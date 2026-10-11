@@ -69,7 +69,12 @@ function renderFriendDropdown() {
         let catIcon = isUnassigned ? "👤" : "📁";
         let allVisible = groupsMap[cat].length > 0 && groupsMap[cat].every(f => visibleFriends.has(f.id));
         let catChecked = allVisible ? 'checked' : '';
-        let editBtnHtml = !isUnassigned ? `<button class="btn btn-sm btn-link text-secondary p-0 ms-2 text-decoration-none" onclick="editCustomCategory('${escapeJsString(cat)}', event)" title="Переименовать папку">✏️</button>` : '';
+
+        // Кнопка ✕ — удалить папку. Показывается только для пользовательских папок.
+        let editBtnHtml = !isUnassigned
+            ? `<button class="btn btn-sm btn-link text-secondary p-0 ms-2 text-decoration-none" onclick="editCustomCategory('${escapeJsString(cat)}', event)" title="Переименовать папку">✏️</button>
+               <button class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none" onclick="deleteCustomCategory('${escapeJsString(cat)}', event)" title="Удалить папку">✕</button>`
+            : '';
 
         parts.push(`
             <li ondragover="allowDrop(event)" ondrop="handleCategoryDrop(event, '${escapeJsString(cat)}')">
@@ -139,6 +144,42 @@ async function editCustomCategory(oldName, e) {
     renderFriendsCalendar();
 }
 
+// ============================================================
+//  УДАЛЕНИЕ ПАПКИ
+// ------------------------------------------------------------
+//  Друзья из папки переезжают в «Без папки» (category = ''),
+//  сама папка удаляется из customCategories в localStorage.
+// ============================================================
+async function deleteCustomCategory(catName, e) {
+    e.stopPropagation();
+    if (!catName) return;
+
+    const friendsInCat = friendsList.filter(f => (f.category || '') === catName);
+    const confirmMsg = friendsInCat.length > 0
+        ? `Удалить папку «${catName}»?\n\nДрузья (${friendsInCat.length} шт.) останутся, но переедут в «Без папки».`
+        : `Удалить пустую папку «${catName}»?`;
+    if (!confirm(confirmMsg)) return;
+
+    for (let f of friendsInCat) {
+        f.category = '';
+        try {
+            await apiUpdateFriend(f.id, {
+                name: f.name,
+                group: f.group,
+                subgroup: f.subgroup,
+                category: ''
+            });
+        } catch (err) { console.error('deleteCustomCategory: update friend failed', err); }
+    }
+
+    const idx = customCategories.indexOf(catName);
+    if (idx !== -1) customCategories.splice(idx, 1);
+    localStorage.setItem('customCategories', JSON.stringify(customCategories));
+
+    renderFriendDropdown();
+    renderFriendsCalendar();
+}
+
 function toggleFriendGroup(cat) {
     let groupFriends = friendsList.filter(f => (f.category || '') === cat);
     let allVisible = groupFriends.length > 0 && groupFriends.every(f => visibleFriends.has(f.id));
@@ -194,6 +235,18 @@ function hideAllFriends(e) {
     renderFriendsCalendar();
 }
 
+// ============================================================
+//  ЗАГРУЗКА РАСПИСАНИЙ ДРУЗЕЙ
+// ------------------------------------------------------------
+//  fetchAllFriendsSchedules — только загрузка из локального кэша
+//  (apiLoadSchedule). Синхронизация с сервером СевГУ НЕ
+//  запускается автоматически: иначе на каждого друга уходит
+//  запрос apiSyncSchedule, и общий лимит 10/min на /api/schedule_sync
+//  быстро пробивается (см. HTTP 429 в консоли).
+//
+//  Синхронизация друзей идёт только при ручном обновлении
+//  (кнопка «🔄» → manualRefresh → syncFriendsSchedules(true)).
+// ============================================================
 async function fetchAllFriendsSchedules() {
     let promises = friendsList.map(async (friend) => {
         if (!friendsSchedules[friend.id]) {
@@ -207,15 +260,31 @@ async function fetchAllFriendsSchedules() {
         }
     });
     await Promise.all(promises);
-    syncFriendsSchedules();
+    // Никакого syncFriendsSchedules() здесь — синк ушёл в manualRefresh.
 }
 
-async function syncFriendsSchedules() {
+// ============================================================
+//  СИНХРОНИЗАЦИЯ РАСПИСАНИЙ ДРУЗЕЙ
+// ------------------------------------------------------------
+//  force = true — запускается принудительно (после ручного «🔄»).
+//  force = false (по умолчанию) — с троттлингом: не чаще раза
+//  в 30 минут за сессию.
+// ============================================================
+async function syncFriendsSchedules(force = false) {
+    if (!force) {
+        const now = Date.now();
+        if (window._lastFriendsSync && now - window._lastFriendsSync < 30 * 60 * 1000) {
+            return;
+        }
+    }
+    window._lastFriendsSync = Date.now();
+
     for (let friend of friendsList) {
         try {
             let newData = applyTimeFix(await apiSyncSchedule(friend.group, friend.subgroup));
             if (Array.isArray(newData) && newData.length > 0) {
-                if (friendsSchedules[friend.id] && friendsSchedules[friend.id].length > 0 && newData.length < friendsSchedules[friend.id].length * 0.9) {
+                if (friendsSchedules[friend.id] && friendsSchedules[friend.id].length > 0
+                    && newData.length < friendsSchedules[friend.id].length * 0.9) {
                     continue;
                 }
                 if (isScheduleDifferent(newData, friendsSchedules[friend.id])) {
@@ -430,8 +499,6 @@ function renderFriendsCalendar(dir = null) {
         else                      grid.classList.add('fade-in');
 
         // Собираем HTML всех 7 дней в массив и подставляем одной операцией.
-        // Раньше был `grid.innerHTML += html` в цикле — 7 перепарсиваний
-        // на каждого друга.
         const dayParts = [];
 
         for (let i = 0; i < 7; i++) {
@@ -498,8 +565,8 @@ function renderFriendsCalendar(dir = null) {
                     html += `<div class="mt-2 border-top pt-2">`;
                     daySchedule.forEach(fItem => {
                         let typeBadge = fItem.type_name ? `<span class="badge bg-secondary ms-1" style="font-size: 0.6em;">${fItem.type_name}</span>` : '';
-                        let teacherHtml = (showTeacher && fItem.teacher) ? `<div class="text-muted mt-1" style="font-size: 0.85em;">👨‍🏫 ${escapeHtml(fItem.teacher)}</div>` : '';
-                        let locHtml = (showLocation && fItem.location) ? `<div class="text-muted" style="font-size: 0.85em;">🚪 ${escapeHtml(fItem.location)}</div>` : '';
+                        let teacherHtml = (showTeacher && fItem.teacher) ? `<div class="text-muted mt-1" style="font-size: 0.85em;">${escapeHtml(fItem.teacher)}</div>` : '';
+                        let locHtml = (showLocation && fItem.location) ? `<div class="text-muted" style="font-size: 0.85em;">${escapeHtml(fItem.location)}</div>` : '';
                         html += `
                             <div class="bg-white border rounded p-1 mb-1 shadow-sm" style="font-size: 0.75em; border-left: 3px solid var(--border-color) !important;">
                                 <strong class="text-primary">${fixTime(fItem.time_range)}</strong>${typeBadge}<br>

@@ -48,24 +48,40 @@ function _sortItemsByTime(a, b) {
 }
 
 // Карточка события — всегда видна в дне, как заметка.
+//
+// Новая разметка (сверху вниз):
+//   1) Бейдж «Событие»
+//   2) Время + ✏️ (карандаш редактирования)
+//   3) Название события (свободный перенос)
+//   4) «+ Заметка» справа внизу
 function _renderEventCard(ev) {
-    const editBtn = `<span style="cursor:pointer; font-size: 0.9em; margin-left: 6px;" onclick="openCustomScheduleModal('${ev.date}', ${ev.custom_id})" title="Редактировать">✏️</span>`;
-    const teacherInfo = (ev.teacher && showTeacher)
-        ? `<span class="text-muted" style="font-size: 0.85em;">👨‍🏫 ${escapeHtml(ev.teacher)}</span>` : '';
-    const locInfo = (ev.location && showLocation)
-        ? `<span class="text-muted" style="font-size: 0.85em;">🚪 ${escapeHtml(ev.location)}</span>` : '';
-    const extra = (teacherInfo || locInfo)
-        ? `<div class="d-flex gap-2 flex-wrap">${teacherInfo} ${locInfo}</div>` : '';
     const safeSubject = escapeJsString(ev.lesson || '');
 
+    const teacherInfo = (ev.teacher && showTeacher)
+        ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(ev.teacher)}</span>` : '';
+    const locInfo = (ev.location && showLocation)
+        ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(ev.location)}</span>` : '';
+    const extra = (teacherInfo || locInfo)
+        ? `<div class="d-flex gap-2 flex-wrap schedule-item-extra">${teacherInfo} ${locInfo}</div>` : '';
+
     return `
-        <div class="schedule-item event-card shadow-sm" style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.2; border-left: 3px solid var(--event-color);">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <div><strong class="text-primary">${ev.time_range}</strong> <span class="badge bg-success ms-2" style="font-size: 0.7em;">Событие</span>${editBtn}</div>
-                <span class="add-task-btn mt-0" style="font-size: 0.75em;" onclick="createTaskFromSchedule('${ev.date}', '${safeSubject}')">+ Заметка</span>
+        <div class="schedule-item event-card shadow-sm"
+             style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.25; border-left: 3px solid var(--event-color);">
+            <div class="schedule-item-badge">
+                <span class="badge bg-success" style="font-size: 0.7em;">Событие</span>
             </div>
-            <div class="mb-1">${escapeHtml(ev.lesson)}</div>
+            <div class="schedule-item-time">
+                <strong class="text-primary">${ev.time_range}</strong>
+                <span class="schedule-item-edit"
+                      onclick="openCustomScheduleModal('${ev.date}', ${ev.custom_id})"
+                      title="Редактировать">✏️</span>
+            </div>
+            <div class="schedule-item-title">${escapeHtml(ev.lesson)}</div>
             ${extra}
+            <div class="schedule-item-footer">
+                <span class="add-task-btn"
+                      onclick="createTaskFromSchedule('${ev.date}', '${safeSubject}')">+ Заметка</span>
+            </div>
         </div>
     `;
 }
@@ -210,26 +226,38 @@ async function renderCalendar() {
                     lessonHtml += ` <span style="cursor:pointer; font-size: 0.9em; opacity: 0.4;" onclick="openSubjectSettings('${safeSubjectKey}')" title="Настроить предмет">⚙️</span>`;
                 }
 
+                // Бейдж типа — отдельная строка в самом верху карточки
                 let typeBadge = '';
                 if (item.is_custom && item.is_event) {
-                    typeBadge = `<span class="badge bg-success ms-2" style="font-size: 0.7em;">Событие</span>`;
+                    typeBadge = `<span class="badge bg-success" style="font-size: 0.7em;">Событие</span>`;
                 } else if (item.type_name) {
-                    typeBadge = `<span class="badge bg-secondary ms-2" style="font-size: 0.7em;">${item.type_name}</span>`;
+                    typeBadge = `<span class="badge bg-secondary" style="font-size: 0.7em;">${item.type_name}</span>`;
                 }
 
-                let editCustomHtml = item.is_custom ? `<span style="cursor:pointer; font-size: 0.9em; margin-left: 8px;" onclick="openCustomScheduleModal('${item.date}', ${item.custom_id})" title="Редактировать">✏️</span>` : '';
-                let teacherInfo = (displayTeacher && showTeacher) ? `<span class="text-muted" style="font-size: 0.85em;">👨‍🏫 ${escapeHtml(displayTeacher)}</span>` : '';
-                let locInfo = (displayLocation && showLocation) ? `<span class="text-muted" style="font-size: 0.85em;">🚪 ${escapeHtml(displayLocation)}</span>` : '';
+                // Карандаш редактирования — только для кастомных элементов,
+                // стоит рядом со временем.
+                let editIconHtml = item.is_custom
+                    ? `<span class="schedule-item-edit"
+                            onclick="openCustomScheduleModal('${item.date}', ${item.custom_id})"
+                            title="Редактировать">✏️</span>`
+                    : '';
+
+                let teacherInfo = (displayTeacher && showTeacher) ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(displayTeacher)}</span>` : '';
+                let locInfo = (displayLocation && showLocation) ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(displayLocation)}</span>` : '';
                 let customStyle = item.is_custom ? (item.is_event ? 'border-left: 3px solid var(--event-color);' : 'border-left: 3px solid var(--custom-pair-color);') : 'border-left: 3px solid var(--accent);';
 
                 scheduleHtml += `
-                    <div class="schedule-item shadow-sm" style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.2; ${customStyle}">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div><strong class="text-primary">${item.time_range}</strong>${typeBadge}${editCustomHtml}</div>
-                            <span class="add-task-btn mt-0" style="font-size: 0.75em;" onclick="createTaskFromSchedule('${item.date}', '${safeTaskSubject}')">+ Заметка</span>
+                    <div class="schedule-item shadow-sm" style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.25; ${customStyle}">
+                        ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
+                        <div class="schedule-item-time">
+                            <strong class="text-primary">${item.time_range}</strong>
+                            ${editIconHtml}
                         </div>
-                        <div class="mb-1">${lessonHtml}</div>
-                        <div class="d-flex gap-2 flex-wrap">${teacherInfo} ${locInfo}</div>
+                        <div class="schedule-item-title">${lessonHtml}</div>
+                        <div class="d-flex gap-2 flex-wrap schedule-item-extra">${teacherInfo} ${locInfo}</div>
+                        <div class="schedule-item-footer">
+                            <span class="add-task-btn" onclick="createTaskFromSchedule('${item.date}', '${safeTaskSubject}')">+ Заметка</span>
+                        </div>
                     </div>
                 `;
             });
@@ -242,8 +270,6 @@ async function renderCalendar() {
         }
 
         // Копим HTML каждого дня в массив и вставляем всё разом в конце.
-        // Раньше был `cal.innerHTML += ...` в цикле — на 7-й итерации браузер
-        // заново парсил уже существующие 6 колонок. Теперь парсит 1 раз.
         htmlParts.push(`
             <div class="day-col ${isTodayClass}" id="day-col-${dateStr}" ondragover="allowDrop(event)" ondrop="drop(event, '${dateStr}')">
                 <div class="day-header">

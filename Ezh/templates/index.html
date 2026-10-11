@@ -74,18 +74,16 @@
                 </select>
             </div>
             <div class="col-md-5 d-flex align-items-center justify-content-end gap-2">
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm"
-                        onclick="openSearchModal()" title="Поиск по заметкам и событиям (Ctrl+K)"
-                        style="font-size: 1.1em; padding: 3px 10px;">🔍</button>
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm"
+                <!-- FIX 1: единый класс header-icon-btn + emoji через html-entity -->
+                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
+                        onclick="openSearchModal()" title="Поиск по заметкам и событиям (Ctrl+K)">&#128269;</button>
+                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="manualRefresh()" id="refreshBtn"
-                        title="Принудительно обновить расписание с сервера СевГУ"
-                        style="font-size: 1.1em; padding: 3px 10px;">
-                    <span id="refreshIcon">🔄</span>
+                        title="Принудительно обновить расписание с сервера СевГУ">
+                    <span id="refreshIcon">&#128260;</span>
                 </button>
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm"
-                        onclick="openSettingsModal()" title="Настройки"
-                        style="font-size: 1.1em; padding: 3px 10px;">⚙️</button>
+                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
+                        onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
                 <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="goToToday()">Сегодня</button>
                 <div class="dropdown">
@@ -222,12 +220,13 @@
   </div>
 </div>
 
+<!-- FIX 3: убран bg-white у input-group-text — иначе в тёмной теме окно поиска было белым -->
 <div class="modal fade" id="searchModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content border-0 shadow">
       <div class="modal-header py-2 bg-light">
         <div class="input-group input-group-sm flex-grow-1">
-          <span class="input-group-text bg-white border-end-0">🔍</span>
+          <span class="input-group-text border-end-0">🔍</span>
           <input type="text" id="searchInput" class="form-control border-start-0"
                  placeholder="Поиск по заметкам и событиям..." autocomplete="off">
         </div>
@@ -263,6 +262,25 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="labsContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW: модальное окно предмета — список лаб/ПЗ с чекбоксами и датами сдачи -->
+<div class="modal fade" id="labItemsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title fw-bold" id="labItemsModalTitle">Предмет</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="labItemsContent">
+        <div class="text-center text-muted small py-4">Загрузка…</div>
+      </div>
+      <div class="modal-footer py-1 border-0 justify-content-between">
+        <small class="text-muted">Клик по названию — переименовать</small>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Готово</button>
+      </div>
     </div>
   </div>
 </div>
@@ -346,7 +364,7 @@
   </div>
 </div>
 
-<!-- Модал выбора типа заметки при создании из пары/события -->
+<!-- FIX 4: обе кнопки теперь btn-primary — одинаковый цвет -->
 <div class="modal fade" id="taskKindModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content border-0 shadow">
@@ -357,7 +375,7 @@
       <div class="modal-body">
         <p class="small mb-3 text-muted">Что нужно сделать с этим предметом?</p>
         <div class="d-grid gap-2">
-            <button class="btn btn-outline-primary btn-sm fw-bold" id="btnTaskKindDo">📝 Сделать</button>
+            <button class="btn btn-primary btn-sm fw-bold" id="btnTaskKindDo">📝 Сделать</button>
             <button class="btn btn-primary btn-sm fw-bold" id="btnTaskKindSubmit">✅ Сдать</button>
         </div>
       </div>
@@ -529,6 +547,11 @@
                 <option value="southpark">🎿 Южный парк</option>
                 <option value="anime">🌸 Аниме</option>
             </optgroup>
+            <!-- NEW: OLED-темы (чистый чёрный фон) -->
+            <optgroup label="OLED (чёрный фон)">
+                <option value="oled">🌑 OLED Deep</option>
+                <option value="oled-warm">🔥 OLED Warm</option>
+            </optgroup>
             <optgroup label="Своя">
                 <option value="custom">🎨 Своя тема</option>
             </optgroup>
@@ -554,6 +577,10 @@
                         <option value="hedgehog">🦔 Ежики</option>
                         <option value="southpark">🎿 Южный парк</option>
                         <option value="anime">🌸 Аниме</option>
+                    </optgroup>
+                    <optgroup label="OLED (чёрный фон)">
+                        <option value="oled">🌑 OLED Deep</option>
+                        <option value="oled-warm">🔥 OLED Warm</option>
                     </optgroup>
                 </select>
                 <button class="btn btn-outline-primary" type="button" onclick="applyBaseThemeFromSelect()" title="Скопировать цвета выбранной темы в свою">Применить</button>

@@ -104,9 +104,28 @@ async function saveAllLabs() {
 //  ГРАФИКИ
 // ============================================================
 // Все цвета читаются через getThemeColor() (см. utils.js) — он берёт
-// значения из CSS-переменных текущей темы. Когда тема меняется,
-// applyTheme() из settings.js вызывает refreshChartsTheme(), который
-// уничтожает старые чарты и создаёт здесь новые с актуальной палитрой.
+// значения из CSS-переменных текущей темы.
+//
+// ВАЖНО (фикс «растянутой/пропадающей диаграммы»):
+//   • options.responsive: true + maintainAspectRatio: false —
+//     Chart.js сам следит за размером контейнера через ResizeObserver.
+//   • Перед new Chart() ЯВНО выставляем canvas.width/height по
+//     родителю. Без этого Chart.js создаёт canvas с дефолтными
+//     300×150 и «расплющивает» его на всю ширину карточки.
+
+function _setCanvasInitialSize(canvasEl) {
+    if (!canvasEl) return;
+    const parent = canvasEl.parentElement;
+    if (!parent) return;
+    const w = parent.clientWidth;
+    const h = parent.clientHeight;
+    if (w > 0 && h > 0) {
+        canvasEl.width  = w;
+        canvasEl.height = h;
+        canvasEl.style.width  = w + 'px';
+        canvasEl.style.height = h + 'px';
+    }
+}
 
 function renderCharts() {
     if (typeof Chart === 'undefined') {
@@ -114,7 +133,6 @@ function renderCharts() {
         return;
     }
 
-    // Палитра текущей темы
     const cPassed     = getThemeColor('--chart-passed',       '#6366f1');
     const cRemaining  = getThemeColor('--chart-remaining',    '#cbd5e1');
     const cLabDone    = getThemeColor('--chart-lab-done',     '#14b8a6');
@@ -140,7 +158,9 @@ function renderCharts() {
     let todayStr = getLocalDateStr(new Date());
     cachedSchedule.forEach(item => { item.date < todayStr ? passed++ : remaining++; });
 
-    const ctx1 = document.getElementById('globalStatsChart').getContext('2d');
+    const canvas1 = document.getElementById('globalStatsChart');
+    if (!canvas1) return;
+
     if (globalChart) {
         globalChart.data.datasets[0].data = [passed, remaining];
         globalChart.data.datasets[0].backgroundColor = [cPassed, cRemaining];
@@ -148,9 +168,10 @@ function renderCharts() {
         globalChart.options.plugins.tooltip = Object.assign(
             {}, globalChart.options.plugins.tooltip, tooltipOpts
         );
-        globalChart.update();
+        globalChart.update('none');
     } else {
-        globalChart = new Chart(ctx1, {
+        _setCanvasInitialSize(canvas1);
+        globalChart = new Chart(canvas1.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: ['Прошло', 'Осталось'],
@@ -159,6 +180,7 @@ function renderCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 250 },
                 plugins: {
                     legend: { position: 'bottom', labels: { color: cText } },
                     tooltip: tooltipOpts,
@@ -181,7 +203,9 @@ function renderCharts() {
     let labColors = totLabs === 0 ? [cRemaining, cRemaining] : [cLabDone, cLabLeft];
     let labLabels = totLabs === 0 ? ['Нет данных', ''] : ['Сдано', 'Осталось'];
 
-    const ctx2 = document.getElementById('labStatsChart').getContext('2d');
+    const canvas2 = document.getElementById('labStatsChart');
+    if (!canvas2) return;
+
     if (globalLabChart) {
         globalLabChart.data.datasets[0].data = labData;
         globalLabChart.data.datasets[0].backgroundColor = labColors;
@@ -190,9 +214,10 @@ function renderCharts() {
         globalLabChart.options.plugins.tooltip = Object.assign(
             {}, globalLabChart.options.plugins.tooltip, tooltipOpts
         );
-        globalLabChart.update();
+        globalLabChart.update('none');
     } else {
-        globalLabChart = new Chart(ctx2, {
+        _setCanvasInitialSize(canvas2);
+        globalLabChart = new Chart(canvas2.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: labLabels,
@@ -201,6 +226,7 @@ function renderCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: { duration: 250 },
                 plugins: {
                     legend: { position: 'bottom', labels: { color: cText } },
                     tooltip: tooltipOpts,
@@ -212,9 +238,7 @@ function renderCharts() {
     renderLabPacing();
 }
 
-// Уничтожает существующие чарты и создаёт их заново, чтобы подхватить
-// палитру текущей темы. Вызывается из applyTheme() в settings.js при
-// смене темы. Идемпотентна: если графиков нет — просто тихо выйдет.
+// Пересоздаёт чарты с актуальной палитрой темы.
 function refreshChartsTheme() {
     if (typeof globalChart !== 'undefined' && globalChart) {
         try { globalChart.destroy(); } catch (e) {}
@@ -224,10 +248,6 @@ function refreshChartsTheme() {
         try { globalLabChart.destroy(); } catch (e) {}
         globalLabChart = null;
     }
-    // Перерисовываем только если расписание уже загружено — иначе
-    // renderCharts() создаст чарты с нулевыми данными, а потом
-    // fetchSemesterData → renderCharts() создаст их повторно. Потери нет,
-    // но и смысла тоже.
     if (typeof cachedSchedule !== 'undefined'
         && Array.isArray(cachedSchedule)
         && cachedSchedule.length > 0) {
@@ -235,6 +255,10 @@ function refreshChartsTheme() {
         catch (e) { console.error('[theme] renderCharts failed', e); }
     }
 }
+
+// ============================================================
+//  ТЕМП СДАЧИ ЛАБ
+// ============================================================
 
 function renderLabPacing() {
     const container = document.getElementById('labPacingContent');
@@ -265,9 +289,28 @@ function renderLabPacing() {
         hasData = true;
         let stats = scheduleStats[subj];
 
+        // ============================================================
+        //  Расчёт плана «сколько лаб должно быть сдано к сегодня».
+        // ------------------------------------------------------------
+        //  Идея: к сегодняшнему дню прошло `stats.passed` пар из
+        //  `stats.total` всего. Значит, освоено `passed/total` семестра.
+        //  Ожидаемое число сданных лаб = floor(N * passed / total),
+        //  где N = data.total (всего лаб по плану).
+        //
+        //  Округление вниз (Math.floor) — иначе план обгоняет реальность.
+        //
+        //  Частные случаи:
+        //    • прошла последняя пара → план = все лабы (data.total)
+        //    • ни одна пара ещё не прошла → план = 0
+        // ============================================================
         let expectedCount = 0;
-        if (stats.total > 1) expectedCount = Math.round(data.total * (stats.passed / (stats.total - 1)));
-        else if (stats.passed >= 1) expectedCount = data.total;
+        if (stats.total > 0) {
+            if (stats.passed >= stats.total) {
+                expectedCount = data.total;
+            } else {
+                expectedCount = Math.floor(data.total * stats.passed / stats.total);
+            }
+        }
         if (expectedCount > data.total) expectedCount = data.total;
         if (expectedCount < 0) expectedCount = 0;
 
@@ -276,9 +319,263 @@ function renderLabPacing() {
         let icon = actualCount >= expectedCount ? '✅' : '⚠️';
         let displaySubj = getDisplaySubjectKey(subj);
 
-        html += `<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1"><span class="text-truncate me-2" style="max-width: 65%; font-size: 0.8em;" title="${escapeHtml(displaySubj)}">${escapeHtml(displaySubj)}</span><span class="fw-bold ${statusClass}" style="font-size: 0.8em; white-space: nowrap;">${actualCount} / ${expectedCount} ${icon}</span></div>`;
+        // Делаем всю строку кликабельной: клик по предмету → окно предмета.
+        html += `<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1 lab-pacing-row" style="cursor:pointer;" title="Открыть список лаб" onclick="openLabItemsModal('${escapeJsString(subj)}')"><span class="text-truncate me-2" style="max-width: 65%; font-size: 0.8em;">${escapeHtml(displaySubj)}</span><span class="fw-bold ${statusClass}" style="font-size: 0.8em; white-space: nowrap;">${actualCount} / ${expectedCount} ${icon}</span></div>`;
     }
     html += '</div>';
 
     container.innerHTML = hasData ? html : "<div class='text-center text-muted small mt-2'>Нет данных</div>";
+}
+
+// ============================================================
+//  ОКНО ПРЕДМЕТА: СПИСОК ЛАБ/ПЗ
+// ------------------------------------------------------------
+//  Логика:
+//   1) Считаем, сколько у предмета пар ЛЗ/ПЗ в семестре (по
+//      cachedSchedule) — это и есть "total" лаб.
+//   2) Синкаем lab_items на сервере (создаём недостающие до total).
+//      Sync работает только «в плюс» — ручные добавления не затираются.
+//   3) Для каждой лабы k (1..N) считаем примерную дату сдачи:
+//      берём список дат пар ЛЗ/ПЗ, отсортированный по возрастанию,
+//      и раскидываем N лаб равномерно по этому списку.
+//      dateIdx = ceil(k * M / N), M — число дат.
+//   4) Рендерим строки: чекбокс | название (inline-edit) | дата
+//      сдачи. Просроченные (дата < сегодня и не completed) —
+//      красным цветом.
+//   5) Кнопки «+ Добавить» и «🗑 Удалить последнюю» правят список.
+//      Каждое изменение пересчитывает lab_progress на сервере —
+//      «Управление лабораторными» и графики обновляются автоматически.
+// ============================================================
+
+let _labItemsCurrentSubject = null;
+let _labItemsCurrentGroup = null;
+let _labItemsCache = {};      // { [subject]: [ {id, idx, title, completed, due_date} ] }
+
+function _datesForSubject(subject) {
+    // Возвращает отсортированный список дат (YYYY-MM-DD), где у предмета
+    // есть пара. subject — полный ключ вида "Математика (ЛЗ)".
+    const dates = [];
+    cachedSchedule.forEach(item => {
+        const key = `${item.lesson} (${item.type_name})`;
+        if (key === subject && item.date) dates.push(item.date);
+    });
+    dates.sort();
+    return dates;
+}
+
+function _computeDueDate(dates, k, total) {
+    // Раскидываем total лаб на dates.length дат.
+    // k — 1-based номер лабы.
+    if (!dates.length || total <= 0) return null;
+    const M = dates.length;
+    let idx = Math.ceil(k * M / total) - 1;   // 0-based
+    if (idx < 0) idx = 0;
+    if (idx >= M) idx = M - 1;
+    return dates[idx];
+}
+
+async function openLabItemsModal(subjectKey) {
+    const group = (document.getElementById('groupSelect').value || '').trim();
+    if (!group) return;
+    if (!cachedLabs[subjectKey] || cachedLabs[subjectKey].total === 0) {
+        alert('У этого предмета нет лаб в расписании.');
+        return;
+    }
+
+    _labItemsCurrentSubject = subjectKey;
+    _labItemsCurrentGroup = group;
+
+    const modalEl = document.getElementById('labItemsModal');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+
+    document.getElementById('labItemsModalTitle').textContent = getDisplaySubjectKey(subjectKey);
+    document.getElementById('labItemsContent').innerHTML =
+        '<div class="text-center text-muted small py-4">Загрузка…</div>';
+    modal.show();
+
+    await _reloadLabItems();
+}
+
+// Перезагружает данные окна с сервера и перерисовывает.
+async function _reloadLabItems() {
+    if (!_labItemsCurrentSubject || !_labItemsCurrentGroup) return;
+
+    const subjectKey = _labItemsCurrentSubject;
+    const group = _labItemsCurrentGroup;
+
+    // 1) Синкаем с сервером: сколько пар ЛЗ/ПЗ — столько и записей
+    //    должно быть минимум. Sync работает только «в плюс» — если
+    //    пользователь добавил лишние лабы вручную, они сохранятся.
+    const totalCount = (cachedLabs[subjectKey] && cachedLabs[subjectKey].total) || 0;
+    if (totalCount > 0) {
+        try {
+            await apiSyncLabItems(group, [{ subject: subjectKey, count: totalCount }]);
+        } catch (e) {
+            console.error('[lab_items] sync failed', e);
+        }
+    }
+
+    // 2) Тянем список.
+    let grouped = {};
+    try { grouped = await apiLoadLabItems(group); }
+    catch (e) { grouped = {}; }
+
+    const items = Array.isArray(grouped[subjectKey]) ? grouped[subjectKey] : [];
+
+    // 3) Считаем даты сдачи.
+    const dates = _datesForSubject(subjectKey);
+    const enriched = items.map(it => ({
+        ...it,
+        due_date: _computeDueDate(dates, it.idx, items.length || totalCount),
+    }));
+
+    _labItemsCache[subjectKey] = enriched;
+    renderLabItemsList();
+}
+
+function renderLabItemsList() {
+    const container = document.getElementById('labItemsContent');
+    if (!container) return;
+
+    const subjectKey = _labItemsCurrentSubject;
+    if (!subjectKey) return;
+
+    const items = _labItemsCache[subjectKey] || [];
+    const todayStr = getLocalDateStr(new Date());
+
+    // Панель действий — всегда сверху, даже если список пуст
+    // (тогда можно добавить первую лабу).
+    let html = `
+        <div class="lab-items-toolbar">
+            <div class="small text-muted">
+                Всего: <b>${items.length}</b> · Сдано: <b>${items.filter(x => x.completed).length}</b>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold"
+                        onclick="onAddLabItem()" title="Добавить ещё одну лабу/ПЗ">+ Добавить</button>
+                <button type="button" class="btn btn-sm btn-outline-danger fw-bold"
+                        onclick="onRemoveLastLabItem()"
+                        ${items.length === 0 ? 'disabled' : ''}
+                        title="Удалить последнюю запись">🗑 Удалить последнюю</button>
+            </div>
+        </div>
+    `;
+
+    if (items.length === 0) {
+        html += "<div class='text-center text-muted small py-4'>Записей нет. Нажмите «+ Добавить».</div>";
+        container.innerHTML = html;
+        return;
+    }
+
+    html += '<div class="lab-items-list">';
+
+    items.forEach(it => {
+        const overdue = !it.completed && it.due_date && it.due_date < todayStr;
+        const dueLabel = it.due_date ? formatDateRu(it.due_date) : '—';
+        const dueYear  = it.due_date ? it.due_date.slice(0, 4) : '';
+
+        let rowCls = 'lab-item-row';
+        if (it.completed) rowCls += ' lab-item-done';
+        else if (overdue) rowCls += ' lab-item-overdue';
+
+        html += `
+            <div class="${rowCls}" data-id="${it.id}">
+                <input type="checkbox" class="lab-item-check"
+                       ${it.completed ? 'checked' : ''}
+                       onchange="onLabItemToggle(${it.id}, this.checked)">
+                <span class="lab-item-title"
+                      onclick="onLabItemRename(${it.id}, this)"
+                      title="Клик — переименовать">${escapeHtml(it.title)}</span>
+                <span class="lab-item-due ${overdue ? 'is-overdue' : ''}"
+                      title="${it.due_date ? 'Примерная дата сдачи' : 'Нет даты'}">
+                    ${dueLabel}${dueYear ? ' ' + dueYear : ''}
+                </span>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+async function onLabItemToggle(id, isCompleted) {
+    try {
+        await apiUpdateLabItem(id, { completed: isCompleted ? 1 : 0 });
+    } catch (e) {
+        console.error('[lab_items] update failed', e);
+        alert('Не удалось сохранить');
+        return;
+    }
+    // Локально обновим кэш, чтобы не мигать
+    const subjectKey = _labItemsCurrentSubject;
+    if (subjectKey && _labItemsCache[subjectKey]) {
+        const it = _labItemsCache[subjectKey].find(x => x.id === id);
+        if (it) it.completed = isCompleted ? 1 : 0;
+    }
+    renderLabItemsList();
+    // Обновим агрегат — пересчитывается на сервере, но локально тоже
+    await updateLabsCache();
+    renderCharts();
+}
+
+async function onLabItemRename(id, el) {
+    const subjectKey = _labItemsCurrentSubject;
+    if (!subjectKey) return;
+    const it = (_labItemsCache[subjectKey] || []).find(x => x.id === id);
+    if (!it) return;
+
+    const newTitle = prompt('Новое название:', it.title);
+    if (newTitle === null) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed || trimmed === it.title) return;
+
+    try {
+        await apiUpdateLabItem(id, { title: trimmed });
+    } catch (e) {
+        console.error('[lab_items] rename failed', e);
+        alert('Не удалось переименовать');
+        return;
+    }
+    it.title = trimmed;
+    renderLabItemsList();
+}
+
+// ============================================================
+//  ДОБАВИТЬ / УДАЛИТЬ ПОСЛЕДНЮЮ ЛАБУ
+// ============================================================
+
+async function onAddLabItem() {
+    if (!_labItemsCurrentSubject || !_labItemsCurrentGroup) return;
+    try {
+        await apiAddLabItem(_labItemsCurrentGroup, _labItemsCurrentSubject);
+    } catch (e) {
+        console.error('[lab_items] add failed', e);
+        alert('Не удалось добавить');
+        return;
+    }
+    // Сервер пересчитал lab_progress. Обновляем локальный кэш агрегатов,
+    // затем перезагружаем окно предмета и все виджеты.
+    await updateLabsCache();
+    await _reloadLabItems();
+    renderCharts();
+}
+
+async function onRemoveLastLabItem() {
+    if (!_labItemsCurrentSubject || !_labItemsCurrentGroup) return;
+    const items = _labItemsCache[_labItemsCurrentSubject] || [];
+    if (items.length === 0) return;
+
+    const last = items[items.length - 1];
+    if (!confirm(`Удалить последнюю запись — «${last.title}»?`)) return;
+
+    try {
+        await apiRemoveLastLabItem(_labItemsCurrentGroup, _labItemsCurrentSubject);
+    } catch (e) {
+        console.error('[lab_items] remove_last failed', e);
+        alert('Не удалось удалить');
+        return;
+    }
+    await updateLabsCache();
+    await _reloadLabItems();
+    renderCharts();
 }

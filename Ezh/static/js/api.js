@@ -55,3 +55,20 @@ async function apiUpdateCustomSchedule(id, x) { return apiPut(`/api/custom_sched
 async function apiDeleteCustomSchedule(id)    { return apiDelete(`/api/custom_schedule/${id}`); }
 async function apiSearch(q)                   { return apiGet(`/api/search?q=${encodeURIComponent(q)}`); }
 async function apiSyncScheduleForce(group, sg){ return apiGet(`/api/schedule_sync?group=${encodeURIComponent(group)}&subgroup=${sg}&force=1`); }
+
+// ============================================================
+//  ЛАБЫ ПОШТУЧНО (lab_items)
+// ------------------------------------------------------------
+//  • apiLoadLabItems(group)              — { subject: [ {id, idx, title, completed}, ... ] }
+//  • apiSyncLabItems(group, items)       — создать недостающие записи
+//    (items: [{subject, count}]). Работает ТОЛЬКО в плюс:
+//    не удаляет лишние, чтобы ручное добавление не затиралось.
+//  • apiUpdateLabItem(id, {title, completed}) — обновить одну запись
+//  • apiAddLabItem(group, subject)       — добавить одну в конец списка
+//  • apiRemoveLastLabItem(group, subject)— удалить последнюю запись
+// ============================================================
+async function apiLoadLabItems(group)               { return apiGet(`/api/lab_items?group=${encodeURIComponent(group)}`); }
+async function apiSyncLabItems(group, items)        { return apiPost('/api/lab_items/sync', {group, items}); }
+async function apiUpdateLabItem(id, patch)          { return apiPut(`/api/lab_items/${id}`, patch); }
+async function apiAddLabItem(group, subject)        { return apiPost('/api/lab_items/add', {group, subject}); }
+async function apiRemoveLastLabItem(group, subject) { return apiPost('/api/lab_items/remove_last', {group, subject}); }

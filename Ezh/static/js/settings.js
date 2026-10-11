@@ -223,12 +223,83 @@ function applyTheme() {
     if (prevTheme !== theme && typeof refreshChartsTheme === 'function') refreshChartsTheme();
 }
 
-function downloadICS() {
-    let group = document.getElementById('groupSelect').value.trim();
-    let subgroup = document.getElementById('subgroupSelect').value;
-    if (!group) { alert("Сначала выберите группу!"); return; }
-    let url = `/api/schedule.ics?group=${encodeURIComponent(group)}&subgroup=${subgroup}`;
-    window.location.href = url;
+// ============================================================
+//  ЭКСПОРТ РАСПИСАНИЯ В .ICS
+// ------------------------------------------------------------
+//  Через fetch + Blob + a[download]:
+//    • видно лоадер «📅 Готовим .ics...»;
+//    • можно поймать HTTP-статус (409, 429, 500);
+//    • имя файла берём из Content-Disposition, приоритет —
+//      filename* (UTF-8, кириллица), фолбэк — filename="...".
+//
+//  Бэкенд отдаёт заголовок по RFC 6266:
+//    Content-Disposition: attachment;
+//      filename="schedule___-24-1-_2.ics";
+//      filename*=UTF-8''schedule_%D0%9F%D0%98%D0%9D_...ics
+//  Браузер, если поддерживает filename*, использует его.
+// ============================================================
+async function downloadICS() {
+    const group    = (document.getElementById('groupSelect').value || '').trim();
+    const subgroup = document.getElementById('subgroupSelect').value || '0';
+
+    if (!group) {
+        alert('Сначала выберите группу!');
+        return;
+    }
+
+    showGlobalLoader('📅 Готовим .ics-файл...');
+
+    try {
+        const url = `/api/schedule.ics?group=${encodeURIComponent(group)}&subgroup=${encodeURIComponent(subgroup)}`;
+        const resp = await fetch(url);
+
+        if (!resp.ok) {
+            if (resp.status === 409) {
+                let text = '';
+                try { text = await resp.text(); } catch (e) {}
+                throw new Error(text || 'Расписание ещё не загружено. Откройте группу в календаре, затем скачивайте .ics.');
+            }
+            if (resp.status === 429) {
+                throw new Error('Слишком часто. Подождите минуту и попробуйте снова.');
+            }
+            throw new Error(`HTTP ${resp.status}`);
+        }
+
+        const blob = await resp.blob();
+
+        // Дефолтное имя — на случай, если заголовка нет.
+        let filename = `schedule_${group.replace(/[\/\\:*?"<>|]/g, '_')}_${subgroup}.ics`;
+        const cd = resp.headers.get('Content-Disposition') || '';
+
+        // Сначала filename*=UTF-8''... — там настоящая кириллица.
+        let m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+        if (m && m[1]) {
+            try { filename = decodeURIComponent(m[1]); }
+            catch (e) { /* оставляем fallback */ }
+        } else {
+            // Фолбэк: filename="..." (обычно ASCII).
+            m = /filename="?([^";]+)"?/i.exec(cd);
+            if (m && m[1]) filename = m[1];
+        }
+
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+
+        showUpdateNotification('✅ Файл .ics скачан');
+
+    } catch (e) {
+        console.error('[ics] download failed', e);
+        const msg = (e && e.message) ? e.message : 'Не удалось собрать .ics';
+        showUpdateNotification(`❌ ${msg}`);
+    } finally {
+        hideGlobalLoader();
+    }
 }
 
 function applyWidgetVisibility() {

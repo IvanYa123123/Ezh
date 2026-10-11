@@ -93,14 +93,55 @@ function showUpdateNotification(message) {
     }, 3000);
 }
 
+// ============================================================
+//  FIX 2: СВОРАЧИВАНИЕ ВИДЖЕТОВ — БЕЗ ЗАЛИПАНИЯ И ПРОПАДАНИЯ ЧАРТОВ
+// ------------------------------------------------------------
+//  Проблема была в том, что при быстром toggle Chart.js ловил
+//  resize в момент, когда контейнер только начал меняться,
+//  и «залипал» в промежуточной геометрии. Уничтожение чартов
+//  при сворачивании тоже плохо — canvas остаётся с нулевой
+//  высотой, и при следующем renderCharts() он не восстанавливается.
+//
+//  Правильный подход:
+//    1) На время CSS-перехода отключаем у чартов авто-ресайз
+//       (options.responsive = false) — Chart.js не дёргается.
+//    2) После завершения перехода (330 мс) возвращаем responsive = true
+//       и зовём chart.resize(). Это даёт чистую геометрию.
+//    3) Чарты НЕ уничтожаем — они переживают сворачивание.
+// ============================================================
+
+const _widgetResizeTimers = {};
+
+function _getCharts() {
+    const list = [];
+    if (typeof globalChart    !== 'undefined' && globalChart)    list.push(globalChart);
+    if (typeof globalLabChart !== 'undefined' && globalLabChart) list.push(globalLabChart);
+    return list;
+}
+
 function toggleWidget(bodyId, btn) {
     let body = document.getElementById(bodyId);
+    if (!body) return;
+
+    // Отменяем предыдущий отложенный resize (если юзер быстро кликает)
+    if (_widgetResizeTimers[bodyId]) {
+        clearTimeout(_widgetResizeTimers[bodyId]);
+        delete _widgetResizeTimers[bodyId];
+    }
+
+    // Замораживаем Chart.js на время анимации
+    _getCharts().forEach(ch => {
+        if (ch.options) ch.options.responsive = false;
+    });
+
     if (body.style.height === '0px') {
+        // --- РАЗВОРАЧИВАНИЕ ---
         body.style.height = body.dataset.originalHeight || (bodyId === 'labPacingBody' ? 'auto' : '160px');
         setTimeout(() => { body.style.overflow = 'visible'; }, 300);
         btn.textContent = '−';
         localStorage.setItem('widget_' + bodyId, 'expanded');
     } else {
+        // --- СВОРАЧИВАНИЕ ---
         if (!body.dataset.originalHeight) {
             let h = body.style.height;
             if (!h || h === 'auto') h = window.getComputedStyle(body).height;
@@ -111,6 +152,15 @@ function toggleWidget(bodyId, btn) {
         btn.textContent = '+';
         localStorage.setItem('widget_' + bodyId, 'collapsed');
     }
+
+    // После завершения CSS-перехода (0.3s) — размораживаем и ресайзим.
+    _widgetResizeTimers[bodyId] = setTimeout(() => {
+        delete _widgetResizeTimers[bodyId];
+        _getCharts().forEach(ch => {
+            if (ch.options) ch.options.responsive = true;
+            try { ch.resize(); } catch (e) {}
+        });
+    }, 330);
 }
 
 // ============================================================
@@ -126,7 +176,6 @@ function showUndoBar(message, onUndo) {
     if (textEl) textEl.textContent = message;
 
     if (btnEl) {
-        // Заменяем кнопку, чтобы снять все старые обработчики
         const newBtn = btnEl.cloneNode(true);
         btnEl.parentNode.replaceChild(newBtn, btnEl);
         newBtn.onclick = () => { if (typeof onUndo === 'function') onUndo(); };

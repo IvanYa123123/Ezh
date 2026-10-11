@@ -8,6 +8,7 @@ import secrets
 import threading
 import hashlib
 from datetime import datetime, timezone
+from urllib.parse import quote
 from flask import Flask, render_template, request, jsonify, g, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -71,9 +72,6 @@ limiter = Limiter(
 # ============================================================
 #  CSP NONCE
 # ============================================================
-#  Для статики nonce не нужен — там нет inline-скриптов, а CSP
-#  применяется ко всем ответам. Пропуск генерации экономит urandom
-#  на 20+ запросов при каждой загрузке страницы.
 
 @app.before_request
 def _generate_csp_nonce():
@@ -154,10 +152,6 @@ def _security_headers(response):
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     response.headers.pop('Server', None)
 
-    # Статика: no-cache означает «кэшируй, но переспрашивай перед использованием».
-    # Flask сам проставляет ETag/Last-Modified для /static/*, поэтому неизменённый
-    # файл возвращается с 304 (десятки байт), а изменённый — скачивается заново.
-    # Это ловит правки JS/CSS без Ctrl+F5 и не жертвует производительностью.
     if request.path.startswith('/static/'):
         response.headers['Cache-Control'] = 'no-cache'
 
@@ -176,14 +170,10 @@ def get_db():
     if 'db' not in g:
         g.db = sqlite3.connect(DB_FILE, timeout=30)
         g.db.row_factory = sqlite3.Row
-        # ВАЖНО: PRAGMA в SQLite — per-connection, а не per-database.
-        # Раньше эти параметры выставлялись только в init_db() и терялись
-        # с закрытием init-соединения. Переносим в get_db(), где создаётся
-        # рабочее соединение на каждый запрос.
         g.db.execute("PRAGMA foreign_keys = ON")
         g.db.execute("PRAGMA busy_timeout = 5000")
-        g.db.execute("PRAGMA cache_size = -64000")       # 64 МБ page cache
-        g.db.execute("PRAGMA mmap_size = 268435456")     # 256 МБ memory-mapped I/O
+        g.db.execute("PRAGMA cache_size = -64000")
+        g.db.execute("PRAGMA mmap_size = 268435456")
         g.db.execute("PRAGMA temp_store = MEMORY")
         g.db.execute("PRAGMA synchronous = NORMAL")
     return g.db
@@ -234,6 +224,15 @@ def init_db(retries: int = 5):
                                  total INTEGER NOT NULL DEFAULT 0,
                                  PRIMARY KEY(group_name, subject))''')
 
+                conn.execute('''CREATE TABLE IF NOT EXISTS lab_items
+                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 group_name TEXT NOT NULL,
+                                 subject TEXT NOT NULL,
+                                 idx INTEGER NOT NULL,
+                                 title TEXT NOT NULL,
+                                 completed INTEGER NOT NULL DEFAULT 0,
+                                 UNIQUE(group_name, subject, idx))''')
+
                 conn.execute('''CREATE TABLE IF NOT EXISTS friends
                                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  name TEXT NOT NULL,
@@ -268,6 +267,7 @@ def init_db(retries: int = 5):
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_date_status ON tasks(date, status)")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_friends_category ON friends(category)")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_group ON lab_progress(group_name)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_items_group ON lab_items(group_name, subject)")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_custom_group ON custom_schedule(group_name)")
                 conn.commit()
                 return
@@ -548,8 +548,6 @@ def get_schedule_all():
         try:
             tmp = cache_file + '.tmp'
             with open(tmp, 'w', encoding='utf-8') as f:
-                # Без indent — файл в разы меньше, а читает его только
-                # браузер и gzip. Экономит и диск, и трафик.
                 json.dump(schedule, f, ensure_ascii=False)
             os.replace(tmp, cache_file)
         except OSError:
@@ -605,7 +603,7 @@ def sync_schedule():
 
 
 # ============================================================
-#  ЛАБЫ
+#  ЛАБЫ — АГРЕГАТЫ (lab_progress)
 # ============================================================
 
 @app.route("/api/labs", methods=["GET", "POST"])
@@ -650,6 +648,229 @@ def manage_labs():
     labs = {row["subject"]: {"completed": row["completed"], "total": row["total"]}
             for row in cursor.fetchall()}
     return jsonify(labs)
+
+
+# ============================================================
+#  ЛАБЫ ПОШТУЧНО (lab_items)
+# ============================================================
+
+def _recalc_lab_progress(conn, group, subject):
+    """Пересчитывает lab_progress из lab_items для одной пары (group, subject)."""
+    row = conn.execute(
+        "SELECT COUNT(*) AS total, COALESCE(SUM(completed), 0) AS done "
+        "FROM lab_items WHERE group_name=? AND subject=?",
+        (group, subject)
+    ).fetchone()
+    total = row["total"] or 0
+    done = row["done"] or 0
+    if total == 0:
+        conn.execute(
+            "DELETE FROM lab_progress WHERE group_name=? AND subject=?",
+            (group, subject)
+        )
+    else:
+        conn.execute(
+            "INSERT OR REPLACE INTO lab_progress (group_name, subject, completed, total) "
+            "VALUES (?, ?, ?, ?)",
+            (group, subject, done, total)
+        )
+
+
+@app.route("/api/lab_items", methods=["GET"])
+@limiter.limit("240 per minute")
+def get_lab_items():
+    group = (request.args.get('group') or '').strip()
+    if not group:
+        return jsonify({})
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, subject, idx, title, completed FROM lab_items "
+        "WHERE group_name=? ORDER BY subject, idx",
+        (group,)
+    ).fetchall()
+
+    grouped = {}
+    for r in rows:
+        subj = r["subject"]
+        if subj not in grouped:
+            grouped[subj] = []
+        grouped[subj].append({
+            "id": r["id"],
+            "idx": r["idx"],
+            "title": r["title"],
+            "completed": int(r["completed"]),
+        })
+    return jsonify(grouped)
+
+
+@app.route("/api/lab_items/sync", methods=["POST"])
+@limiter.limit("120 per minute")
+def sync_lab_items():
+    """Создаёт недостающие lab_items. Работает только «в плюс» —
+    записи с idx > count НЕ удаляются (могут быть ручные добавления)."""
+    data = request.get_json(silent=True) or {}
+    group = (data.get('group') or '').strip()
+    items = data.get('items') or []
+    if not group or not isinstance(items, list):
+        return jsonify({"error": "group and items required"}), 400
+
+    conn = get_db()
+    touched_subjects = set()
+
+    for spec in items:
+        subject = (spec.get('subject') or '').strip()
+        try:
+            count = int(spec.get('count') or 0)
+        except (TypeError, ValueError):
+            continue
+        if not subject or count <= 0 or count > 200:
+            continue
+
+        touched_subjects.add(subject)
+
+        existing = conn.execute(
+            "SELECT idx FROM lab_items WHERE group_name=? AND subject=?",
+            (group, subject)
+        ).fetchall()
+        existing_idx = {r["idx"] for r in existing}
+
+        short = subject
+        if '(' in subject and ')' in subject:
+            short = subject[subject.rfind('(') + 1:subject.rfind(')')].strip() or subject
+
+        for i in range(1, count + 1):
+            if i in existing_idx:
+                continue
+            conn.execute(
+                "INSERT OR IGNORE INTO lab_items (group_name, subject, idx, title, completed) "
+                "VALUES (?, ?, ?, ?, 0)",
+                (group, subject, i, f"{short}{i}")
+            )
+
+    for subj in touched_subjects:
+        _recalc_lab_progress(conn, group, subj)
+
+    conn.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/lab_items/add", methods=["POST"])
+@limiter.limit("120 per minute")
+def add_lab_item():
+    """Добавляет одну запись в конец списка лаб/ПЗ предмета."""
+    data = request.get_json(silent=True) or {}
+    group = (data.get('group') or '').strip()
+    subject = (data.get('subject') or '').strip()
+    if not group or not subject:
+        return jsonify({"error": "group and subject required"}), 400
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT COALESCE(MAX(idx), 0) AS max_idx FROM lab_items "
+        "WHERE group_name=? AND subject=?",
+        (group, subject)
+    ).fetchone()
+    next_idx = (row["max_idx"] or 0) + 1
+
+    short = subject
+    if '(' in subject and ')' in subject:
+        short = subject[subject.rfind('(') + 1:subject.rfind(')')].strip() or subject
+
+    conn.execute(
+        "INSERT INTO lab_items (group_name, subject, idx, title, completed) "
+        "VALUES (?, ?, ?, ?, 0)",
+        (group, subject, next_idx, f"{short}{next_idx}")
+    )
+    _recalc_lab_progress(conn, group, subject)
+    conn.commit()
+
+    new_row = conn.execute(
+        "SELECT id, idx, title, completed FROM lab_items "
+        "WHERE group_name=? AND subject=? AND idx=?",
+        (group, subject, next_idx)
+    ).fetchone()
+
+    return jsonify({
+        "success": True,
+        "item": {
+            "id": new_row["id"],
+            "idx": new_row["idx"],
+            "title": new_row["title"],
+            "completed": int(new_row["completed"]),
+        }
+    })
+
+
+@app.route("/api/lab_items/remove_last", methods=["POST"])
+@limiter.limit("120 per minute")
+def remove_last_lab_item():
+    """Удаляет последнюю (по idx) запись лаб/ПЗ предмета."""
+    data = request.get_json(silent=True) or {}
+    group = (data.get('group') or '').strip()
+    subject = (data.get('subject') or '').strip()
+    if not group or not subject:
+        return jsonify({"error": "group and subject required"}), 400
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT id FROM lab_items WHERE group_name=? AND subject=? "
+        "ORDER BY idx DESC LIMIT 1",
+        (group, subject)
+    ).fetchone()
+    if not row:
+        return jsonify({"success": False, "error": "no items"}), 404
+
+    conn.execute("DELETE FROM lab_items WHERE id=?", (row["id"],))
+    _recalc_lab_progress(conn, group, subject)
+    conn.commit()
+
+    return jsonify({"success": True, "removed_id": row["id"]})
+
+
+@app.route("/api/lab_items/<int:item_id>", methods=["PUT", "DELETE"])
+@limiter.limit("240 per minute")
+def update_lab_item(item_id):
+    conn = get_db()
+
+    if request.method == "DELETE":
+        row = conn.execute(
+            "SELECT group_name, subject FROM lab_items WHERE id=?",
+            (item_id,)
+        ).fetchone()
+        if not row:
+            return jsonify({"success": True})
+        conn.execute("DELETE FROM lab_items WHERE id=?", (item_id,))
+        _recalc_lab_progress(conn, row["group_name"], row["subject"])
+        conn.commit()
+        return jsonify({"success": True})
+
+    data = request.get_json(silent=True) or {}
+    row = conn.execute(
+        "SELECT group_name, subject, title, completed FROM lab_items WHERE id=?",
+        (item_id,)
+    ).fetchone()
+    if not row:
+        return jsonify({"error": "not found"}), 404
+
+    new_title = data.get('title', row["title"])
+    new_title = str(new_title).strip()[:200] if new_title is not None else row["title"]
+    if not new_title:
+        new_title = row["title"]
+
+    new_completed = data.get('completed', row["completed"])
+    try:
+        new_completed = 1 if int(new_completed) else 0
+    except (TypeError, ValueError):
+        new_completed = int(row["completed"])
+
+    conn.execute(
+        "UPDATE lab_items SET title=?, completed=? WHERE id=?",
+        (new_title, new_completed, item_id)
+    )
+    _recalc_lab_progress(conn, row["group_name"], row["subject"])
+    conn.commit()
+    return jsonify({"success": True, "title": new_title, "completed": new_completed})
 
 
 # ============================================================
@@ -733,16 +954,11 @@ def task_dates():
 
 
 # ============================================================
-#  ГЛОБАЛЬНЫЙ ПОИСК — чистая Python-фильтрация
+#  ГЛОБАЛЬНЫЙ ПОИСК
 # ============================================================
-#
-#  Почему не SQL: SQLite LOWER()/LIKE по умолчанию case-insensitive только
-#  для ASCII. Кастомные функции через create_function() ведут себя по-разному
-#  на разных сборках. Для персонального дневника (сотни-тысячи записей) Python
-#  `.lower()` и `in` работают мгновенно и без сюрпризов с кириллицей.
 
-_SEARCH_FETCH_LIMIT  = 5000   # сколько строк тянем из каждой таблицы
-_SEARCH_RESULT_LIMIT = 100    # сколько совпадений возвращаем
+_SEARCH_FETCH_LIMIT  = 5000
+_SEARCH_RESULT_LIMIT = 100
 
 
 @app.route("/api/search")
@@ -757,7 +973,6 @@ def search_all():
     q_lower = q.lower()
     conn = get_db()
 
-    # --- Заметки ---
     cursor = conn.execute(
         "SELECT id, date, text, status FROM tasks "
         "ORDER BY date DESC, id DESC LIMIT ?",
@@ -776,7 +991,6 @@ def search_all():
             if len(tasks) >= _SEARCH_RESULT_LIMIT:
                 break
 
-    # --- Кастомное расписание ---
     cursor = conn.execute(
         "SELECT id, group_name, base_date, time_range, lesson, type_name, "
         "       teacher, location, is_event, recurrence "
@@ -895,46 +1109,73 @@ def _generate_ics(schedule, group_name):
     return "\r\n".join(lines) + "\r\n"
 
 
+# ============================================================
+#  ЭКСПОРТ .ICS — c корректным кириллическим именем файла
+# ------------------------------------------------------------
+#  HTTP-заголовки кодируются latin-1. Кириллица в filename="..."
+#  валит send_header с UnicodeEncodeError. Отдаём имя двумя
+#  параметрами по RFC 6266:
+#    • filename  — ASCII-фолбэк (кириллица → '_')
+#    • filename* — UTF-8 percent-encoded (%D0%9F%D0%98%D0%9D...)
+#  Современные браузеры читают filename*, старые — filename.
+# ============================================================
+
 @app.route("/api/schedule.ics")
 @limiter.limit("30 per minute")
 def export_ics():
+    t0 = time.time()
     raw_group = request.args.get('group')
     try:
         group = validate_group(raw_group)
     except ValueError:
-        return Response("Invalid group", status=400, mimetype='text/plain')
+        return Response("Invalid group", status=400, mimetype='text/plain; charset=utf-8')
     subgroup = validate_subgroup(request.args.get('subgroup', '0'))
 
     safe_group = make_safe_filename(group)
     cache_file = os.path.join(SCHEDULES_DIR, f"{safe_group}_{subgroup}.json")
+    cache_exists = os.path.exists(cache_file)
+    print(f"[ics] START group={group!r} subgroup={subgroup} cache_exists={cache_exists}")
 
     schedule = []
-    if os.path.exists(cache_file):
+    if cache_exists:
         try:
             with open(cache_file, 'r', encoding='utf-8') as f:
                 schedule = json.load(f)
-        except (json.JSONDecodeError, OSError):
+            print(f"[ics] loaded from cache: {len(schedule)} items")
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[ics] cache read failed: {e}")
             schedule = []
 
+    # Если кэша нет — не идём в СевГУ (иначе 5–15 сек ожидания).
     if not schedule:
-        schedule = planner.get_semester_schedule(group, subgroup)
-        if schedule:
-            try:
-                tmp = cache_file + '.tmp'
-                with open(tmp, 'w', encoding='utf-8') as f:
-                    json.dump(schedule, f, ensure_ascii=False)
-                os.replace(tmp, cache_file)
-            except OSError:
-                pass
+        print(f"[ics] no cache — returning 409")
+        return Response(
+            "Расписание ещё не загружено. Откройте группу в календаре — данные подтянутся из СевГУ, затем скачивайте .ics.",
+            status=409,
+            mimetype='text/plain; charset=utf-8'
+        )
 
     ics_text = _generate_ics(schedule, group)
     filename = f"schedule_{safe_group}_{subgroup}.ics"
+    elapsed = time.time() - t0
+    print(f"[ics] DONE in {elapsed:.2f}s, size={len(ics_text)} bytes, filename={filename}")
+
+    # ASCII-фолбэк: кириллица и прочие не-ASCII → '_'. Это гарантирует,
+    # что заголовок закодируется в latin-1 без ошибок.
+    ascii_filename = filename.encode('ascii', 'replace').decode('ascii').replace('?', '_')
+
+    # UTF-8 percent-encoded — настоящая кириллица. Браузер прочитает
+    # её из filename* и покажет в диалоге сохранения.
+    utf8_filename = quote(filename, safe='')
 
     return Response(
         ics_text,
         mimetype='text/calendar; charset=utf-8',
         headers={
-            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Content-Disposition': (
+                f"attachment; filename=\"{ascii_filename}\"; "
+                f"filename*=UTF-8''{utf8_filename}"
+            ),
             'Cache-Control': 'no-store',
         }
     )

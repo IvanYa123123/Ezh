@@ -136,27 +136,54 @@ async function fetchSemesterData() {
     syncSemesterData(group, subgroup);
 }
 
+// ============================================================
+//  ФОНОВАЯ СИНХРОНИЗАЦИЯ РАСПИСАНИЯ
+// ------------------------------------------------------------
+//  Сервер отдаёт [] если троттлинг (6 часов) ещё не истёк или
+//  если расписание не изменилось.
+//
+//  saveSyncTime вызывается ВСЕГДА, когда сервер вернул непустой
+//  массив — то есть «мы успешно поговорили с СевГУ и получили
+//  расписание». Раньше таймер обновлялся только если данные
+//  изменились, из-за чего индикатор свежести «залипал» на
+//  «📦 давно», даже если синхронизация шла нормально.
+// ============================================================
 async function syncSemesterData(group, subgroup) {
     try {
         let newData = applyTimeFix(await apiSyncSchedule(group, subgroup));
-        if (Array.isArray(newData) && newData.length > 0) {
-            if (cachedSchedule && cachedSchedule.length > 0 && newData.length < cachedSchedule.length * 0.9) {
-                console.error("Критический сбой СевГУ: попытка затереть расписание.");
-                return;
-            }
-            if (isScheduleDifferent(newData, cachedSchedule)) {
-                cachedSchedule = newData;
-                renderCalendar();
-                try { renderCharts(); } catch (e) { console.error(e); }
-                updateScheduleStatus();
-                refreshNotifications();
-                showUpdateNotification("Ваше расписание обновлено в фоне");
-            }
-            // Только после успешной синхронизации пишем timestamp
-            if (typeof saveSyncTime === 'function') {
-                saveSyncTime(group, subgroup);
-                if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
-            }
+
+        // Пустой ответ может значить две вещи:
+        //   • троттлинг на сервере (мы синхронизировались <6ч назад)
+        //   • у группы реально нет пар
+        // В обоих случаях таймер НЕ трогаем — фактической синхронизации не было.
+        if (!Array.isArray(newData) || newData.length === 0) return;
+
+        // Защита от «обнуления»: если сервер вернул заметно меньше пар —
+        // это сбой, а не реальное расписание. Ничего не делаем.
+        if (cachedSchedule && cachedSchedule.length > 0
+            && newData.length < cachedSchedule.length * 0.9) {
+            console.error("Критический сбой СевГУ: попытка затереть расписание.");
+            return;
         }
-    } catch (e) { console.error("Ошибка синхронизации расписания", e); }
+
+        // Обновляем таймер свежести в любом случае: синхронизация прошла.
+        if (typeof saveSyncTime === 'function') {
+            saveSyncTime(group, subgroup);
+        }
+
+        // Перерисовываем только если содержимое реально изменилось.
+        if (isScheduleDifferent(newData, cachedSchedule)) {
+            cachedSchedule = newData;
+            renderCalendar();
+            try { renderCharts(); } catch (e) { console.error(e); }
+            updateScheduleStatus();
+            refreshNotifications();
+            showUpdateNotification("Ваше расписание обновлено в фоне");
+        }
+
+        if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
+
+    } catch (e) {
+        console.error("Ошибка синхронизации расписания", e);
+    }
 }

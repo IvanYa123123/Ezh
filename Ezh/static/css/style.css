@@ -72,12 +72,18 @@
     --status-completed: #64748b;
     --event-color:       #34d399;
     --custom-pair-color: #a78bfa;
-    --chart-passed:     #818cf8;
-    --chart-remaining:  #475569;
-    --chart-lab-done:   #2dd4bf;
-    --chart-lab-left:   #fbbf24;
-    --chart-tooltip-bg:   rgba(2, 6, 23, 0.95);
-    --chart-tooltip-text: #f1f5f9;
+
+    /* FIX: приглушённая палитра для «Остаток пар» и «Лабораторные».
+       Было в lab-чарте: teal #34a89b + коричневый #8b6f47 — не в тему.
+       Стало: teal + violet. Обе яркие, контрастируют друг с другом,
+       хорошо читаются на тёмно-синем фоне. */
+    --chart-passed:     #7c85d9;
+    --chart-remaining:  #3a4a63;
+    --chart-lab-done:   #2dd4bf;   /* teal — сдано */
+    --chart-lab-left:   #c084fc;   /* violet — осталось */
+    --chart-tooltip-bg:   rgba(15, 23, 42, 0.96);
+    --chart-tooltip-text: #e2e8f0;
+
     --friend-common-bg:       #059669;
     --friend-common-text:     #ecfdf5;
     --friend-warning-bg:      #d97706;
@@ -392,6 +398,138 @@
 }
 
 /* ============================================================
+   OLED-ТЕМА 1: «OLED Deep» — чистый чёрный фон
+   ============================================================ */
+[data-theme="oled"] {
+    --bg-body:         #000000;
+    --bg-surface:      #0a0a0a;
+    --bg-surface-alt:  #141414;
+    --bg-surface-soft: #050505;
+    --bg-hover:        #1f1f1f;
+    --loader-overlay:  rgba(0, 0, 0, 0.92);
+    --border-color:    #1f1f1f;
+    --border-soft:     #141414;
+    --text-primary:    #ffffff;
+    --text-secondary:  #b8b8b8;
+    --text-muted:      #6a6a6a;
+    --text-invert:     #000000;
+
+    --accent:          #00d4ff;
+    --accent-hover:    #33ddff;
+    --accent-soft:     #001f2e;
+    --accent-border:   #005f7a;
+
+    --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.9);
+    --shadow-md:       0 0.5rem 1rem rgba(0, 0, 0, 1);
+
+    --status-green:     #00e676;
+    --status-orange:    #ffb300;
+    --status-red:       #ff1744;
+    --status-completed: #4a4a4a;
+
+    --event-color:       #00e676;
+    --custom-pair-color: #d500f9;
+
+    --chart-passed:     #00d4ff;
+    --chart-remaining:  #1f1f1f;
+    --chart-lab-done:   #00e676;
+    --chart-lab-left:   #ffb300;
+    --chart-tooltip-bg:   rgba(20, 20, 20, 0.98);
+    --chart-tooltip-text: #ffffff;
+
+    --friend-common-bg:       #00897b;
+    --friend-common-text:     #ffffff;
+    --friend-warning-bg:      #ef6c00;
+    --friend-warning-text:    #ffffff;
+    --friend-same-bg:         #00251a;
+    --friend-same-text:       #69f0ae;
+    --friend-same-border:     #00e676;
+    --friend-info-bg:         #001f2e;
+    --friend-info-text:       #80d8ff;
+    --friend-info-border:     #00d4ff;
+
+    --font-display: 'Inter', sans-serif;
+}
+
+[data-theme="oled"] .task-card,
+[data-theme="oled"] .day-col,
+[data-theme="oled"] .friend-wrapper,
+[data-theme="oled"] .bg-white.rounded.shadow-sm {
+    box-shadow: none !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="oled"] #globalLoader {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+/* ============================================================
+   OLED-ТЕМА 2: «OLED Warm» — чёрный фон + тёплые акценты
+   ============================================================ */
+[data-theme="oled-warm"] {
+    --bg-body:         #000000;
+    --bg-surface:      #0a0806;
+    --bg-surface-alt:  #17110a;
+    --bg-surface-soft: #050403;
+    --bg-hover:        #241a0e;
+    --loader-overlay:  rgba(0, 0, 0, 0.92);
+    --border-color:    #2a1f10;
+    --border-soft:     #17110a;
+    --text-primary:    #f5ede0;
+    --text-secondary:  #c2b39c;
+    --text-muted:      #7a6b54;
+    --text-invert:     #000000;
+
+    --accent:          #ffb347;
+    --accent-hover:    #ffc266;
+    --accent-soft:     #2b1d08;
+    --accent-border:   #7a5416;
+
+    --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.9);
+    --shadow-md:       0 0.5rem 1rem rgba(0, 0, 0, 1);
+
+    --status-green:     #a5d66a;
+    --status-orange:    #ffa726;
+    --status-red:       #ef5350;
+    --status-completed: #4a3f2e;
+
+    --event-color:       #a5d66a;
+    --custom-pair-color: #d98cb3;
+
+    --chart-passed:     #ffb347;
+    --chart-remaining:  #2a1f10;
+    --chart-lab-done:   #a5d66a;
+    --chart-lab-left:   #ffa726;
+    --chart-tooltip-bg:   rgba(23, 17, 10, 0.98);
+    --chart-tooltip-text: #f5ede0;
+
+    --friend-common-bg:       #7a8f3a;
+    --friend-common-text:     #ffffff;
+    --friend-warning-bg:      #c47a1a;
+    --friend-warning-text:    #ffffff;
+    --friend-same-bg:         #1a2010;
+    --friend-same-text:       #c5e1a5;
+    --friend-same-border:     #a5d66a;
+    --friend-info-bg:         #2b1d08;
+    --friend-info-text:       #ffcc80;
+    --friend-info-border:     #ffb347;
+
+    --font-display: 'Inter', sans-serif;
+}
+
+[data-theme="oled-warm"] .task-card,
+[data-theme="oled-warm"] .day-col,
+[data-theme="oled-warm"] .friend-wrapper,
+[data-theme="oled-warm"] .bg-white.rounded.shadow-sm {
+    box-shadow: none !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+[data-theme="oled-warm"] #globalLoader {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+/* ============================================================
    БАЗА
    ============================================================ */
 
@@ -531,7 +669,6 @@ body {
     to   { opacity: 1; transform: scale(1)    translateY(0);    }
 }
 
-/* Просроченные заметки: пульсирующий индикатор слева */
 .task-card.task-overdue::after {
     content: '⏰';
     position: absolute;
@@ -574,7 +711,72 @@ body {
 .task-completed { opacity: 0.6; text-decoration: line-through; border-left-color: var(--status-completed) !important; background-color: var(--bg-surface-soft); }
 
 .schedule-item { border-left: 3px solid var(--accent); background: var(--bg-surface-soft); padding: 8px; margin-bottom: 8px; font-size: 0.85em; border-radius: 0 6px 6px 0; }
-.add-task-btn { font-size: 0.8em; cursor: pointer; color: var(--accent); text-decoration: none; display: inline-block; margin-top: 6px; font-weight: 500; }
+
+/* ============================================================
+   FIX 3 (v3): карточка пары/события — 4 независимых блока
+   ------------------------------------------------------------
+   Сверху вниз:
+     • .schedule-item-badge  — бейдж типа (Событие / ПЗ / ЛЗ / ...)
+     • .schedule-item-time   — время + ✏️ (карандаш редактирования)
+     • .schedule-item-title  — название (обычный перенос строк)
+     • .schedule-item-footer — «+ Заметка» справа
+   ============================================================ */
+.schedule-item-badge {
+    display: block;
+    margin-bottom: 3px;
+    line-height: 1;
+}
+
+.schedule-item-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    margin-bottom: 3px;
+}
+.schedule-item-time strong {
+    flex-shrink: 0;
+}
+
+.schedule-item-edit {
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+.schedule-item-edit:hover { opacity: 1; }
+
+.schedule-item-title {
+    display: block;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    margin-bottom: 2px;
+}
+
+.schedule-item-extra {
+    margin-bottom: 2px;
+}
+
+.schedule-item-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.add-task-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.78em;
+    cursor: pointer;
+    color: var(--accent);
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 500;
+}
 .add-task-btn:hover { text-decoration: underline; }
 
 .schedule-summary { background-color: var(--bg-surface-alt); color: var(--text-secondary); padding: 8px; border-radius: 8px; font-size: 0.8em; font-weight: 600; cursor: pointer; text-align: center; user-select: none; margin-bottom: 10px; transition: background 0.2s; }
@@ -691,7 +893,6 @@ body {
 .scrollable-weeks::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 .scrollable-weeks .dropdown-item.active { background-color: var(--accent); color: #fff; font-weight: 600; }
 
-/* Пункт недели с бейджем чётности */
 .week-item {
     display: flex !important;
     justify-content: space-between;
@@ -779,9 +980,6 @@ body {
     min-height: 1.2em;
 }
 
-/* ============================================================
-   ИНДИКАТОР СВЕЖЕСТИ РАСПИСАНИЯ
-   ============================================================ */
 .sync-freshness {
     padding-top: 6px;
     margin-top: 6px;
@@ -805,9 +1003,6 @@ body {
     color: var(--text-muted);
 }
 
-/* ============================================================
-   ПУСТЫЕ СОСТОЯНИЯ
-   ============================================================ */
 .empty-state {
     padding: 32px 20px;
     text-align: center;
@@ -854,9 +1049,6 @@ body {
     opacity: 0.8;
 }
 
-/* ============================================================
-   MINI-КАЛЕНДАРЬ
-   ============================================================ */
 .mini-calendar { user-select: none; }
 
 .mini-cal-grid {
@@ -924,9 +1116,6 @@ body {
 .mini-cal-day.mini-cal-today .mini-cal-dot-class { background: #fff; }
 .mini-cal-day.mini-cal-today .mini-cal-dot-event { background: #fff; }
 
-/* ============================================================
-   UNDO-ПОЛОСА
-   ============================================================ */
 #undoBar {
     position: fixed;
     bottom: 20px;
@@ -965,9 +1154,6 @@ body {
 }
 #undoBarBtn:hover { background: var(--accent-hover); }
 
-/* ============================================================
-   ПАНЕЛЬ СВОЕЙ ТЕМЫ
-   ============================================================ */
 .custom-theme-warning {
     padding: 8px 12px;
     margin-bottom: 12px;
@@ -1077,9 +1263,6 @@ body {
     border: 2px solid var(--bg-surface);
 }
 
-/* ============================================================
-   СВОРАЧИВАЕМЫЕ СЕКЦИИ
-   ============================================================ */
 .collapsible-section {
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -1117,9 +1300,6 @@ body {
     background: var(--bg-surface);
 }
 
-/* ============================================================
-   ПЕРЕОПРЕДЕЛЕНИЯ BOOTSTRAP-УТИЛИТ
-   ============================================================ */
 .bg-white { background-color: var(--bg-surface)     !important; }
 .bg-light { background-color: var(--bg-surface-alt) !important; }
 .text-muted { color: var(--text-muted)     !important; }
@@ -1201,9 +1381,6 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ============================================================
-   АНИМАЦИИ
-   ============================================================ */
 .btn, .form-control, .form-select, .dropdown-item {
     transition: all 0.2s ease-in-out;
 }
@@ -1266,3 +1443,215 @@ div[id^="schedule-details-"] > .schedule-details-inner {
 @keyframes slideRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideLeft  { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes fadeIn     { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================================
+   FIX 1: ИКОНКИ В ШАПКЕ (эмодзи-шрифт + размер)
+   ============================================================ */
+.header-icon-btn {
+    font-size: 1.15em;
+    padding: 3px 10px;
+    line-height: 1;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji",
+                 "Noto Color Emoji", "EmojiOne Color",
+                 "Android Emoji", sans-serif;
+}
+
+/* ============================================================
+   FIX 3: ФОРМЫ И МОДАЛКИ В ТЁМНОЙ ТЕМЕ
+   ============================================================ */
+.form-control,
+.form-select,
+.input-group-text {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem var(--accent-soft);
+}
+.form-control::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--bg-surface-alt);
+    color: var(--text-muted);
+}
+.input-group-text {
+    background-color: var(--bg-surface-alt);
+    color: var(--text-secondary);
+}
+
+.modal-content {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary);
+}
+.modal-header,
+.modal-footer {
+    border-color: var(--border-color);
+}
+.modal-header.bg-light,
+.modal-footer.bg-light {
+    background-color: var(--bg-surface-alt) !important;
+}
+.modal-body {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+#searchResults .search-result-card {
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+#searchResults .search-result-card:hover {
+    background: var(--bg-hover);
+}
+.search-section-title {
+    font-size: 0.78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+.search-result-text {
+    font-size: 0.9em;
+    color: var(--text-primary);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+.search-result-text mark {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    padding: 0 2px;
+    border-radius: 3px;
+}
+.search-meta {
+    margin-top: 10px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.72em;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ============================================================
+   ОКНО ПРЕДМЕТА — СПИСОК ЛАБ/ПЗ
+   ============================================================ */
+.lab-items-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-wrap: wrap;
+}
+.lab-items-toolbar .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lab-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lab-item-row {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+}
+.lab-item-row:hover {
+    background: var(--bg-hover);
+}
+
+.lab-item-check {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.lab-item-title {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-primary);
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+.lab-item-title:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+}
+
+.lab-item-due {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-soft);
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.lab-item-due.is-overdue {
+    color: var(--status-red);
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.08);
+    border-color: var(--status-red);
+}
+
+.lab-item-row.lab-item-done {
+    opacity: 0.6;
+    background: var(--bg-surface);
+}
+.lab-item-row.lab-item-done .lab-item-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+.lab-item-row.lab-item-done .lab-item-due {
+    color: var(--text-muted);
+    background: var(--bg-surface-alt);
+    border-color: var(--border-soft);
+}
+
+.lab-item-row.lab-item-overdue {
+    border-left: 3px solid var(--status-red);
+    background: var(--bg-surface);
+}
+
+.lab-pacing-row {
+    border-radius: 6px;
+    padding-left: 4px;
+    padding-right: 4px;
+    transition: background 0.15s;
+}
+.lab-pacing-row:hover {
+    background: var(--bg-surface-alt);
+}
