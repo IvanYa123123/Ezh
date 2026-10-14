@@ -29,7 +29,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@600;700&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
-    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/style.css?v={{ app_version }}" rel="stylesheet">
+    <link href="/static/css/fixes.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -59,6 +60,7 @@
                     <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
                     <span>дневник</span>
                 </h5>
+                <div class="version-label">v{{ app_version }}</div>
             </div>
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
@@ -74,7 +76,6 @@
                 </select>
             </div>
             <div class="col-md-5 d-flex align-items-center justify-content-end gap-2">
-                <!-- FIX 1: единый класс header-icon-btn + emoji через html-entity -->
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSearchModal()" title="Поиск по заметкам и событиям (Ctrl+K)">&#128269;</button>
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
@@ -101,91 +102,133 @@
     </div>
 
     <div class="row">
-        <div class="col-xl-9 col-lg-8 mb-4">
+        <div class="col-xl-9 col-lg-8 mb-4 main-column">
             <div class="d-flex flex-column w-100">
                 <div class="calendar-nav-row">
                     <div class="nav-side">
-                        <button class="nav-arrow" onclick="changeWeek(-1)">&#10094;</button>
+                        <button class="nav-arrow" onclick="navigatePrev()">&#10094;</button>
                     </div>
                     <div class="calendar-grid flex-grow-1" id="calendar"></div>
                     <div class="nav-side">
-                        <button class="nav-arrow" onclick="changeWeek(1)">&#10095;</button>
+                        <button class="nav-arrow" onclick="navigateNext()">&#10095;</button>
                     </div>
                 </div>
 
-                <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
-                    <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
-                    <div class="vr mx-1"></div>
+                <div id="mainColumnSections">
 
-                    <div class="dropdown d-flex align-items-center">
-                        <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                            Кого показывать?
-                        </button>
-                        <div id="friendsLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
-                        <ul class="dropdown-menu shadow-sm border-0" id="friendTogglesDropdown" style="min-width: 250px;"></ul>
+                    <div id="friendsSection" data-draggable-section>
+                        <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
+                            <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
+                            <div class="vr mx-1"></div>
+
+                            <div class="dropdown d-flex align-items-center">
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Кого показывать?
+                                </button>
+                                <div id="friendsLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
+                                <ul class="dropdown-menu shadow-sm border-0" id="friendTogglesDropdown" style="min-width: 250px;"></ul>
+                            </div>
+                        </div>
+
+                        <div class="friends-list-wrapper">
+                            <div class="friends-nav-btn friends-nav-prev" id="friendsNavPrev">
+                                <button class="nav-arrow" onclick="navigatePrev()">&#10094;</button>
+                            </div>
+                            <div class="friends-nav-btn friends-nav-next" id="friendsNavNext">
+                                <button class="nav-arrow" onclick="navigateNext()">&#10095;</button>
+                            </div>
+
+                            <div id="friendsCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
+                        </div>
+                    </div>
+
+                    <div id="teachersSection" data-draggable-section>
+                        <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
+                            <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
+                            <div class="vr mx-1"></div>
+
+                            <div class="dropdown d-flex align-items-center">
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    Кого показывать?
+                                </button>
+                                <div id="teachersLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
+                                <ul class="dropdown-menu shadow-sm border-0" id="teacherTogglesDropdown" style="min-width: 250px;"></ul>
+                            </div>
+                        </div>
+
+                        <div id="teachersCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
                     </div>
                 </div>
 
-                <div class="friends-list-wrapper">
-                    <div class="friends-nav-btn friends-nav-prev" id="friendsNavPrev">
-                        <button class="nav-arrow" onclick="changeWeek(-1)">&#10094;</button>
-                    </div>
-                    <div class="friends-nav-btn friends-nav-next" id="friendsNavNext">
-                        <button class="nav-arrow" onclick="changeWeek(1)">&#10095;</button>
-                    </div>
-
-                    <div id="friendsCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
-                </div>
+                <div id="underCalendarWidgetsZone"></div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-lg-4">
-            <div class="sticky-top d-flex flex-column gap-3" style="top: 15px;">
+        <div class="col-xl-3 col-lg-4 sidebar-column">
+            <div id="rightWidgetsZone" class="sticky-top d-flex flex-column gap-3" style="top: 15px;">
 
-                <!-- Мини-календарь -->
-                <div class="bg-white rounded shadow-sm border p-3" id="widgetMiniCalCard">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-bold">📅 <span id="miniCalendarTitle">—</span></h6>
-                        <div class="d-flex gap-1">
+                <div class="widget-card" id="widgetMiniCalCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📅 <span id="miniCalendarTitle">—</span></h6>
+                        <div class="widget-header-actions">
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalPrevMonth()" title="Предыдущий месяц">‹</button>
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalToday()" title="К текущему месяцу">●</button>
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalNextMonth()" title="Следующий месяц">›</button>
                         </div>
                     </div>
-                    <div id="miniCalendarBody" class="mini-calendar"></div>
-                </div>
-
-                <div class="bg-white rounded shadow-sm border p-3" id="widgetGlobalCard">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-bold w-100" style="cursor:pointer;" onclick="showStats()">Остаток пар</h6>
-                        <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="toggleWidget('globalStatsBody', this)">−</button>
-                    </div>
-                    <div id="globalStatsBody" class="widget-body-wrap" style="height: 160px; cursor:pointer;" onclick="showStats()">
-                        <canvas id="globalStatsChart"></canvas>
+                    <div class="mini-cal-body-row">
+                        <div id="miniCalendarBody" class="mini-calendar"></div>
+                        <div class="mini-cal-events" id="miniCalEvents"></div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded shadow-sm border p-3" id="widgetLabsCard">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0 fw-bold w-100" style="cursor:pointer;" onclick="showLabs()">Лабораторные</h6>
-                        <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="toggleWidget('labStatsBody', this)">−</button>
+                <div class="widget-card" id="widgetGlobalCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title clickable" onclick="showStats()">Остаток пар</h6>
                     </div>
-                    <div id="labStatsBody" class="widget-body-wrap" style="height: 160px; cursor:pointer;" onclick="showLabs()">
-                        <canvas id="labStatsChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded shadow-sm border p-3" id="widgetPacingCard">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <h6 class="mb-0 fw-bold">Темп сдачи лаб</h6>
-                            <span class="text-muted" style="font-size: 0.7em;">Сдано / План к сегодня</span>
+                    <div class="widget-body-row">
+                        <div class="widget-canvas-wrap" id="globalStatsBody" onclick="showStats()" title="Подробнее">
+                            <canvas id="globalStatsChart"></canvas>
                         </div>
-                        <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="toggleWidget('labPacingBody', this)">−</button>
+                        <div class="widget-details-wrap" id="globalStatsDetails"></div>
                     </div>
-                    <div id="labPacingBody" class="widget-body-wrap" style="height: auto; max-height: 300px; overflow-y: auto;">
+                </div>
+
+                <div class="widget-card" id="widgetLabsCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title clickable" onclick="showLabs()">Лабораторные</h6>
+                    </div>
+                    <div class="widget-body-row">
+                        <div class="widget-canvas-wrap" id="labStatsBody" onclick="showLabs()" title="Подробнее">
+                            <canvas id="labStatsChart"></canvas>
+                        </div>
+                        <div class="widget-details-wrap" id="labStatsDetails"></div>
+                    </div>
+                </div>
+
+                <div class="widget-card" id="widgetPacingCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">Темп сдачи лаб</h6>
+                    </div>
+                    <div id="labPacingBody" style="max-height: 340px; overflow-y: auto;">
                         <div id="labPacingContent"></div>
                     </div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки</h6>
+                    </div>
+                    <textarea id="notesWidgetText" class="form-control form-control-sm"
+                              placeholder="Что-нибудь важное..."
+                              oninput="onNotesWidgetInput(this)"></textarea>
                 </div>
             </div>
         </div>
@@ -220,7 +263,27 @@
   </div>
 </div>
 
-<!-- FIX 3: убран bg-white у input-group-text — иначе в тёмной теме окно поиска было белым -->
+<div class="modal fade" id="addTeacherModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title fw-bold">🎓 Добавить преподавателя</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <input type="text" id="teacherAddInput" class="form-control form-control-sm"
+                 placeholder="Начните вводить ФИО преподавателя…" autocomplete="off"
+                 oninput="onTeacherSearchInput(this.value)"
+                 onfocus="onTeacherSearchFocus()">
+        </div>
+        <div class="small text-muted mb-2" id="teacherAddHint"></div>
+        <div id="teacherAddSuggestions" class="teacher-suggestions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="searchModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content border-0 shadow">
@@ -266,7 +329,6 @@
   </div>
 </div>
 
-<!-- NEW: модальное окно предмета — список лаб/ПЗ с чекбоксами и датами сдачи -->
 <div class="modal fade" id="labItemsModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content border-0 shadow">
@@ -364,7 +426,6 @@
   </div>
 </div>
 
-<!-- FIX 4: обе кнопки теперь btn-primary — одинаковый цвет -->
 <div class="modal fade" id="taskKindModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content border-0 shadow">
@@ -411,269 +472,277 @@
 </div>
 
 <div class="modal fade" id="settingsModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header py-2 bg-light">
-        <h6 class="modal-title fw-bold">⚙️ Настройки</h6>
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 560px;">
+    <div class="modal-content border-0 shadow settings-modal">
+      <div class="modal-header py-3">
+        <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
+          <span style="font-size: 1.2em;">⚙️</span>
+          <span>Настройки</span>
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
 
-        <div class="collapsible-section">
-            <button type="button" class="collapsible-header" onclick="toggleSettingsSection('display')">
-                <span>Отображение пар</span>
-                <span class="collapsible-arrow" id="settings-arrow-display">▸</span>
-            </button>
-            <div id="settings-section-display" class="collapsible-body" style="display: none;">
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleTeacher" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleTeacher">ФИО преподавателей</label>
-                </div>
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleLocation" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleLocation">Номера аудиторий</label>
-                </div>
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleFriends">Подробные пары друзей</label>
-                </div>
-            </div>
+      <div class="modal-body p-0">
+
+        <div class="settings-group">
+          <div class="settings-group-title">📋 Отображение пар</div>
+
+          <label class="settings-row" for="settingsToggleTeacher">
+            <span class="settings-row-label">ФИО преподавателей</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleTeacher" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleLocation">
+            <span class="settings-row-label">Номера аудиторий</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleLocation" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleFriends">
+            <span class="settings-row-label">Подробные пары друзей</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
+          </label>
         </div>
 
-        <div class="collapsible-section">
-            <button type="button" class="collapsible-header" onclick="toggleSettingsSection('widgets')">
-                <span>Виджеты</span>
-                <span class="collapsible-arrow" id="settings-arrow-widgets">▸</span>
-            </button>
-            <div id="settings-section-widgets" class="collapsible-body" style="display: none;">
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMiniCal" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleWidgetMiniCal">Мини-календарь</label>
-                </div>
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetGlobal" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleWidgetGlobal">Остаток пар</label>
-                </div>
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleWidgetLabs">Лабораторные</label>
-                </div>
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleWidgetPacing">Темп сдачи лаб</label>
-                </div>
-            </div>
+        <div class="settings-group">
+          <div class="settings-group-title">🧩 Виджеты</div>
+
+          <div class="settings-subsection">Разделы на главной</div>
+
+          <label class="settings-row" for="settingsToggleFriendsSection">
+            <span class="settings-row-label">Друзья</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleFriendsSection" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleTeachersSection">
+            <span class="settings-row-label">Преподаватели</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleTeachersSection" onchange="saveSettingsFromUI()">
+          </label>
+
+          <div class="settings-subsection">Правая колонка</div>
+
+          <label class="settings-row" for="settingsToggleWidgetMiniCal">
+            <span class="settings-row-label">Мини-календарь</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMiniCal" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleWidgetGlobal">
+            <span class="settings-row-label">Остаток пар</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetGlobal" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleWidgetLabs">
+            <span class="settings-row-label">Лабораторные</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleWidgetPacing">
+            <span class="settings-row-label">Темп сдачи лаб</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
+          </label>
+
+          <label class="settings-row" for="settingsToggleWidgetNotes">
+            <span class="settings-row-label">Заметки</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes" onchange="saveSettingsFromUI()">
+          </label>
         </div>
 
-        <div class="collapsible-section">
-            <button type="button" class="collapsible-header" onclick="toggleSettingsSection('status')">
-                <span>Статус-строка</span>
-                <span class="collapsible-arrow" id="settings-arrow-status">▸</span>
-            </button>
-            <div id="settings-section-status" class="collapsible-body" style="display: none;">
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsToggleStatus" onchange="saveSettingsFromUI()">
-                    <label class="form-check-label small fw-bold" for="settingsToggleStatus">Показывать «до / во время / после пар»</label>
-                </div>
-                <div class="mt-2">
-                    <label class="small text-muted mb-1 d-block">Формат</label>
-                    <select class="form-select form-select-sm mb-2" id="settingsStatusFormat" onchange="saveSettingsFromUI()">
-                        <option value="interval">интервал</option>
-                        <option value="both">интервал + время</option>
-                        <option value="time">время</option>
-                    </select>
+        <div class="settings-group">
+          <div class="settings-group-title">⏱ Статус-строка</div>
 
-                    <label class="small text-muted mb-1 d-block">Точность интервала</label>
-                    <select class="form-select form-select-sm" id="settingsStatusPrecision" onchange="saveSettingsFromUI()">
-                        <option value="min">до минуты</option>
-                        <option value="sec">до секунды</option>
-                        <option value="cs">до сотых</option>
-                    </select>
-                </div>
-            </div>
+          <label class="settings-row" for="settingsToggleStatus">
+            <span class="settings-row-label">Показывать статус под шапкой</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleStatus" onchange="saveSettingsFromUI()">
+          </label>
+
+          <div class="settings-row-inline">
+            <span class="settings-row-label">Формат</span>
+            <select class="form-select form-select-sm" id="settingsStatusFormat" onchange="saveSettingsFromUI()" style="max-width: 180px;">
+              <option value="interval">интервал</option>
+              <option value="both">интервал + время</option>
+              <option value="time">время</option>
+            </select>
+          </div>
+
+          <div class="settings-row-inline">
+            <span class="settings-row-label">Точность</span>
+            <select class="form-select form-select-sm" id="settingsStatusPrecision" onchange="saveSettingsFromUI()" style="max-width: 180px;">
+              <option value="min">до минуты</option>
+              <option value="sec">до секунды</option>
+              <option value="cs">до сотых</option>
+            </select>
+          </div>
         </div>
 
-        <div class="collapsible-section">
-            <button type="button" class="collapsible-header" onclick="toggleSettingsSection('notif')">
-                <span>Уведомления о событиях</span>
-                <span class="collapsible-arrow" id="settings-arrow-notif">▸</span>
-            </button>
-            <div id="settings-section-notif" class="collapsible-body" style="display: none;">
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" id="settingsNotifEnabled" onchange="handleNotificationsToggle(this)">
-                    <label class="form-check-label small fw-bold" for="settingsNotifEnabled">Включить уведомления</label>
-                </div>
-                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-                    <label class="small text-muted mb-0" for="settingsNotifAdvance">За</label>
-                    <input type="number" id="settingsNotifAdvance" class="form-control form-control-sm"
-                           style="width: 70px;" min="1" max="60" onchange="saveSettingsFromUI()">
-                    <select id="settingsNotifUnit" class="form-select form-select-sm"
-                            style="width: auto; max-width: 120px;" onchange="saveSettingsFromUI()">
-                        <option value="min">минут</option>
-                        <option value="hour">часов</option>
-                        <option value="day">дней</option>
-                        <option value="week">недель</option>
-                    </select>
-                    <span class="small text-muted">до начала</span>
-                </div>
-                <div class="small text-muted mb-2" style="line-height: 1.3;">
-                    Уведомления приходят как о парах из расписания, так и о ваших событиях.
-                </div>
-                <div id="settingsNotifHint" class="small text-muted" style="display: none; line-height: 1.3;"></div>
+        <div class="settings-group">
+          <div class="settings-group-title">🔔 Уведомления</div>
+
+          <label class="settings-row" for="settingsNotifEnabled">
+            <span class="settings-row-label">Включить уведомления</span>
+            <input class="form-check-input" type="checkbox" id="settingsNotifEnabled" onchange="handleNotificationsToggle(this)">
+          </label>
+
+          <div class="settings-row-inline">
+            <span class="settings-row-label">Напомнить за</span>
+            <div class="d-flex align-items-center gap-2">
+              <input type="number" id="settingsNotifAdvance" class="form-control form-control-sm"
+                     style="width: 68px;" min="1" max="60" onchange="saveSettingsFromUI()">
+              <select id="settingsNotifUnit" class="form-select form-select-sm"
+                      style="width: auto;" onchange="saveSettingsFromUI()">
+                <option value="min">минут</option>
+                <option value="hour">часов</option>
+                <option value="day">дней</option>
+                <option value="week">недель</option>
+              </select>
             </div>
+          </div>
+
+          <div id="settingsNotifHint" class="settings-hint-box" style="display: none;"></div>
         </div>
 
-        <hr class="my-3">
-        <div class="settings-section-title">Экспорт</div>
-        <button class="btn btn-outline-primary btn-sm w-100" onclick="downloadICS()">
+        <div class="settings-group">
+          <div class="settings-group-title">📤 Экспорт</div>
+          <button class="btn btn-outline-primary w-100" onclick="downloadICS()">
             📅 Скачать расписание (.ics)
-        </button>
-        <div class="small text-muted mt-1" style="line-height: 1.3;">
-            Файл можно импортировать в Google Calendar, Apple Calendar или Яндекс.Календарь.
+          </button>
         </div>
 
-        <hr class="my-3">
-        <div class="settings-section-title">Тема</div>
-        <select class="form-select form-select-sm" id="settingsTheme" onchange="saveSettingsFromUI()">
-            <optgroup label="Базовые">
+        <div class="settings-group">
+          <div class="settings-group-title">🎨 Тема оформления</div>
+
+          <div class="settings-row-inline">
+            <span class="settings-row-label">Цветовая схема</span>
+            <select class="form-select form-select-sm" id="settingsTheme" onchange="saveSettingsFromUI()" style="max-width: 220px;">
+              <optgroup label="Базовые">
                 <option value="light">☀️ Светлая</option>
                 <option value="dark">🌙 Тёмная</option>
                 <option value="forest">🌿 Лесная</option>
                 <option value="sunset">🌅 Закат</option>
                 <option value="ocean">🌊 Океан</option>
-            </optgroup>
-            <optgroup label="Особые">
+              </optgroup>
+              <optgroup label="Особые">
                 <option value="hedgehog">🦔 Ежики</option>
                 <option value="southpark">🎿 Южный парк</option>
                 <option value="anime">🌸 Аниме</option>
-            </optgroup>
-            <!-- NEW: OLED-темы (чистый чёрный фон) -->
-            <optgroup label="OLED (чёрный фон)">
+              </optgroup>
+              <optgroup label="OLED (чёрный фон)">
                 <option value="oled">🌑 OLED Deep</option>
                 <option value="oled-warm">🔥 OLED Warm</option>
-            </optgroup>
-            <optgroup label="Своя">
+              </optgroup>
+              <optgroup label="Своя">
                 <option value="custom">🎨 Своя тема</option>
-            </optgroup>
-        </select>
+              </optgroup>
+            </select>
+          </div>
 
-        <div id="customThemePanel" class="mt-3" style="display: none;">
+          <div id="customThemePanel" class="mt-3" style="display: none;">
             <div class="custom-theme-warning">
-                ⚠️ <strong>Будьте осторожны</strong> при создании своей темы: некоторая часть функционала может стать невидимой. Разработчик не несёт ответственности за пользовательскую тему.
+              ⚠️ <strong>Будьте осторожны</strong> при создании своей темы: некоторая часть функционала может стать невидимой.
             </div>
 
-            <div class="settings-section-title">Взять за основу готовую тему</div>
-            <div class="input-group input-group-sm mb-1">
-                <select id="customThemeBaseSelect" class="form-select form-select-sm">
-                    <option value="">— выбрать тему —</option>
-                    <optgroup label="Базовые">
-                        <option value="light">☀️ Светлая</option>
-                        <option value="dark">🌙 Тёмная</option>
-                        <option value="forest">🌿 Лесная</option>
-                        <option value="sunset">🌅 Закат</option>
-                        <option value="ocean">🌊 Океан</option>
-                    </optgroup>
-                    <optgroup label="Особые">
-                        <option value="hedgehog">🦔 Ежики</option>
-                        <option value="southpark">🎿 Южный парк</option>
-                        <option value="anime">🌸 Аниме</option>
-                    </optgroup>
-                    <optgroup label="OLED (чёрный фон)">
-                        <option value="oled">🌑 OLED Deep</option>
-                        <option value="oled-warm">🔥 OLED Warm</option>
-                    </optgroup>
-                </select>
-                <button class="btn btn-outline-primary" type="button" onclick="applyBaseThemeFromSelect()" title="Скопировать цвета выбранной темы в свою">Применить</button>
-            </div>
-            <div class="small text-muted mb-3" style="line-height: 1.3;">
-                Цвета выбранной темы скопируются в свою. Фото, стикеры и сохранённые пресеты не пострадают.
-            </div>
-
-            <div class="settings-section-title">Мои сохранённые темы</div>
+            <div class="settings-subsection">Взять за основу готовую</div>
             <div class="input-group input-group-sm mb-2">
-                <input type="text" id="customThemePresetName" class="form-control"
-                       placeholder="Название темы" maxlength="40"
-                       onkeydown="if(event.key==='Enter'){event.preventDefault();saveCurrentAsPreset();}">
-                <button class="btn btn-outline-primary" type="button" onclick="saveCurrentAsPreset()" title="Сохранить текущие настройки как пресет">💾 Сохранить</button>
+              <select id="customThemeBaseSelect" class="form-select form-select-sm">
+                <option value="">— выбрать тему —</option>
+                <optgroup label="Базовые">
+                  <option value="light">☀️ Светлая</option>
+                  <option value="dark">🌙 Тёмная</option>
+                  <option value="forest">🌿 Лесная</option>
+                  <option value="sunset">🌅 Закат</option>
+                  <option value="ocean">🌊 Океан</option>
+                </optgroup>
+                <optgroup label="Особые">
+                  <option value="hedgehog">🦔 Ежики</option>
+                  <option value="southpark">🎿 Южный парк</option>
+                  <option value="anime">🌸 Аниме</option>
+                </optgroup>
+                <optgroup label="OLED (чёрный фон)">
+                  <option value="oled">🌑 OLED Deep</option>
+                  <option value="oled-warm">🔥 OLED Warm</option>
+                </optgroup>
+              </select>
+              <button class="btn btn-outline-primary" type="button" onclick="applyBaseThemeFromSelect()">Применить</button>
             </div>
-            <div id="customThemePresets" class="custom-presets-list mb-3"></div>
+
+            <div class="settings-subsection">Мои сохранённые темы</div>
+            <div class="input-group input-group-sm mb-2">
+              <input type="text" id="customThemePresetName" class="form-control"
+                     placeholder="Название темы" maxlength="40"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();saveCurrentAsPreset();}">
+              <button class="btn btn-outline-primary" type="button" onclick="saveCurrentAsPreset()">💾 Сохранить</button>
+            </div>
+            <div id="customThemePresets" class="custom-presets-list mb-2"></div>
 
             <div class="collapsible-section">
-                <button type="button" class="collapsible-header" onclick="toggleCustomSection('colors')">
-                    <span>🎨 Цвета</span>
-                    <span class="collapsible-arrow" id="arrow-colors">▸</span>
-                </button>
-                <div id="custom-section-colors" class="collapsible-body" style="display: none;">
-                    <div id="customThemePickers" class="custom-pickers-grid"></div>
-                    <button type="button" id="customThemeAdvancedToggle"
-                            class="btn btn-sm btn-outline-secondary w-100 mt-2"
-                            onclick="toggleCustomThemeAdvanced()">▼ Показать все цвета</button>
-                </div>
-            </div>
-
-            <div class="collapsible-section">
-                <button type="button" class="collapsible-header" onclick="toggleCustomSection('bg')">
-                    <span>🖼 Фон</span>
-                    <span class="collapsible-arrow" id="arrow-bg">▸</span>
-                </button>
-                <div id="custom-section-bg" class="collapsible-body" style="display: none;">
-                    <div class="mb-2">
-                        <label class="small text-muted mb-1 d-block">
-                            Загрузить фотографию с компьютера
-                            <span class="text-muted" style="font-weight: 400;">
-                                (сжимается до 800px / ~200 КБ, хранится в IndexedDB)
-                            </span>
-                        </label>
-                        <div class="input-group input-group-sm">
-                            <input type="file" id="customThemePhotoFile" class="form-control form-control-sm"
-                                   accept="image/*" onchange="onCustomPhotoUpload(this)">
-                            <button class="btn btn-outline-secondary" type="button" onclick="clearCustomPhoto()" title="Удалить фото">✕</button>
-                        </div>
-                        <div id="customThemePhotoMeta" class="small text-muted mt-1"></div>
-                    </div>
-
-                    <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
-                            onclick="applyThemeFromPhoto()"
-                            title="Автоматически извлечь палитру из загруженного фона">
-                        🎨 Взять цвета с фото
-                    </button>
-
-                    <div class="mb-0">
-                        <label class="small text-muted mb-1 d-block">
-                            Видимость фото: <span id="customThemePhotoOpacityVal">15</span>%
-                        </label>
-                        <input type="range" id="customThemePhotoOpacity" min="0" max="100" value="15"
-                               class="form-range" oninput="onCustomOpacityChange(this, 'photo')">
-                    </div>
-                </div>
+              <button type="button" class="collapsible-header" onclick="toggleCustomSection('colors')">
+                <span>🎨 Цвета</span>
+                <span class="collapsible-arrow" id="arrow-colors">▸</span>
+              </button>
+              <div id="custom-section-colors" class="collapsible-body" style="display: none;">
+                <div id="customThemePickers" class="custom-pickers-grid"></div>
+                <button type="button" id="customThemeAdvancedToggle"
+                        class="btn btn-sm btn-outline-secondary w-100 mt-2"
+                        onclick="toggleCustomThemeAdvanced()">▼ Показать все цвета</button>
+              </div>
             </div>
 
             <div class="collapsible-section">
-                <button type="button" class="collapsible-header" onclick="toggleCustomSection('stickers')">
-                    <span>✨ Стикеры</span>
-                    <span class="collapsible-arrow" id="arrow-stickers">▸</span>
-                </button>
-                <div id="custom-section-stickers" class="collapsible-body" style="display: none;">
-                    <div class="mb-2">
-                        <label class="small text-muted mb-1 d-block">Эмодзи через пробел, до 4 штук — повторяются по фону</label>
-                        <input type="text" id="customThemeStickers" class="form-control form-control-sm"
-                               placeholder="🦔 🌸 ⭐" oninput="onCustomStickersChange(this)">
-                    </div>
-                    <div class="mb-0">
-                        <label class="small text-muted mb-1 d-block">
-                            Прозрачность стикеров: <span id="customThemeStickersOpacityVal">15</span>%
-                        </label>
-                        <input type="range" id="customThemeStickersOpacity" min="0" max="100" value="15"
-                               class="form-range" oninput="onCustomOpacityChange(this, 'stickers')">
-                    </div>
+              <button type="button" class="collapsible-header" onclick="toggleCustomSection('bg')">
+                <span>🖼 Фон</span>
+                <span class="collapsible-arrow" id="arrow-bg">▸</span>
+              </button>
+              <div id="custom-section-bg" class="collapsible-body" style="display: none;">
+                <div class="mb-2">
+                  <label class="small text-muted mb-1 d-block">Фото с компьютера (сжимается до 800px)</label>
+                  <div class="input-group input-group-sm">
+                    <input type="file" id="customThemePhotoFile" class="form-control form-control-sm"
+                           accept="image/*" onchange="onCustomPhotoUpload(this)">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearCustomPhoto()" title="Удалить фото">✕</button>
+                  </div>
+                  <div id="customThemePhotoMeta" class="small text-muted mt-1"></div>
                 </div>
+
+                <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
+                        onclick="applyThemeFromPhoto()">
+                  🎨 Взять цвета с фото
+                </button>
+
+                <div class="mb-0">
+                  <label class="small text-muted mb-1 d-block">
+                    Видимость фото: <span id="customThemePhotoOpacityVal">15</span>%
+                  </label>
+                  <input type="range" id="customThemePhotoOpacity" min="0" max="100" value="15"
+                         class="form-range" oninput="onCustomOpacityChange(this, 'photo')">
+                </div>
+              </div>
+            </div>
+
+            <div class="collapsible-section">
+              <button type="button" class="collapsible-header" onclick="toggleCustomSection('stickers')">
+                <span>✨ Стикеры</span>
+                <span class="collapsible-arrow" id="arrow-stickers">▸</span>
+              </button>
+              <div id="custom-section-stickers" class="collapsible-body" style="display: none;">
+                <div class="mb-2">
+                  <label class="small text-muted mb-1 d-block">Эмодзи через пробел, до 4 штук</label>
+                  <input type="text" id="customThemeStickers" class="form-control form-control-sm"
+                         placeholder="🦔 🌸 ⭐" oninput="onCustomStickersChange(this)">
+                </div>
+                <div class="mb-0">
+                  <label class="small text-muted mb-1 d-block">
+                    Прозрачность: <span id="customThemeStickersOpacityVal">15</span>%
+                  </label>
+                  <input type="range" id="customThemeStickersOpacity" min="0" max="100" value="15"
+                         class="form-range" oninput="onCustomOpacityChange(this, 'stickers')">
+                </div>
+              </div>
             </div>
 
             <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="resetCustomTheme()">
-                    ↺ Сбросить к светлым
-                </button>
+              <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="resetCustomTheme()">
+                ↺ Сбросить к светлым
+              </button>
             </div>
+          </div>
         </div>
 
       </div>
@@ -683,26 +752,27 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="/static/js/state.js"></script>
-<script src="/static/js/utils.js"></script>
-<script src="/static/js/ui.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/autocomplete.js"></script>
-<script src="/static/js/weeks.js"></script>
-<script src="/static/js/mini-calendar.js"></script>
-<script src="/static/js/calendar.js"></script>
-<script src="/static/js/navigation.js"></script>
-<script src="/static/js/status.js"></script>
-<script src="/static/js/tasks.js"></script>
-<script src="/static/js/custom-schedule.js"></script>
-<script src="/static/js/friends.js"></script>
-<script src="/static/js/widgets.js"></script>
-<script src="/static/js/search.js"></script>
-<script src="/static/js/refresh.js"></script>
-<script src="/static/js/custom-theme.js"></script>
-<script src="/static/js/main.js"></script>
-<script src="/static/js/settings.js"></script>
-<script src="/static/js/notifications.js"></script>
-<script src="/static/js/hotkeys.js"></script>
+<script src="/static/js/state.js?v={{ app_version }}"></script>
+<script src="/static/js/utils.js?v={{ app_version }}"></script>
+<script src="/static/js/ui.js?v={{ app_version }}"></script>
+<script src="/static/js/api.js?v={{ app_version }}"></script>
+<script src="/static/js/autocomplete.js?v={{ app_version }}"></script>
+<script src="/static/js/weeks.js?v={{ app_version }}"></script>
+<script src="/static/js/mini-calendar.js?v={{ app_version }}"></script>
+<script src="/static/js/calendar.js?v={{ app_version }}"></script>
+<script src="/static/js/navigation.js?v={{ app_version }}"></script>
+<script src="/static/js/status.js?v={{ app_version }}"></script>
+<script src="/static/js/tasks.js?v={{ app_version }}"></script>
+<script src="/static/js/custom-schedule.js?v={{ app_version }}"></script>
+<script src="/static/js/friends.js?v={{ app_version }}"></script>
+<script src="/static/js/widgets.js?v={{ app_version }}"></script>
+<script src="/static/js/search.js?v={{ app_version }}"></script>
+<script src="/static/js/refresh.js?v={{ app_version }}"></script>
+<script src="/static/js/custom-theme.js?v={{ app_version }}"></script>
+<script src="/static/js/main.js?v={{ app_version }}"></script>
+<script src="/static/js/settings.js?v={{ app_version }}"></script>
+<script src="/static/js/notifications.js?v={{ app_version }}"></script>
+<script src="/static/js/hotkeys.js?v={{ app_version }}"></script>
+<script src="/static/js/teachers.js?v={{ app_version }}"></script>
 </body>
 </html>

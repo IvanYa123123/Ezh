@@ -1,14 +1,6 @@
-// Мини-календарь в сайдбаре: компактная месячная сетка.
-// Точки на днях, где есть заметки / пары / кастомные события.
-// Клик по дню — переход на него в основном календаре.
-//
-// Точки:
-//   📝 заметка    — точка цвета акцента
-//   🎓 пары       — точка цвета --chart-passed
-//   🎯 событие    — точка цвета --status-orange
-
-let _miniCalMonth = new Date();
-_miniCalMonth.setDate(1);
+// Мини-календарь в сайдбаре.
+// Месяц всегда синхронизирован с текущей неделей основной сетки.
+// Кнопки ‹ ● › листают основную сетку (на ±4 недели / к сегодня).
 
 const MINI_CAL_WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const MINI_CAL_MONTHS = [
@@ -20,13 +12,14 @@ function renderMiniCalendar() {
     const container = document.getElementById('miniCalendarBody');
     if (!container) return;
 
-    const year  = _miniCalMonth.getFullYear();
-    const month = _miniCalMonth.getMonth();
+    // Месяц = месяц понедельника текущей недели
+    const base = new Date(currentBaseDate);
+    const year  = base.getFullYear();
+    const month = base.getMonth();
 
     const titleEl = document.getElementById('miniCalendarTitle');
     if (titleEl) titleEl.textContent = `${MINI_CAL_MONTHS[month]} ${year}`;
 
-    // --- Источники точек ---
     const datesWithTasks = (typeof taskDatesSet !== 'undefined') ? taskDatesSet : new Set();
 
     const datesWithSchedule = new Set();
@@ -49,11 +42,10 @@ function renderMiniCalendar() {
         }
     }
 
-    // --- Сетка ---
     const firstDay = new Date(year, month, 1);
     let firstDow = firstDay.getDay();
     if (firstDow === 0) firstDow = 7;
-    firstDow -= 1; // 0 = Пн
+    firstDow -= 1;
 
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const todayStr = getLocalDateStr(new Date());
@@ -95,21 +87,10 @@ function renderMiniCalendar() {
     container.innerHTML = html;
 }
 
-function miniCalPrevMonth() {
-    _miniCalMonth.setMonth(_miniCalMonth.getMonth() - 1);
-    renderMiniCalendar();
-}
-
-function miniCalNextMonth() {
-    _miniCalMonth.setMonth(_miniCalMonth.getMonth() + 1);
-    renderMiniCalendar();
-}
-
-function miniCalToday() {
-    _miniCalMonth = new Date();
-    _miniCalMonth.setDate(1);
-    renderMiniCalendar();
-}
+// Кнопки мини-календаря листают основную сетку.
+function miniCalPrevMonth() { changeWeek(-4); }
+function miniCalNextMonth() { changeWeek(4);  }
+function miniCalToday()     { goToToday();    }
 
 function miniCalPickDate(dateStr) {
     if (typeof jumpToDate === 'function') {
@@ -117,8 +98,6 @@ function miniCalPickDate(dateStr) {
     }
 }
 
-// Пересчитывает точки без сброса позиции. Вызывается после
-// изменений в расписании, заметках, событиях.
 function refreshMiniCalendar() {
     renderMiniCalendar();
 }

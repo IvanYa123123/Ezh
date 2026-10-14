@@ -20,7 +20,8 @@ function applyFriendsOrder() {
 }
 
 async function fetchFriends() {
-    document.getElementById('friendsLoader').style.display = 'block';
+    const loader = document.getElementById('friendsLoader');
+    if (loader) loader.style.display = 'block';
     try {
         let list = await apiLoadFriends();
         friendsList = Array.isArray(list) ? list : [];
@@ -34,14 +35,11 @@ async function fetchFriends() {
     renderFriendDropdown();
     await fetchAllFriendsSchedules();
     renderFriendsCalendar();
-    document.getElementById('friendsLoader').style.display = 'none';
+    if (loader) loader.style.display = 'none';
 }
 
 function renderFriendDropdown() {
     let dropdownMenu = document.getElementById('friendTogglesDropdown');
-
-    // Копим HTML в массив — раньше был `innerHTML +=` на каждую папку и
-    // каждого друга, то есть 20+ перепарсиваний дропдауна подряд.
     const parts = [];
     parts.push(`<li><a class="dropdown-item text-danger fw-bold" href="#" onclick="hideAllFriends(event)">🚫 Скрыть всех</a></li><li><hr class="dropdown-divider m-0"></li>`);
 
@@ -70,7 +68,6 @@ function renderFriendDropdown() {
         let allVisible = groupsMap[cat].length > 0 && groupsMap[cat].every(f => visibleFriends.has(f.id));
         let catChecked = allVisible ? 'checked' : '';
 
-        // Кнопка ✕ — удалить папку. Показывается только для пользовательских папок.
         let editBtnHtml = !isUnassigned
             ? `<button class="btn btn-sm btn-link text-secondary p-0 ms-2 text-decoration-none" onclick="editCustomCategory('${escapeJsString(cat)}', event)" title="Переименовать папку">✏️</button>
                <button class="btn btn-sm btn-link text-danger p-0 ms-1 text-decoration-none" onclick="deleteCustomCategory('${escapeJsString(cat)}', event)" title="Удалить папку">✕</button>`
@@ -144,12 +141,6 @@ async function editCustomCategory(oldName, e) {
     renderFriendsCalendar();
 }
 
-// ============================================================
-//  УДАЛЕНИЕ ПАПКИ
-// ------------------------------------------------------------
-//  Друзья из папки переезжают в «Без папки» (category = ''),
-//  сама папка удаляется из customCategories в localStorage.
-// ============================================================
 async function deleteCustomCategory(catName, e) {
     e.stopPropagation();
     if (!catName) return;
@@ -235,18 +226,6 @@ function hideAllFriends(e) {
     renderFriendsCalendar();
 }
 
-// ============================================================
-//  ЗАГРУЗКА РАСПИСАНИЙ ДРУЗЕЙ
-// ------------------------------------------------------------
-//  fetchAllFriendsSchedules — только загрузка из локального кэша
-//  (apiLoadSchedule). Синхронизация с сервером СевГУ НЕ
-//  запускается автоматически: иначе на каждого друга уходит
-//  запрос apiSyncSchedule, и общий лимит 10/min на /api/schedule_sync
-//  быстро пробивается (см. HTTP 429 в консоли).
-//
-//  Синхронизация друзей идёт только при ручном обновлении
-//  (кнопка «🔄» → manualRefresh → syncFriendsSchedules(true)).
-// ============================================================
 async function fetchAllFriendsSchedules() {
     let promises = friendsList.map(async (friend) => {
         if (!friendsSchedules[friend.id]) {
@@ -260,16 +239,8 @@ async function fetchAllFriendsSchedules() {
         }
     });
     await Promise.all(promises);
-    // Никакого syncFriendsSchedules() здесь — синк ушёл в manualRefresh.
 }
 
-// ============================================================
-//  СИНХРОНИЗАЦИЯ РАСПИСАНИЙ ДРУЗЕЙ
-// ------------------------------------------------------------
-//  force = true — запускается принудительно (после ручного «🔄»).
-//  force = false (по умолчанию) — с троттлингом: не чаще раза
-//  в 30 минут за сессию.
-// ============================================================
 async function syncFriendsSchedules(force = false) {
     if (!force) {
         const now = Date.now();
@@ -404,6 +375,17 @@ async function deleteFriend(id) {
     } catch (e) { console.error("Ошибка при удалении друга", e); }
 }
 
+function _allPairsMatch(myDaySchedule, friendDaySchedule) {
+    if (myDaySchedule.length === 0) return false;
+    return myDaySchedule.every(myItem =>
+        friendDaySchedule.some(fItem =>
+            myItem.time_range === fItem.time_range &&
+            myItem.lesson === fItem.lesson &&
+            (myItem.location || '').trim().toLowerCase() === (fItem.location || '').trim().toLowerCase()
+        )
+    );
+}
+
 function renderFriendsCalendar(dir = null) {
     let container = document.getElementById("friendsCalendarsContainer");
     if (!container) return;
@@ -419,7 +401,6 @@ function renderFriendsCalendar(dir = null) {
         if (btnNext) btnNext.classList.remove('show-friends-nav');
     }
 
-    // --- Пустые состояния ---
     if (!friendsList || friendsList.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -498,7 +479,6 @@ function renderFriendsCalendar(dir = null) {
         else if (dir === 'left')  grid.classList.add('slide-left');
         else                      grid.classList.add('fade-in');
 
-        // Собираем HTML всех 7 дней в массив и подставляем одной операцией.
         const dayParts = [];
 
         for (let i = 0; i < 7; i++) {
@@ -522,42 +502,48 @@ function renderFriendsCalendar(dir = null) {
 
                 html += `<div class="fw-bold text-primary mb-2 text-center border-bottom pb-1" style="font-size: 0.8em;">🕒 ${fStart} - ${fEnd}</div>`;
 
-                let myStart = myDaySchedule.length > 0 ? fixTime(myDaySchedule[0].time_range.split(' - ')[0]) : null;
-                let myEnd   = myDaySchedule.length > 0 ? fixTime(myDaySchedule[myDaySchedule.length - 1].time_range.split(' - ')[1]) : null;
-                let myCampStart = myDaySchedule.length > 0 ? getCampus(myDaySchedule[0]) : 'unknown';
-                let myCampEnd   = myDaySchedule.length > 0 ? getCampus(myDaySchedule[myDaySchedule.length - 1]) : 'unknown';
+                const allMatch = _allPairsMatch(myDaySchedule, daySchedule);
 
-                daySchedule.forEach(fItem => {
-                    let match = myDaySchedule.find(myItem =>
-                        myItem.time_range === fItem.time_range &&
-                        myItem.lesson === fItem.lesson &&
-                        (myItem.location || '').trim().toLowerCase() === (fItem.location || '').trim().toLowerCase()
-                    );
-                    if (match) html += `<div class="shared-class shared-common fw-bold">🤝 Общая пара в ${fixTime(fItem.time_range.split(' - ')[0])}</div>`;
-                });
+                if (allMatch) {
+                    html += `<div class="shared-class shared-common fw-bold">🤝 Все пары совпадают</div>`;
+                } else {
+                    daySchedule.forEach(fItem => {
+                        let match = myDaySchedule.find(myItem =>
+                            myItem.time_range === fItem.time_range &&
+                            myItem.lesson === fItem.lesson &&
+                            (myItem.location || '').trim().toLowerCase() === (fItem.location || '').trim().toLowerCase()
+                        );
+                        if (match) html += `<div class="shared-class shared-common fw-bold">🤝 Общая пара в ${fixTime(fItem.time_range.split(' - ')[0])}</div>`;
+                    });
 
-                if (myStart && fStart === myStart) {
-                    if (fCampStart !== 'unknown' && myCampStart !== 'unknown') {
-                        if (fCampStart !== myCampStart) {
-                            html += `<div class="shared-class shared-warning fw-bold">🚨 Начинаем одновременно в ${fStart}, но в разных корпусах</div>`;
+                    let myStart = myDaySchedule.length > 0 ? fixTime(myDaySchedule[0].time_range.split(' - ')[0]) : null;
+                    let myEnd   = myDaySchedule.length > 0 ? fixTime(myDaySchedule[myDaySchedule.length - 1].time_range.split(' - ')[1]) : null;
+                    let myCampStart = myDaySchedule.length > 0 ? getCampus(myDaySchedule[0]) : 'unknown';
+                    let myCampEnd   = myDaySchedule.length > 0 ? getCampus(myDaySchedule[myDaySchedule.length - 1]) : 'unknown';
+
+                    if (myStart && fStart === myStart) {
+                        if (fCampStart !== 'unknown' && myCampStart !== 'unknown') {
+                            if (fCampStart !== myCampStart) {
+                                html += `<div class="shared-class shared-warning fw-bold">🚨 Начинаем одновременно в ${fStart}, но в разных корпусах</div>`;
+                            } else {
+                                let campRu = campusNames[fCampStart] || fCampStart;
+                                html += `<div class="shared-class shared-same-campus fw-bold">🏃 Начинаем одновременно в корпусе «${campRu}» в ${fStart}</div>`;
+                            }
                         } else {
-                            let campRu = campusNames[fCampStart] || fCampStart;
-                            html += `<div class="shared-class shared-same-campus fw-bold">🏃 Начинаем одновременно в корпусе «${campRu}» в ${fStart}</div>`;
+                            html += `<div class="shared-class shared-info fw-bold">🕒 Начинаем в одно время: ${fStart}</div>`;
                         }
-                    } else {
-                        html += `<div class="shared-class shared-info fw-bold">🕒 Начинаем в одно время: ${fStart}</div>`;
                     }
-                }
-                if (myEnd && fEnd === myEnd) {
-                    if (fCampEnd !== 'unknown' && myCampEnd !== 'unknown') {
-                        if (fCampEnd !== myCampEnd) {
-                            html += `<div class="shared-class shared-warning fw-bold">🚨 Заканчиваем одновременно в ${fEnd}, но в разных корпусах</div>`;
+                    if (myEnd && fEnd === myEnd) {
+                        if (fCampEnd !== 'unknown' && myCampEnd !== 'unknown') {
+                            if (fCampEnd !== myCampEnd) {
+                                html += `<div class="shared-class shared-warning fw-bold">🚨 Заканчиваем одновременно в ${fEnd}, но в разных корпусах</div>`;
+                            } else {
+                                let campRu = campusNames[fCampEnd] || fCampEnd;
+                                html += `<div class="shared-class shared-same-campus fw-bold">🏡 Заканчиваем одновременно в корпусе «${campRu}» в ${fEnd}</div>`;
+                            }
                         } else {
-                            let campRu = campusNames[fCampEnd] || fCampEnd;
-                            html += `<div class="shared-class shared-same-campus fw-bold">🏡 Заканчиваем одновременно в корпусе «${campRu}» в ${fEnd}</div>`;
+                            html += `<div class="shared-class shared-info fw-bold">🕒 Заканчиваем в одно время: ${fEnd}</div>`;
                         }
-                    } else {
-                        html += `<div class="shared-class shared-info fw-bold">🕒 Заканчиваем в одно время: ${fEnd}</div>`;
                     }
                 }
 

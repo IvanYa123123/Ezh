@@ -14,13 +14,13 @@ if errorlevel 1 (
 
 echo === Every-SevGU ===
 echo Запуск сервера на http://127.0.0.1:5000
-echo Браузер откроется через 3 секунды...
+echo Браузер откроется автоматически через 3 секунды.
 echo.
-echo Чтобы остановить — нажми Ctrl+C в этом окне.
+echo Чтобы остановить - нажми Ctrl+C в этом окне.
 echo.
 
-REM Открыть браузер через 3 секунды в свёрнутом окне cmd
-start "" /min cmd /c "timeout /t 3 /nobreak >nul & start http://127.0.0.1:5000"
+REM Браузер открывает сам Python (см. app.py, _run_console_mode).
+REM Второй запуск из .bat приводил к двум вкладкам - убран.
 
 python app.py
 

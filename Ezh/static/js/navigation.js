@@ -1,4 +1,4 @@
-// Навигация в развёрнутом дне: к следующей/предыдущей заметке и к следующему/предыдущему событию.
+// Навигация по календарю: заметки, события, стрелки.
 
 function computeNextNoteDate(currentDateStr) {
     let sorted = [...taskDatesSet].sort();
@@ -44,6 +44,41 @@ function navigateEvent(fromDateStr, direction) {
         ? findNextEventDate(fromDateStr)
         : findPrevEventDate(fromDateStr);
     if (target) jumpToDate(target);
+}
+
+// ============================================================
+//  СТРЕЛКИ ← →
+// ------------------------------------------------------------
+//  • День развёрнут (fullscreen-day) → шаг на 1 день.
+//  • Иначе                          → шаг на неделю.
+//  Вызывается из HTML вместо changeWeek.
+// ============================================================
+
+function navigatePrev() {
+    if (expandedDayDateStr) _navigateDay(-1);
+    else                    changeWeek(-1);
+}
+function navigateNext() {
+    if (expandedDayDateStr) _navigateDay(1);
+    else                    changeWeek(1);
+}
+
+function _navigateDay(offset) {
+    window._calDir = offset > 0 ? 'right' : 'left';
+    let [y, m, d] = expandedDayDateStr.split('-').map(Number);
+    let target = new Date(y, m - 1, d);
+    target.setDate(target.getDate() + offset);
+    let targetStr = getLocalDateStr(target);
+
+    let dow = target.getDay();
+    if (dow === 0) dow = 7;
+    let monday = new Date(target);
+    monday.setDate(monday.getDate() - (dow - 1));
+
+    currentBaseDate = monday;
+    expandedDayDateStr = targetStr;
+    renderCalendar();
+    if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
 }
 
 function jumpToDate(dateStr) {

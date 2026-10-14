@@ -1,5 +1,4 @@
-// Модальное окно настроек: видимость, статус, уведомления, экспорт, тема.
-// Секции сворачиваются; ключ settingsSections_v1.
+// Модальное окно настроек.
 
 const SETTINGS_SECTIONS_KEY = 'settingsSections_v1';
 const SETTINGS_SECTIONS_NAMES = ['display', 'widgets', 'status', 'notif'];
@@ -17,6 +16,9 @@ function initSettings() {
 
     applyTheme();
     applyWidgetVisibility();
+    if (typeof initNotesWidget === 'function') initNotesWidget();
+    if (typeof restoreNotesWidgetZone === 'function') restoreNotesWidgetZone();
+    if (typeof initWidgetDragAndDrop === 'function') initWidgetDragAndDrop();
 }
 
 function openSettingsModal() {
@@ -29,6 +31,10 @@ function openSettingsModal() {
     document.getElementById('settingsToggleWidgetGlobal').checked  = showWidgetGlobal;
     document.getElementById('settingsToggleWidgetLabs').checked    = showWidgetLabs;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
+    document.getElementById('settingsToggleWidgetNotes').checked   = showWidgetNotes;
+
+    document.getElementById('settingsToggleFriendsSection').checked  = showFriendsSection;
+    document.getElementById('settingsToggleTeachersSection').checked = showTeachersSection;
 
     document.getElementById('settingsStatusFormat').value    = statusFormat;
     document.getElementById('settingsStatusPrecision').value = statusPrecision;
@@ -107,11 +113,18 @@ function saveSettingsFromUI() {
     showWidgetGlobal  = document.getElementById('settingsToggleWidgetGlobal').checked;
     showWidgetLabs    = document.getElementById('settingsToggleWidgetLabs').checked;
     showWidgetPacing  = document.getElementById('settingsToggleWidgetPacing').checked;
+    showWidgetNotes   = document.getElementById('settingsToggleWidgetNotes').checked;
 
     localStorage.setItem('showWidgetMiniCal', showWidgetMiniCal);
     localStorage.setItem('showWidgetGlobal',  showWidgetGlobal);
     localStorage.setItem('showWidgetLabs',    showWidgetLabs);
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
+    localStorage.setItem('showWidgetNotes',   showWidgetNotes);
+
+    showFriendsSection  = document.getElementById('settingsToggleFriendsSection').checked;
+    showTeachersSection = document.getElementById('settingsToggleTeachersSection').checked;
+    localStorage.setItem('showFriendsSection',  showFriendsSection);
+    localStorage.setItem('showTeachersSection', showTeachersSection);
 
     applyWidgetVisibility();
 
@@ -223,21 +236,6 @@ function applyTheme() {
     if (prevTheme !== theme && typeof refreshChartsTheme === 'function') refreshChartsTheme();
 }
 
-// ============================================================
-//  ЭКСПОРТ РАСПИСАНИЯ В .ICS
-// ------------------------------------------------------------
-//  Через fetch + Blob + a[download]:
-//    • видно лоадер «📅 Готовим .ics...»;
-//    • можно поймать HTTP-статус (409, 429, 500);
-//    • имя файла берём из Content-Disposition, приоритет —
-//      filename* (UTF-8, кириллица), фолбэк — filename="...".
-//
-//  Бэкенд отдаёт заголовок по RFC 6266:
-//    Content-Disposition: attachment;
-//      filename="schedule___-24-1-_2.ics";
-//      filename*=UTF-8''schedule_%D0%9F%D0%98%D0%9D_...ics
-//  Браузер, если поддерживает filename*, использует его.
-// ============================================================
 async function downloadICS() {
     const group    = (document.getElementById('groupSelect').value || '').trim();
     const subgroup = document.getElementById('subgroupSelect').value || '0';
@@ -267,17 +265,14 @@ async function downloadICS() {
 
         const blob = await resp.blob();
 
-        // Дефолтное имя — на случай, если заголовка нет.
         let filename = `schedule_${group.replace(/[\/\\:*?"<>|]/g, '_')}_${subgroup}.ics`;
         const cd = resp.headers.get('Content-Disposition') || '';
 
-        // Сначала filename*=UTF-8''... — там настоящая кириллица.
         let m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
         if (m && m[1]) {
             try { filename = decodeURIComponent(m[1]); }
             catch (e) { /* оставляем fallback */ }
         } else {
-            // Фолбэк: filename="..." (обычно ASCII).
             m = /filename="?([^";]+)"?/i.exec(cd);
             if (m && m[1]) filename = m[1];
         }
@@ -303,12 +298,19 @@ async function downloadICS() {
 }
 
 function applyWidgetVisibility() {
-    let wm = document.getElementById('widgetMiniCalCard');
-    let wg = document.getElementById('widgetGlobalCard');
-    let wl = document.getElementById('widgetLabsCard');
-    let wp = document.getElementById('widgetPacingCard');
-    if (wm) wm.style.display = showWidgetMiniCal ? 'block' : 'none';
-    if (wg) wg.style.display = showWidgetGlobal  ? 'block' : 'none';
-    if (wl) wl.style.display = showWidgetLabs    ? 'block' : 'none';
-    if (wp) wp.style.display = showWidgetPacing  ? 'block' : 'none';
+    const wm = document.getElementById('widgetMiniCalCard');
+    const wg = document.getElementById('widgetGlobalCard');
+    const wl = document.getElementById('widgetLabsCard');
+    const wp = document.getElementById('widgetPacingCard');
+    const wn = document.getElementById('widgetNotesCard');
+    if (wm) wm.style.display = showWidgetMiniCal ? '' : 'none';
+    if (wg) wg.style.display = showWidgetGlobal  ? '' : 'none';
+    if (wl) wl.style.display = showWidgetLabs    ? '' : 'none';
+    if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
+    if (wn) wn.style.display = showWidgetNotes   ? '' : 'none';
+
+    const fs = document.getElementById('friendsSection');
+    const ts = document.getElementById('teachersSection');
+    if (fs) fs.style.display = showFriendsSection  ? '' : 'none';
+    if (ts) ts.style.display = showTeachersSection ? '' : 'none';
 }

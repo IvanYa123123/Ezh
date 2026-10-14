@@ -40,53 +40,83 @@ function getCustomItemsForDate(dateStr) {
     return items;
 }
 
-// Компаратор для пары/события по времени начала.
 function _sortItemsByTime(a, b) {
     let aTime = a.time_range ? a.time_range.split(' - ')[0] : "99:99";
     let bTime = b.time_range ? b.time_range.split(' - ')[0] : "99:99";
     return aTime.localeCompare(bTime);
 }
 
-// Карточка события — всегда видна в дне, как заметка.
-//
-// Новая разметка (сверху вниз):
-//   1) Бейдж «Событие»
-//   2) Время + ✏️ (карандаш редактирования)
-//   3) Название события (свободный перенос)
-//   4) «+ Заметка» справа внизу
+// ============================================================
+//  РАСКЛАДКА «+ ЗАМЕТКА»
+// ------------------------------------------------------------
+//  Изначально кнопка стоит в .schedule-item-top рядом со временем.
+//  Если при верстке она «уехала» на вторую строку (перенос из-за
+//  нехватки ширины) — переносим её в .schedule-item-footer.
+// ============================================================
+
+function _layoutScheduleNotes(rootEl) {
+    const scope = rootEl || document;
+    scope.querySelectorAll('.schedule-item').forEach(card => {
+        const top    = card.querySelector('.schedule-item-top');
+        const footer = card.querySelector('.schedule-item-footer');
+        if (!top || !footer) return;
+
+        // Кнопку ищем по обоим местам — она могла остаться в футере от прошлого рендера
+        let note = top.querySelector('.add-task-btn') || footer.querySelector('.add-task-btn');
+        if (!note) return;
+
+        // 1) Сбрасываем: возвращаем в top, чтобы замерить «идеальное» положение
+        if (note.parentElement !== top) top.appendChild(note);
+
+        const timeEl = top.querySelector('.schedule-item-time');
+        if (!timeEl) return;
+
+        // 2) Замеряем: если top-кнопка оказалась ниже времени — значит перенеслась
+        const timeTop = timeEl.getBoundingClientRect().top;
+        const noteTop = note.getBoundingClientRect().top;
+
+        if (noteTop > timeTop + 4) {
+            footer.appendChild(note);
+        }
+    });
+}
+
+// ============================================================
+//  КАРТОЧКА СОБЫТИЯ
+// ============================================================
+
 function _renderEventCard(ev) {
     const safeSubject = escapeJsString(ev.lesson || '');
 
-    const teacherInfo = (ev.teacher && showTeacher)
-        ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(ev.teacher)}</span>` : '';
-    const locInfo = (ev.location && showLocation)
-        ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(ev.location)}</span>` : '';
-    const extra = (teacherInfo || locInfo)
-        ? `<div class="d-flex gap-2 flex-wrap schedule-item-extra">${teacherInfo} ${locInfo}</div>` : '';
+    const teacherHtml = (ev.teacher && showTeacher)
+        ? `<div class="schedule-item-teacher">${escapeHtml(ev.teacher)}</div>` : '';
+    const locationHtml = (ev.location && showLocation)
+        ? `<div class="schedule-item-location">${escapeHtml(ev.location)}</div>` : '';
 
     return `
         <div class="schedule-item event-card shadow-sm"
-             style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.25; border-left: 3px solid var(--event-color);">
-            <div class="schedule-item-badge">
-                <span class="badge bg-success" style="font-size: 0.7em;">Событие</span>
-            </div>
-            <div class="schedule-item-time">
-                <strong class="text-primary">${ev.time_range}</strong>
-                <span class="schedule-item-edit"
-                      onclick="openCustomScheduleModal('${ev.date}', ${ev.custom_id})"
-                      title="Редактировать">✏️</span>
-            </div>
-            <div class="schedule-item-title">${escapeHtml(ev.lesson)}</div>
-            ${extra}
-            <div class="schedule-item-footer">
+             style="border-left: 3px solid var(--event-color);">
+            <div class="schedule-item-top">
+                <span class="schedule-item-time">
+                    <strong class="text-primary">${ev.time_range}</strong>
+                    <span class="schedule-item-edit"
+                          onclick="openCustomScheduleModal('${ev.date}', ${ev.custom_id})"
+                          title="Редактировать">✏️</span>
+                </span>
                 <span class="add-task-btn"
                       onclick="createTaskFromSchedule('${ev.date}', '${safeSubject}')">+ Заметка</span>
             </div>
+            <div class="schedule-item-badge">
+                <span class="badge bg-success" style="font-size: 0.7em;">Событие</span>
+            </div>
+            <div class="schedule-item-title">${escapeHtml(ev.lesson)}</div>
+            ${teacherHtml}
+            ${locationHtml}
+            <div class="schedule-item-footer"></div>
         </div>
     `;
 }
 
-// Индексирует расписание по дате один раз — вместо N×7 filter() в рендере.
 function _buildScheduleByDate() {
     const map = new Map();
     if (!Array.isArray(cachedSchedule)) return map;
@@ -129,7 +159,6 @@ async function renderCalendar() {
     let endStr = getLocalDateStr(endD);
     let realTodayStr = getLocalDateStr(new Date());
 
-    // Пустое состояние: если пользователь ещё не выбрал группу — вся сетка пуста.
     const currentGroup = (document.getElementById('groupSelect')?.value || '').trim();
     if (!currentGroup || cachedSchedule.length === 0) {
         cal.innerHTML = `
@@ -145,7 +174,6 @@ async function renderCalendar() {
         return;
     }
 
-    // Один проход по cachedSchedule вместо семи filter() в цикле ниже.
     const scheduleByDate = _buildScheduleByDate();
     const htmlParts = [];
 
@@ -160,14 +188,12 @@ async function renderCalendar() {
         let customItems = getCustomItemsForDate(dateStr);
         let allItems = daySchedule.concat(customItems);
 
-        // Разделяем: события показываем всегда (как заметки), пары — в сворачиваемом блоке.
         let eventItems = allItems.filter(x => x.is_custom && x.is_event);
         let pairItems  = allItems.filter(x => !(x.is_custom && x.is_event));
 
         eventItems.sort(_sortItemsByTime);
         pairItems.sort(_sortItemsByTime);
 
-        // --- Блок событий (всегда виден, идёт ПОД парами) ---
         let eventsHtml = "";
         if (eventItems.length > 0) {
             eventsHtml = '<div class="day-events-block mt-2">';
@@ -175,7 +201,6 @@ async function renderCalendar() {
             eventsHtml += '</div>';
         }
 
-        // --- Блок пар (сворачивается) ---
         let scheduleHtml = "";
         if (pairItems.length > 0) {
             let startTime = fixTime(pairItems[0].time_range.split(' - ')[0]);
@@ -226,7 +251,6 @@ async function renderCalendar() {
                     lessonHtml += ` <span style="cursor:pointer; font-size: 0.9em; opacity: 0.4;" onclick="openSubjectSettings('${safeSubjectKey}')" title="Настроить предмет">⚙️</span>`;
                 }
 
-                // Бейдж типа — отдельная строка в самом верху карточки
                 let typeBadge = '';
                 if (item.is_custom && item.is_event) {
                     typeBadge = `<span class="badge bg-success" style="font-size: 0.7em;">Событие</span>`;
@@ -234,30 +258,35 @@ async function renderCalendar() {
                     typeBadge = `<span class="badge bg-secondary" style="font-size: 0.7em;">${item.type_name}</span>`;
                 }
 
-                // Карандаш редактирования — только для кастомных элементов,
-                // стоит рядом со временем.
                 let editIconHtml = item.is_custom
                     ? `<span class="schedule-item-edit"
                             onclick="openCustomScheduleModal('${item.date}', ${item.custom_id})"
                             title="Редактировать">✏️</span>`
                     : '';
 
-                let teacherInfo = (displayTeacher && showTeacher) ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(displayTeacher)}</span>` : '';
-                let locInfo = (displayLocation && showLocation) ? `<span class="text-muted" style="font-size: 0.85em;">${escapeHtml(displayLocation)}</span>` : '';
-                let customStyle = item.is_custom ? (item.is_event ? 'border-left: 3px solid var(--event-color);' : 'border-left: 3px solid var(--custom-pair-color);') : 'border-left: 3px solid var(--accent);';
+                let teacherHtml = (displayTeacher && showTeacher)
+                    ? `<div class="schedule-item-teacher">${escapeHtml(displayTeacher)}</div>` : '';
+                let locationHtml = (displayLocation && showLocation)
+                    ? `<div class="schedule-item-location">${escapeHtml(displayLocation)}</div>` : '';
+
+                let customStyle = item.is_custom
+                    ? (item.is_event ? 'border-left: 3px solid var(--event-color);' : 'border-left: 3px solid var(--custom-pair-color);')
+                    : 'border-left: 3px solid var(--accent);';
 
                 scheduleHtml += `
-                    <div class="schedule-item shadow-sm" style="padding: 6px 8px; margin-bottom: 5px; line-height: 1.25; ${customStyle}">
-                        ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
-                        <div class="schedule-item-time">
-                            <strong class="text-primary">${item.time_range}</strong>
-                            ${editIconHtml}
-                        </div>
-                        <div class="schedule-item-title">${lessonHtml}</div>
-                        <div class="d-flex gap-2 flex-wrap schedule-item-extra">${teacherInfo} ${locInfo}</div>
-                        <div class="schedule-item-footer">
+                    <div class="schedule-item shadow-sm" style="${customStyle}">
+                        <div class="schedule-item-top">
+                            <span class="schedule-item-time">
+                                <strong class="text-primary">${item.time_range}</strong>
+                                ${editIconHtml}
+                            </span>
                             <span class="add-task-btn" onclick="createTaskFromSchedule('${item.date}', '${safeTaskSubject}')">+ Заметка</span>
                         </div>
+                        ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
+                        <div class="schedule-item-title">${lessonHtml}</div>
+                        ${teacherHtml}
+                        ${locationHtml}
+                        <div class="schedule-item-footer"></div>
                     </div>
                 `;
             });
@@ -269,7 +298,6 @@ async function renderCalendar() {
             </div>`;
         }
 
-        // Копим HTML каждого дня в массив и вставляем всё разом в конце.
         htmlParts.push(`
             <div class="day-col ${isTodayClass}" id="day-col-${dateStr}" ondragover="allowDrop(event)" ondrop="drop(event, '${dateStr}')">
                 <div class="day-header">
@@ -284,8 +312,11 @@ async function renderCalendar() {
                 <div class="day-tasks-wrap d-flex flex-column" style="flex-grow: 1;">
                     <div id="tasks-${dateStr}" style="flex-grow: 1; min-height: 50px;"></div>
 
-                    <div id="expand-btn-wrap-${dateStr}" style="display: none; text-align: center;">
-                        <span class="add-task-btn mt-1" style="color: var(--status-orange);" onclick="toggleExpandDay('${dateStr}')">Развернуть</span>
+                    <div id="expand-btn-wrap-${dateStr}" style="display: none; text-align: center; margin-top: 6px;">
+                        <button type="button" class="day-expand-btn" onclick="toggleExpandDay('${dateStr}')">
+                            <span class="day-expand-icon">▼</span>
+                            <span class="day-expand-label">Развернуть</span>
+                        </button>
                     </div>
 
                     <div class="text-center mt-2 d-flex justify-content-center gap-2">
@@ -310,6 +341,9 @@ async function renderCalendar() {
 
     cal.innerHTML = htmlParts.join('');
 
+    // Раскладываем «+ Заметка»: где поместилась — в топе, где нет — в футере
+    _layoutScheduleNotes(cal);
+
     try {
         let tasks = await apiLoadTasks(startStr, endStr);
         if (typeof renderTasksStaggered === 'function') {
@@ -320,6 +354,7 @@ async function renderCalendar() {
     } catch (e) { console.error("Tasks load error", e); }
 
     renderFriendsCalendar(calDir);
+    if (typeof renderTeachersCalendars === 'function') renderTeachersCalendars();
 
     if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
     if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
@@ -330,8 +365,14 @@ async function renderCalendar() {
         if (col) {
             col.classList.add('fullscreen-day');
             grid.classList.add('has-fullscreen');
-            let btn = document.querySelector(`#expand-btn-wrap-${expandedDayDateStr} span`);
-            if (btn) btn.textContent = "Свернуть";
+
+            let btn = document.querySelector(`#expand-btn-wrap-${expandedDayDateStr} .day-expand-btn`);
+            if (btn) {
+                btn.classList.add('is-expanded');
+                let lbl = btn.querySelector('.day-expand-label');
+                if (lbl) lbl.textContent = 'Свернуть';
+            }
+
             let details = document.getElementById(`schedule-details-${expandedDayDateStr}`);
             let arrow   = document.getElementById(`arrow-${expandedDayDateStr}`);
             if (details) details.classList.add('expanded');
@@ -344,7 +385,7 @@ async function renderCalendar() {
 }
 
 // ============================================================
-//  ИНДИКАТОР СВЕЖЕСТИ РАСПИСАНИЯ
+//  ИНДИКАТОР СВЕЖЕСТИ
 // ============================================================
 
 function _formatAgo(ms) {
@@ -388,12 +429,15 @@ function toggleSchedule(dateStr) {
     if (!details) return;
     const nowExpanded = details.classList.toggle('expanded');
     if (arrow) arrow.textContent = nowExpanded ? '▲' : '▼';
+
+    // Пересчёт раскладки «+ Заметка» при развороте
+    _layoutScheduleNotes();
 }
 
 function toggleExpandDay(dateStr) {
     let grid = document.querySelector('.calendar-grid');
     let col  = document.getElementById(`day-col-${dateStr}`);
-    let btn  = document.querySelector(`#expand-btn-wrap-${dateStr} span`);
+    let btn  = document.querySelector(`#expand-btn-wrap-${dateStr} .day-expand-btn`);
     let headerEl = document.querySelector('.controls-header');
     let headerOffset = headerEl ? headerEl.offsetHeight + 25 : 90;
 
@@ -406,23 +450,35 @@ function toggleExpandDay(dateStr) {
     if (col.classList.contains('fullscreen-day')) {
         col.classList.remove('fullscreen-day');
         grid.classList.remove('has-fullscreen');
-        btn.textContent = "Развернуть";
+        if (btn) {
+            btn.classList.remove('is-expanded');
+            let lbl = btn.querySelector('.day-expand-label');
+            if (lbl) lbl.textContent = 'Развернуть';
+        }
         expandedDayDateStr = null;
         let details = document.getElementById(`schedule-details-${dateStr}`);
         let arrow   = document.getElementById(`arrow-${dateStr}`);
         if (details) details.classList.remove('expanded');
         if (arrow)   arrow.textContent = "▼";
         rebalanceDayText(dateStr);
+        _layoutScheduleNotes();
     } else {
         col.classList.add('fullscreen-day');
         grid.classList.add('has-fullscreen');
-        btn.textContent = "Свернуть";
+        if (btn) {
+            btn.classList.add('is-expanded');
+            let lbl = btn.querySelector('.day-expand-label');
+            if (lbl) lbl.textContent = 'Свернуть';
+        }
         expandedDayDateStr = dateStr;
         let details = document.getElementById(`schedule-details-${dateStr}`);
         let arrow   = document.getElementById(`arrow-${dateStr}`);
         if (details) details.classList.add('expanded');
         if (arrow) arrow.textContent = "▲";
-        setTimeout(() => scrollToCol(true), 60);
+        setTimeout(() => {
+            scrollToCol(true);
+            _layoutScheduleNotes();
+        }, 60);
     }
 }
 
@@ -482,3 +538,9 @@ function rebalanceDayText(dateStr) {
         shortEl.textContent = full.length <= limit ? full : full.slice(0, limit).trimEnd() + '…';
     });
 }
+
+// Пересчёт при изменении размера окна — ширина колонок меняется,
+// значит «+ Заметка» может помещаться или не помещаться по-новому.
+window.addEventListener('resize', () => {
+    if (typeof _layoutScheduleNotes === 'function') _layoutScheduleNotes();
+});

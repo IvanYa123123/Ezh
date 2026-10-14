@@ -1,0 +1,1202 @@
+/* ============================================================
+   fixes.css — патч поверх style.css
+   v3.6.8
+   ============================================================ */
+
+/* ============================================================
+   1. РАЗМЕРЫ И ПЕРЕНОС ТЕКСТА
+   ============================================================ */
+
+.day-header {
+    font-size: 13px;
+    line-height: 1.25;
+}
+.day-nav-center {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.friend-day-header,
+.teacher-day-header {
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.schedule-item-time { font-size: 12px; }
+.schedule-item-extra span { font-size: 11px; }
+.schedule-summary { font-size: 11px; }
+.empty-state-inline { font-size: 11px; }
+
+.task-card {
+    font-size: 10px;
+    padding: 6px 8px 4px 8px;
+}
+.task-card .task-text {
+    font-size: 10px;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+/* ============================================================
+   2. СЕТКА КАЛЕНДАРЯ
+   ============================================================ */
+
+.calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+}
+
+.day-col {
+    padding: 8px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 250px;
+    height: 100%;
+}
+
+.day-col * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.day-col,
+.day-schedule-wrap,
+.day-tasks-wrap,
+.day-col [id^="tasks-"],
+.day-col [id^="task-input-wrap-"],
+.day-col [id^="expand-btn-wrap-"] {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.day-tasks-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: min-content;
+}
+
+.task-card,
+.task-card .task-text,
+.task-card .task-actions {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.task-card .task-actions {
+    flex-wrap: wrap;
+}
+
+.day-col textarea,
+.day-col [id^="task-input-"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+}
+
+.friend-wrapper .calendar-grid,
+.teacher-wrapper .calendar-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+}
+
+.friend-col,
+.teacher-col {
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: min-content;
+}
+
+/* ============================================================
+   3. ТЕМА ДЛЯ LIST-GROUP / CARD / INPUT / PROGRESS
+   ============================================================ */
+
+.list-group-item {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.card,
+.card-header,
+.card-body {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.card-header { background-color: var(--bg-surface-alt); }
+
+.form-control,
+.form-select,
+.input-group-text,
+input[type="number"],
+input[type="text"],
+input[type="time"],
+input[type="url"],
+input[type="search"],
+input[type="email"],
+textarea {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 0.2rem var(--accent-soft);
+}
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 1;
+}
+.input-group-text {
+    background-color: var(--bg-surface-alt) !important;
+    color: var(--text-secondary) !important;
+}
+
+.progress { background-color: var(--bg-surface-alt); }
+
+#labsContent .list-group-item { padding: 10px 12px; }
+#labsContent input[type="number"] { width: 70px; }
+
+/* ============================================================
+   4. СЕКЦИИ ДРУЗЕЙ И ПРЕПОДАВАТЕЛЕЙ
+   ============================================================ */
+
+#teachersCalendarsContainer {
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+/* ============================================================
+   4a. ОТСТУП МЕЖДУ ОСНОВНОЙ КОЛОНКОЙ И САЙДБАРОМ
+   ============================================================ */
+
+@media (min-width: 992px) {
+    .row > .sidebar-column {
+        padding-left: 40px;
+    }
+}
+
+/* ============================================================
+   5. ЗОНЫ ПЕРЕТАСКИВАНИЯ
+   ============================================================ */
+
+#rightWidgetsZone {
+    min-height: 200px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#rightWidgetsZone:empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#rightWidgetsZone:empty::before {
+    content: 'Перетащите сюда виджеты';
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85em;
+    line-height: 1.3;
+}
+
+#mainColumnSections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+#underCalendarWidgetsZone {
+    margin-top: 24px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    min-height: 0;
+}
+
+#underCalendarWidgetsZone:empty {
+    display: none;
+}
+
+body.widget-dragging #underCalendarWidgetsZone:empty,
+body.widget-dragging #rightWidgetsZone:empty {
+    display: flex;
+    min-height: 80px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-surface-alt);
+}
+
+#underCalendarWidgetsZone > .widget-card,
+#underCalendarWidgetsZone > [data-draggable-section] {
+    flex: 1 1 320px;
+    max-width: 420px;
+    min-width: 260px;
+}
+
+#underCalendarWidgetsZone > #widgetMiniCalCard:not(.is-horizontal) {
+    flex: 0 1 340px;
+    max-width: 340px;
+}
+
+#underCalendarWidgetsZone > #widgetMiniCalCard.is-horizontal {
+    flex: 1 1 100%;
+    max-width: none;
+}
+
+#mainColumnSections > #widgetMiniCalCard.is-horizontal {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+}
+
+/* ============================================================
+   5a. PLACEHOLDER — ПОДСВЕТКА МЕСТА ВСТАВКИ
+   ============================================================ */
+
+.widget-drop-placeholder {
+    border: 2px dashed var(--accent);
+    border-radius: 12px;
+    background: var(--accent-soft);
+    opacity: 0.45;
+    pointer-events: none;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    min-height: 40px;
+    min-width: 40px;
+}
+
+/* ============================================================
+   6. ВИДЖЕТ-КАРТОЧКИ И РУЧКИ ПЕРЕТАСКИВАНИЯ
+   ============================================================ */
+
+.widget-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+    transition: opacity 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.widget-title {
+    flex: 1 1 auto;
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.95em;
+    color: var(--text-primary);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.widget-title.clickable { cursor: pointer; }
+.widget-header-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.widget-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.widget-icon-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    border-color: var(--accent-border);
+}
+
+.widget-header-actions .btn-light {
+    padding: 1px 8px !important;
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+.widget-header-actions .btn-light:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.widget-drag-handle,
+.section-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    min-height: 22px;
+    padding: 2px 6px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    color: var(--border-color);
+    font-weight: bold;
+    letter-spacing: -2px;
+    font-size: 1em;
+    flex-shrink: 0;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+.section-drag-handle {
+    min-width: 30px;
+    min-height: 24px;
+}
+.widget-drag-handle:active,
+.section-drag-handle:active { cursor: grabbing; }
+.widget-drag-handle:hover,
+.section-drag-handle:hover {
+    color: var(--accent);
+    background: var(--bg-surface-alt);
+}
+
+.widget-card.widget-dragging,
+[data-draggable-section].widget-dragging {
+    opacity: 0.4;
+}
+
+.widget-card.widget-drop-target,
+[data-draggable-section].widget-drop-target {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-sm);
+}
+
+body.widget-dragging #widgetMiniCalCard {
+    flex: 1 1 320px !important;
+    max-width: 420px !important;
+    min-width: 260px !important;
+    width: auto !important;
+}
+
+body.widget-dragging #widgetMiniCalCard .mini-cal-body-row {
+    display: block !important;
+}
+
+body.widget-dragging #widgetMiniCalCard .mini-cal-events {
+    display: none !important;
+}
+
+body.widget-dragging .widget-card,
+body.widget-dragging .widget-body-row,
+body.widget-dragging .widget-canvas-wrap,
+body.widget-dragging .widget-details-wrap,
+body.widget-dragging .mini-cal-body-row,
+body.widget-dragging .mini-cal-events {
+    transition: none !important;
+}
+
+/* ============================================================
+   7. ТЕЛО ВИДЖЕТА-ГРАФИКА — ГРАФИК + ДЕТАЛИ
+   ============================================================ */
+
+.widget-body-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.widget-canvas-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 160px;
+    position: relative;
+    cursor: pointer;
+}
+
+.widget-details-wrap {
+    display: none;
+    flex: 0 0 55%;
+    min-width: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.78em;
+    padding-left: 10px;
+    border-left: 1px solid var(--border-soft);
+}
+
+.widget-details-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+.widget-details-row:last-child { border-bottom: none; }
+
+.widget-details-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+.widget-details-nums {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.widget-card.is-horizontal .widget-body-row {
+    align-items: flex-start;
+}
+.widget-card.is-horizontal .widget-canvas-wrap {
+    flex: 0 0 180px;
+    height: 180px;
+}
+.widget-card.is-horizontal .widget-details-wrap {
+    display: block !important;
+    flex: 1 1 auto;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   8. КАРТОЧКА ПАРЫ / СОБЫТИЯ
+   ============================================================ */
+
+.schedule-item {
+    border-left: 3px solid var(--accent);
+    background: var(--bg-surface-soft);
+    padding: 5px 6px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    line-height: 1.28;
+    border-radius: 0 6px 6px 0;
+    overflow: hidden;
+}
+
+.schedule-item-top {
+    display: flex;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+.schedule-item-time {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+}
+.schedule-item-time strong {
+    white-space: nowrap;
+}
+
+.schedule-item-edit {
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+.schedule-item-edit:hover { opacity: 1; }
+
+.schedule-item-badge {
+    display: block;
+    margin-bottom: 3px;
+    line-height: 1;
+}
+
+.schedule-item-title {
+    display: block;
+    font-size: 11px;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: none;
+    margin-bottom: 2px;
+}
+
+.schedule-item-teacher,
+.schedule-item-location {
+    display: block;
+    font-size: 0.78em;
+    line-height: 1.2;
+    color: var(--text-muted);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+.schedule-item-teacher { margin-top: 2px; }
+
+.schedule-item-footer {
+    display: block;
+    text-align: left;
+    margin-top: 3px;
+}
+.schedule-item-footer:empty { display: none; }
+
+.add-task-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.75em;
+    cursor: pointer;
+    color: var(--accent);
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 500;
+}
+.add-task-btn:hover { text-decoration: underline; }
+
+/* ============================================================
+   9. SHARED-CLASS
+   ============================================================ */
+
+.shared-class {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+    padding: 3px 6px;
+    font-size: 0.72em;
+    line-height: 1.25;
+}
+
+/* ============================================================
+   10. TEACHER-PAIR-CARD
+   ============================================================ */
+
+.teacher-wrapper {
+    border-top: 4px solid var(--accent);
+}
+.teacher-header-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.teacher-col {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    min-height: 90px;
+}
+.teacher-col.day-today {
+    border: 2px solid var(--accent);
+    background-color: var(--accent-soft);
+}
+.teacher-col.day-today .teacher-day-header {
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent-border);
+}
+.teacher-pair-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 5px 7px;
+    margin-bottom: 5px;
+    font-size: 0.75em;
+    line-height: 1.25;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.teacher-pair-card:hover { background: var(--bg-surface-alt); }
+.teacher-pair-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+}
+.teacher-pair-toggle {
+    margin-left: auto;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+.teacher-pair-card.is-details-open .teacher-pair-toggle {
+    transform: rotate(180deg);
+}
+.teacher-pair-location {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.teacher-pair-details {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border-color);
+    font-size: 0.95em;
+}
+.teacher-pair-details[hidden] { display: none !important; }
+
+.teacher-pair-details > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   11. КНОПКА «РАЗВЕРНУТЬ/СВЕРНУТЬ» ДНЯ
+   ============================================================ */
+
+.day-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.day-expand-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    border-color: var(--accent-border);
+}
+.day-expand-btn .day-expand-icon {
+    font-size: 0.75em;
+    transition: transform 0.25s ease;
+}
+.day-expand-btn.is-expanded .day-expand-icon {
+    transform: rotate(180deg);
+}
+
+/* ============================================================
+   12. МОДАЛКА «ОСТАТОК ПАР»
+   ============================================================ */
+
+.stats-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.stats-summary-item {
+    flex: 1;
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+}
+.stats-summary-num {
+    font-size: 1.8em;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 2px;
+}
+.stats-summary-past   { color: var(--chart-passed); }
+.stats-summary-future { color: var(--chart-lab-left, var(--accent)); }
+.stats-summary-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+}
+.stats-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+}
+.stats-card-header {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--text-primary);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+.stats-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.stats-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+    font-size: 0.82em;
+}
+.stats-row-label { color: var(--text-secondary); font-weight: 600; }
+.stats-row-counts {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+.stats-row-past  { color: var(--chart-passed); font-weight: 700; }
+.stats-row-sep   { margin: 0 2px; opacity: 0.5; }
+.stats-row-total { color: var(--text-secondary); }
+.stats-row-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-surface-alt);
+    overflow: hidden;
+}
+.stats-row-bar-fill {
+    height: 100%;
+    background: var(--chart-passed);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* ============================================================
+   13. ВИДЖЕТ «ЗАМЕТКИ»
+   ============================================================ */
+
+#notesWidgetText {
+    resize: vertical;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    min-height: 90px;
+    max-height: 800px;
+    font-size: 0.85em;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+}
+
+/* ============================================================
+   14. «ТЕМП СДАЧИ ЛАБ»
+   ============================================================ */
+
+#labPacingContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.pacing-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-soft);
+    transition: background 0.15s;
+    border-radius: 6px;
+}
+.pacing-row:last-child { border-bottom: none; }
+.pacing-row:hover { background: var(--bg-surface-alt); }
+
+.pacing-row-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.78em;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pacing-row-counts {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+}
+.pacing-row-counts.is-ok     { background: rgba(16, 185, 129, 0.16); color: var(--status-green); }
+.pacing-row-counts.is-warn   { background: rgba(245, 158, 11, 0.16); color: var(--status-orange); }
+.pacing-row-counts.is-danger { background: rgba(239, 68, 68, 0.16);  color: var(--status-red); }
+.pacing-row-counts.is-empty  { background: var(--bg-surface-alt);    color: var(--text-muted); }
+
+.pacing-num-sep { opacity: 0.55; margin: 0 1px; }
+
+/* ============================================================
+   15. ПАЛИТРА ЛАБ-ГРАФИКА ДЛЯ ТЁМНОЙ И OLED
+   ============================================================ */
+
+[data-theme="dark"] {
+    --chart-lab-done: #7c85d9;
+    --chart-lab-left: #3a4a63;
+}
+
+[data-theme="oled"] {
+    --chart-lab-done: #00d4ff;
+    --chart-lab-left: #1f3a44;
+}
+
+/* ============================================================
+   16. ДРОПДАУН НЕДЕЛЬ
+   ============================================================ */
+
+.scrollable-weeks .dropdown-item.week-item,
+.scrollable-weeks .week-item-label {
+    font-size: 12px;
+    padding: 4px 12px;
+    line-height: 1.25;
+}
+.scrollable-weeks .week-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+}
+.scrollable-weeks {
+    min-width: 240px;
+}
+
+/* ============================================================
+   17. ПРОЧЕЕ
+   ============================================================ */
+
+.settings-subsection-title {
+    font-size: 0.72em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin: 6px 0 6px;
+}
+
+/* ============================================================
+   18. ВЕРСИЯ ПОД ЛОГОТИПОМ
+   ============================================================ */
+
+.version-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0.45;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    margin-top: 2px;
+    margin-left: 2px;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.version-label:hover {
+    opacity: 0.85;
+}
+
+/* ============================================================
+   19. МОДАЛКА НАСТРОЕК
+   ============================================================ */
+
+.settings-modal {
+    background: var(--bg-surface);
+}
+
+.settings-group {
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.settings-group:last-child {
+    border-bottom: none;
+}
+
+.settings-group-title {
+    font-size: 0.72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    user-select: none;
+}
+
+.settings-subsection {
+    font-size: 0.76em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 12px 0 2px;
+    padding-left: 2px;
+    user-select: none;
+}
+.settings-subsection:first-of-type {
+    margin-top: 4px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 4px;
+    margin: 0 -4px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.12s;
+    user-select: none;
+    font-size: 0.92em;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+.settings-row:hover {
+    background: var(--bg-surface-alt);
+}
+
+.settings-row-label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.settings-row .form-check-input {
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+    width: 36px;
+    height: 20px;
+    background-color: var(--bg-surface-alt);
+    border-color: var(--border-color);
+}
+.settings-row .form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+.settings-row .form-check-input:focus {
+    box-shadow: 0 0 0 0.15rem var(--accent-soft);
+    border-color: var(--accent);
+}
+
+.settings-row-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 4px;
+    margin: 0 -4px;
+    font-size: 0.92em;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+.settings-row-inline .settings-row-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-left: 0;
+}
+
+.settings-hint-box {
+    padding: 8px 11px;
+    margin-top: 8px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    font-size: 0.76em;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.settings-group .btn.w-100 {
+    padding: 9px 14px;
+    font-weight: 600;
+}
+
+.settings-modal .form-select-sm,
+.settings-modal .form-control-sm {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 0.85em;
+}
+
+/* ============================================================
+   20. МИНИ-КАЛЕНДАРЬ В ГОРИЗОНТАЛЬНОМ РЕЖИМЕ
+   ------------------------------------------------------------
+   v3.6.8:
+     • Разделители между календарём и колонками, а также
+       между «Заметками» и «Событиями» — усилены до 2px и
+       цвета --border-color (был --border-soft — почти невидим).
+     • Убран горизонтальный скролл: overflow-x: hidden на
+       колонках и на контейнере. Длинные слова переносятся
+       благодаря min-width: 0 + overflow-wrap: break-word.
+   ============================================================ */
+
+.mini-cal-body-row {
+    display: block;
+}
+
+.mini-cal-events {
+    display: none;
+}
+
+.widget-card.is-horizontal .mini-cal-body-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.widget-card.is-horizontal #miniCalendarBody {
+    flex: 0 0 340px;
+    max-width: 340px;
+}
+
+/* Разделитель №1: между календарём и панелью */
+.widget-card.is-horizontal .mini-cal-events {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    border-left: 2px solid var(--border-color);
+    padding-left: 16px;
+    font-size: 0.82em;
+    line-height: 1.35;
+    overflow-x: hidden;
+}
+
+/* --- Двухколоночная раскладка --- */
+
+.mini-cal-events-cols {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+}
+
+.mini-cal-events-col {
+    flex: 1 1 0;
+    min-width: 0;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 16px;
+    padding-left: 16px;
+}
+
+.mini-cal-events-col:first-child {
+    padding-left: 0;
+}
+
+/* Разделитель №2: между «Заметками» и «Событиями» */
+.mini-cal-events-col:last-child {
+    padding-right: 0;
+    border-left: 2px solid var(--border-color);
+}
+
+/* --- Заголовок колонки --- */
+
+.mini-cal-events-col-header {
+    font-size: 0.82em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border-soft);
+    position: sticky;
+    top: 0;
+    background: var(--bg-surface);
+    z-index: 1;
+}
+
+/* --- Строка события/заметки --- */
+
+.mini-cal-events-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    margin: 1px -4px;
+    transition: background 0.12s;
+    min-width: 0;
+}
+.mini-cal-events-item:hover {
+    background: var(--bg-surface-alt);
+}
+
+.mini-cal-events-date {
+    flex: 0 0 auto;
+    min-width: 62px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.mini-cal-events-time {
+    flex: 0 0 auto;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.9em;
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+}
+.mini-cal-events-time-empty {
+    color: var(--text-muted);
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+.mini-cal-events-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.mini-cal-events-task .mini-cal-events-title {
+    color: var(--text-secondary);
+}
+
+.mini-cal-events-empty {
+    padding: 6px 0;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.82em;
+    font-style: italic;
+}

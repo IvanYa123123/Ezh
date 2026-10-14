@@ -1,6 +1,10 @@
 // Заметки: создание, редактирование, цвета, drag-n-drop, undo.
 // Обновление карточки — in-place, чтобы CSS-transition плавно менял
 // border-left-color при переключении статуса.
+//
+// v3.6.1: после успешного apiUpdateTask дёргаем refreshMiniCalEvents(),
+// чтобы панель заметок/событий справа от миникалендаря (в горизонтальном
+// режиме) всегда была синхронна с данными в БД.
 
 const _taskBlurTimers = {};
 
@@ -34,15 +38,10 @@ function handleTaskBlur(dateStr) {
     }, 100);
 }
 
-// Открывает мини-модал и возвращает:
-//   'do'     — «Сделать»
-//   'submit' — «Сдать»
-//   null     — отмена / закрытие
 function askTaskKind() {
     return new Promise((resolve) => {
         const modalEl = document.getElementById('taskKindModal');
 
-        // Фолбэк, если модал отсутствует в DOM (например, кэш браузера старый)
         if (!modalEl || typeof bootstrap === 'undefined') {
             if (confirm('Создать заметку «Сделать»?\n\nOK — Сделать, Отмена — «Сдать».')) return resolve('do');
             if (confirm('Создать заметку «Сдать»?')) return resolve('submit');
@@ -54,7 +53,6 @@ function askTaskKind() {
         const btnDoOld     = document.getElementById('btnTaskKindDo');
         const btnSubmitOld = document.getElementById('btnTaskKindSubmit');
 
-        // Заменяем кнопки — снимаем все прошлые обработчики
         const btnDo     = btnDoOld.cloneNode(true);
         const btnSubmit = btnSubmitOld.cloneNode(true);
         btnDoOld.parentNode.replaceChild(btnDo, btnDoOld);
@@ -79,8 +77,6 @@ function askTaskKind() {
     });
 }
 
-// Вызывается из календаря кнопкой «+ Заметка» у пары/события.
-// Спрашивает тип заметки и создаёт с префиксом «Сделать: » / «Сдать: ».
 async function createTaskFromSchedule(date, subject) {
     const kind = await askTaskKind();
     if (!kind) return;
@@ -94,6 +90,7 @@ async function createTask(date, text, status) {
         taskDatesSet.add(date);
         renderTask({id: data.id, date, text, status}, { animate: true });
         if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
+        if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
 
         const taskId = data.id;
         scheduleUndo('Заметка добавлена', async () => {
@@ -102,16 +99,12 @@ async function createTask(date, text, status) {
                 const el = document.getElementById(`task-${taskId}`);
                 if (el) { el.remove(); rebalanceDayText(date); }
                 refreshTaskDates();
+                if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
             } catch (e) { console.error(e); }
         });
     } catch (e) { console.error("createTask failed", e); }
 }
 
-// Публичная точка рендера. Если карточка уже есть — обновляет in-place
-// (см. _updateTaskCard, там transition красит границу плавно).
-// Если карточка существует, но лежит в контейнере другого дня
-// (drag-n-drop со дня на день) — физически переносим DOM-узел в новый
-// контейнер. Без этого визуального переезда не будет до перезагрузки.
 function renderTask(task, options = {}) {
     const { animate = false, stagger = -1 } = options;
     const container = document.getElementById(`tasks-${task.date}`);
@@ -120,9 +113,6 @@ function renderTask(task, options = {}) {
     let div = document.getElementById(`task-${task.id}`);
 
     if (div) {
-        // Ключевая строка: appendChild для уже существующего в DOM узла
-        // работает как move — узел переезжает вместе с id, обработчиками
-        // и анимациями. Никакого клонирования и пересоздания.
         if (div.parentElement !== container) {
             container.appendChild(div);
         }
@@ -195,8 +185,6 @@ function _applyOverdueClass(div, task) {
     div.classList.toggle('task-overdue', isOverdue);
 }
 
-// Обновляет существующий DOM-узел без пересоздания — CSS плавно
-// перекрашивает border-left-color, opacity и фон.
 function _updateTaskCard(div, task) {
     div.classList.remove('status-green', 'status-orange', 'status-red');
     div.classList.add(`status-${task.status}`);
@@ -220,9 +208,15 @@ function _updateTaskCard(div, task) {
     div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", JSON.stringify(task)); };
 }
 
+// v3.6.1: после успешного апдейта дёргаем refreshMiniCalEvents() —
+// панель событий справа от миникалендаря обновится (задача могла
+// стать completed, переехать на другую дату или переименоваться).
 function updateTaskRequest(task) {
     renderTask(task);
     apiUpdateTask(task.id, {date: task.date, text: task.text, status: task.status})
+        .then(() => {
+            if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
+        })
         .catch(e => console.error("updateTask failed", e));
 }
 
@@ -243,7 +237,10 @@ function handleTaskDeleteClick(task) {
         const snapshot = { date: task.date, text: task.text, status: task.status };
         _animateTaskRemoval(el, () => rebalanceDayText(task.date));
         apiDeleteTask(task.id)
-            .then(() => refreshTaskDates())
+            .then(() => {
+                refreshTaskDates();
+                if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
+            })
             .catch(e => console.error(e));
 
         scheduleUndo('Заметка удалена', async () => {
@@ -252,6 +249,7 @@ function handleTaskDeleteClick(task) {
                 taskDatesSet.add(snapshot.date);
                 renderTask({id: resp.id, date: snapshot.date, text: snapshot.text, status: snapshot.status}, { animate: true });
                 if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
+                if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
             } catch (e) { console.error(e); }
         });
     }
@@ -307,11 +305,10 @@ async function refreshTaskDates() {
         let dates = await apiLoadTaskDates();
         taskDatesSet = new Set(dates);
         if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
+        if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
     } catch (e) { console.error("refreshTaskDates", e); }
 }
 
-// Стагерный рендер списка задач. Задержка в 45 мс между карточками
-// даёт «высыпание» — заметки появляются друг за дружкой.
 function renderTasksStaggered(tasks) {
     if (!Array.isArray(tasks)) return;
 

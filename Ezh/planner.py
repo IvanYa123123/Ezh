@@ -2,7 +2,6 @@ import requests
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
 class SevSUPlanner:
     def __init__(self):
         self.api_url = "https://schedule.sevsu.ru/api/schedule"
@@ -46,7 +45,17 @@ class SevSUPlanner:
             7: "19:00 - 20:30",
             8: "20:40 - 22:10"
         }
-        self.type_map = {0: "Лекция", 1: "ПЗ", 2: "ЛЗ", 3: "Экзамен/Зачет"}
+
+        # КОДИРОВКА ТИПОВ ЗАНЯТИЙ В API СевГУ
+        # ------------------------------------
+        # Раньше здесь были перепутаны 1 и 2, из-за чего ПЗ отображался как ЛЗ
+        # и наоборот. Проверено сопоставлением с визуальной сеткой сайта
+        # schedule.sevsu.ru: 1 = ЛЗ, 2 = ПЗ.
+        #   0 — Лекция
+        #   1 — ЛЗ (лабораторное занятие)
+        #   2 — ПЗ (практическое занятие)
+        #   3 — Экзамен/Зачёт
+        self.type_map = {0: "Лекция", 1: "ЛЗ", 2: "ПЗ", 3: "Экзамен/Зачет"}
 
         self.holidays = {
             (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8),

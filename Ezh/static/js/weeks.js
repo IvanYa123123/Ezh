@@ -1,15 +1,24 @@
 // Навигация по неделям: dropdown, "Сегодня", стрелки, дельта-переход.
-// В дропдауне рядом с датой — бейдж чётности (Ч / НЧ), считается по ISO-номеру недели.
+//
+// Чётность недели — непрерывный счёт от якоря 6 января 2020 (понедельник).
+// Не сбрасывается в новогоднюю ночь, как ISO-неделя. Это позволяет
+// корректно сохранять чередование Ч/НЧ через границу года и на всём
+// протяжении учебного года.
+//
+// Проверка (реальные примеры):
+//   • Неделя 12–18 октября 2026 → НЧ (odd)
+//   • Неделя 1–7 июня 2026     → Ч  (even)
+
+const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6); // 6 янв 2020, понедельник
 
 function _weekParityLabel(weekDate) {
     const d = new Date(Date.UTC(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    return weekNo % 2 === 0
-        ? { label: 'Ч', cls: 'week-even', title: `Чётная (нед. ${weekNo})` }
-        : { label: 'НЧ', cls: 'week-odd',  title: `Нечётная (нед. ${weekNo})` };
+    const days = Math.floor((d - _WEEK_PARITY_ANCHOR_MS) / 86400000);
+    const weeks = Math.floor(days / 7);
+
+    return (weeks % 2 === 0)
+        ? { label: 'Ч',  cls: 'week-even', title: 'Чётная неделя' }
+        : { label: 'НЧ', cls: 'week-odd',  title: 'Нечётная неделя' };
 }
 
 function updateWeekDropdown() {

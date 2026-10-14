@@ -1,0 +1,149 @@
+/* ============================================================
+   РАСПИСАНИЕ ПРЕПОДАВАТЕЛЕЙ
+   ------------------------------------------------------------
+   Использует CSS-переменные темы — автоматически подстраивается
+   под dark / oled / xp и т.д.
+   ============================================================ */
+
+/* ---------- Карточка преподавателя (аналог .friend-wrapper) ---------- */
+
+.teacher-wrapper {
+    border-top: 4px solid var(--accent);
+    transition: opacity 0.15s, border-color 0.15s;
+}
+
+.teacher-header-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ---------- Колонка дня внутри карточки (аналог .friend-col) ---------- */
+
+.teacher-col {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+}
+.teacher-col.day-today {
+    border: 2px solid var(--accent);
+    background-color: var(--accent-soft);
+}
+.teacher-col.day-today .teacher-day-header {
+    color: var(--accent-hover);
+    border-bottom-color: var(--accent-border);
+}
+
+.teacher-day-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.75em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+/* ---------- Карточка пары внутри дня ---------- */
+
+.teacher-pair-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 5px 7px;
+    margin-bottom: 5px;
+    font-size: 0.75em;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    transition: background 0.15s;
+}
+.teacher-pair-card:hover {
+    background: var(--bg-surface-alt);
+}
+
+/* ============================================================
+   МОДАЛЬНОЕ ОКНО «ДОБАВИТЬ ПРЕПОДАВАТЕЛЯ» — подсказки
+   ============================================================ */
+
+.teacher-suggestions {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-surface);
+}
+
+.teacher-suggestions::-webkit-scrollbar { width: 8px; }
+.teacher-suggestions::-webkit-scrollbar-track {
+    background: var(--bg-surface-alt);
+    border-radius: 4px;
+}
+.teacher-suggestions::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+.teacher-suggestions::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.teacher-suggestion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--text-primary);
+    transition: background 0.12s ease;
+}
+.teacher-suggestion:last-child { border-bottom: none; }
+.teacher-suggestion:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+}
+.teacher-suggestion:hover .teacher-suggestion-arrow { opacity: 1; }
+
+.teacher-suggestion-name {
+    flex: 1;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.teacher-suggestion-arrow {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.1em;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+
+.teacher-suggestion-disabled {
+    cursor: default;
+    opacity: 0.55;
+    background: var(--bg-surface-alt);
+}
+.teacher-suggestion-disabled:hover {
+    background: var(--bg-surface-alt);
+    color: var(--text-primary);
+}
+
+.teacher-suggestion-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
