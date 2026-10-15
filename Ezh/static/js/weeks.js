@@ -1,15 +1,6 @@
-// Навигация по неделям: dropdown, "Сегодня", стрелки, дельта-переход.
-//
-// Чётность недели — непрерывный счёт от якоря 6 января 2020 (понедельник).
-// Не сбрасывается в новогоднюю ночь, как ISO-неделя. Это позволяет
-// корректно сохранять чередование Ч/НЧ через границу года и на всём
-// протяжении учебного года.
-//
-// Проверка (реальные примеры):
-//   • Неделя 12–18 октября 2026 → НЧ (odd)
-//   • Неделя 1–7 июня 2026     → Ч  (even)
+// Навигация по неделям + сброс вертикального дня при смене недели.
 
-const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6); // 6 янв 2020, понедельник
+const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6);
 
 function _weekParityLabel(weekDate) {
     const d = new Date(Date.UTC(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate()));
@@ -78,6 +69,7 @@ function jumpToWeek(offsetVal) {
     currentBaseDate = new Date(realBase);
     currentBaseDate.setDate(currentBaseDate.getDate() + (parseInt(offsetVal) * 7));
     if (expandedDayDateStr !== null) expandedDayDateStr = getLocalDateStr(currentBaseDate);
+    if (typeof _verticalDayOffset !== 'undefined') _verticalDayOffset = null;
     renderCalendar();
     if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
 }
@@ -87,6 +79,7 @@ function goToToday() {
     currentBaseDate = new Date();
     currentBaseDate.setDate(currentBaseDate.getDate() - (currentBaseDate.getDay() === 0 ? 6 : currentBaseDate.getDay() - 1));
     if (expandedDayDateStr !== null) expandedDayDateStr = realTodayStr;
+    if (typeof _verticalDayOffset !== 'undefined') _verticalDayOffset = null;
     renderCalendar();
     if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
 }
@@ -95,6 +88,7 @@ function changeWeek(offset) {
     window._calDir = offset > 0 ? 'right' : 'left';
     currentBaseDate.setDate(currentBaseDate.getDate() + (offset * 7));
     if (expandedDayDateStr !== null) expandedDayDateStr = getLocalDateStr(currentBaseDate);
+    if (typeof _verticalDayOffset !== 'undefined') _verticalDayOffset = null;
     renderCalendar();
     if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
 }

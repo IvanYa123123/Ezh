@@ -31,6 +31,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@600;700&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
     <link href="/static/css/style.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/fixes.css?v={{ app_version }}" rel="stylesheet">
+    <link href="/static/css/hedgehog.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -119,6 +120,13 @@
                     <div id="friendsSection" data-draggable-section>
                         <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
+
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
+                                    id="switchTabToTeachersBtn"
+                                    onclick="switchFriendsTeachersTab('teachers')"
+                                    title="Переключиться на преподавателей"
+                                    style="display: none;">🎓</button>
+
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
                             <div class="vr mx-1"></div>
 
@@ -128,6 +136,11 @@
                                 </button>
                                 <div id="friendsLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="friendTogglesDropdown" style="min-width: 250px;"></ul>
+                            </div>
+
+                            <div class="ms-auto d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
+                                        onclick="rotateFriendsRight()" title="Прокрутить: последний → в начало">⇅</button>
                             </div>
                         </div>
 
@@ -146,6 +159,13 @@
                     <div id="teachersSection" data-draggable-section>
                         <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
+
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
+                                    id="switchTabToFriendsBtn"
+                                    onclick="switchFriendsTeachersTab('friends')"
+                                    title="Переключиться на друзей"
+                                    style="display: none;">👥</button>
+
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
                             <div class="vr mx-1"></div>
 
@@ -155,6 +175,11 @@
                                 </button>
                                 <div id="teachersLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="teacherTogglesDropdown" style="min-width: 250px;"></ul>
+                            </div>
+
+                            <div class="ms-auto d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
+                                        onclick="rotateTeachersRight()" title="Прокрутить: последний → в начало">⇅</button>
                             </div>
                         </div>
 
@@ -506,7 +531,10 @@
         <div class="settings-group">
           <div class="settings-group-title">🧩 Виджеты</div>
 
-          <div class="settings-subsection">Разделы на главной</div>
+          <label class="settings-row" for="settingsToggleSeparateFriendsTeachers">
+            <span class="settings-row-label">Раздельные преподаватели и друзья</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleSeparateFriendsTeachers" onchange="saveSettingsFromUI()">
+          </label>
 
           <label class="settings-row" for="settingsToggleFriendsSection">
             <span class="settings-row-label">Друзья</span>
@@ -517,8 +545,6 @@
             <span class="settings-row-label">Преподаватели</span>
             <input class="form-check-input" type="checkbox" id="settingsToggleTeachersSection" onchange="saveSettingsFromUI()">
           </label>
-
-          <div class="settings-subsection">Правая колонка</div>
 
           <label class="settings-row" for="settingsToggleWidgetMiniCal">
             <span class="settings-row-label">Мини-календарь</span>

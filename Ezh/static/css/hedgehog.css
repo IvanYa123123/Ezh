@@ -1,0 +1,171 @@
+/* ============================================================
+   hedgehog.css — контейнеры и адаптивная палитра SVG-маскота.
+   Все анимации (лапки, наклон, иголки, моргание) определены
+   внутри самого hedgehog.svg — здесь их нет, чтобы избежать
+   конфликта специфичности между внешним и встроенным <style>.
+   ============================================================ */
+
+/* --- Палитра по умолчанию (светлая тема) ---
+   Карамельный мех, насыщенные шоколадные иголки,
+   чёткий контур. Ёжик выделяется на белом фоне, но
+   не «орёт». */
+:root {
+  --hh-body:        #f5d9a8;
+  --hh-body-shade:  #dcb87c;
+  --hh-quills:      #6b3f1a;
+  --hh-quills-dark: #4a2a0e;
+  --hh-dark:        #1f2937;
+  --hh-blush:       #f28b8b;
+  --hh-window:      #ffffff;
+  --hh-stroke:      #2a1505;
+  --hh-shadow:      rgba(0, 0, 0, 0.28);
+
+  /* Акцент ёжика идёт за акцентным цветом приложения. */
+  --hh-accent: var(--accent, #818cf8);
+}
+
+/* --- Тёмная тема: «лунный ёжик» ---
+   Серебристо-лавандовый мех, глубокие индиго-фиолетовые иглы,
+   светлая лавандовая обводка. Глаз почти чёрный, сливается
+   с фоном — настоящий ночной зверёк. Тень — мягкое индиговое
+   свечение в цвет акцента темы. */
+:root[data-theme="dark"] {
+  --hh-body:        #c8c3dc;
+  --hh-body-shade:  #a09ab8;
+  --hh-quills:      #3a3a6a;
+  --hh-quills-dark: #1e1e4a;
+  --hh-dark:        #0a0e1a;
+  --hh-blush:       #c97a8a;
+  --hh-stroke:      #8b9bd4;
+  --hh-shadow:      rgba(129, 140, 248, 0.28);
+}
+
+/* --- Лесная тема ---
+   Светлое тело под мхом + тёмно-хвойные иголки.
+   Настоящий обитатель ельника. */
+:root[data-theme="forest"] {
+  --hh-body:        #d4b88a;
+  --hh-body-shade:  #b89b6a;
+  --hh-quills:      #3f5a2a;
+  --hh-quills-dark: #24380f;
+  --hh-blush:       #e8a08a;
+  --hh-stroke:      #1a2a0a;
+  --hh-shadow:      rgba(20, 60, 30, 0.32);
+}
+
+/* --- Закат ---
+   Багряные иглы — как закатное небо за спиной.
+   Тело — золотисто-розовое. */
+:root[data-theme="sunset"] {
+  --hh-body:        #f6c89a;
+  --hh-body-shade:  #d99d6e;
+  --hh-quills:      #c14a1a;
+  --hh-quills-dark: #8a2e08;
+  --hh-blush:       #f08888;
+  --hh-stroke:      #4a1a08;
+  --hh-shadow:      rgba(90, 30, 10, 0.32);
+}
+
+/* --- Океан --- (без изменений, нравится) */
+:root[data-theme="ocean"] {
+  --hh-body:        #e0dcd0;
+  --hh-body-shade:  #b9c0c4;
+  --hh-quills:      #4a5e6e;
+  --hh-quills-dark: #2f3e4b;
+  --hh-stroke:      #2a3a48;
+}
+
+/* --- Ёжики --- (без изменений, родная тема) */
+/* Базовый :root выше уже даёт ей всё нужное, отдельный блок не нужен. */
+
+/* --- Южный парк --- (без изменений) */
+:root[data-theme="southpark"] {
+  --hh-body:        #f6e2bc;
+  --hh-body-shade:  #d8b878;
+  --hh-quills:      #8c4a1e;
+  --hh-quills-dark: #5a2a10;
+  --hh-stroke:      #2a1a10;
+}
+
+/* --- Аниме --- (без изменений) */
+:root[data-theme="anime"] {
+  --hh-body:        #fbe6dc;
+  --hh-body-shade:  #e9bcb0;
+  --hh-quills:      #b0708a;
+  --hh-quills-dark: #7a4a60;
+  --hh-blush:       #ffa8c4;
+  --hh-stroke:      #5a2e3e;
+}
+
+/* --- OLED Deep ---
+   Киберпанк: холодный голубоватый мех, тёмно-синие иглы,
+   неоновая голубая обводка и свечение вместо чёрной тени.
+   На чистом чёрном фоне ёжик выглядит «подсвеченным». */
+:root[data-theme="oled"] {
+  --hh-body:        #c8d4e0;
+  --hh-body-shade:  #9aacbe;
+  --hh-quills:      #1a3a5a;
+  --hh-quills-dark: #0a1e30;
+  --hh-dark:        #000000;
+  --hh-blush:       #ff6bb0;
+  --hh-stroke:      #00d4ff;
+  --hh-shadow:      rgba(0, 212, 255, 0.35);
+}
+
+/* --- OLED Warm --- (без изменений, нравится) */
+:root[data-theme="oled-warm"] {
+  --hh-body:        #e8d4a8;
+  --hh-body-shade:  #c0a070;
+  --hh-quills:      #9a6830;
+  --hh-quills-dark: #6a4218;
+  --hh-dark:        #0a0806;
+  --hh-stroke:      #b09068;
+  --hh-shadow:      rgba(0, 0, 0, 0.90);
+}
+
+/* ============================================================
+   Контейнеры (без изменений от v3.10.3)
+   ============================================================ */
+
+.drag-hedgehog-wrap {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 2147483000;
+  will-change: transform;
+  transition: none;
+}
+
+.drag-hedgehog-wrap > .drag-hedgehog {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.drag-hedgehog {
+  --leg-duration: 0.5s;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  line-height: 0;
+
+  /* Мягкая тень под ёжиком — переменная, чтобы на каждой
+     теме была своей (на OLED — свечение неона, на светлой —
+     лёгкая чёрная). */
+  filter: drop-shadow(0 8px 16px var(--hh-shadow, rgba(0, 0, 0, 0.28)));
+}
+
+.drag-hedgehog svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transition: none;
+  transform-origin: center center;
+  overflow: visible;
+}
+
+/* Мгновенный разворот влево при движении курсора влево */
+.drag-hedgehog.is-flipped svg {
+  transform: scaleX(-1);
+}

@@ -1,17 +1,42 @@
 // Друзья: список, папки, drag-n-drop, синхронизация расписаний.
+// v3.14.2:
+//   • saveFriendsOrder работает даже при недоступном localStorage —
+//     хранит порядок в памяти (in-memory override).
+//   • fetchFriends защищён счётчиком поколений: ответы, стартовавшие
+//     до ротации, отбрасываются и не откатывают порядок.
 
 const campusNames = { 'galosha': 'Галоша', 'gogol': 'Гоголя', 'univer': 'Университетская' };
 
+let _verticalFriendIndex = 0;
+
+// In-memory копия порядка. Всегда актуальна; localStorage — лишь персистентный бэкап.
+let _friendsOrderOverride = null;
+
+// Счётчик поколений. Увеличивается при ротации; fetchFriends сравнивает
+// свой начальный номер с текущим и игнорирует устаревший ответ.
+let _friendsGeneration = 0;
+
 function loadFriendsOrder() {
-    try { let raw = localStorage.getItem('friendsOrder'); return raw ? JSON.parse(raw) : null; }
-    catch (e) { return null; }
+    if (Array.isArray(_friendsOrderOverride)) return _friendsOrderOverride.slice();
+    try {
+        const raw = localStorage.getItem('friendsOrder');
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
 }
+
 function saveFriendsOrder() {
-    try { localStorage.setItem('friendsOrder', JSON.stringify(friendsList.map(f => f.id))); } catch (e) {}
+    const ids = friendsList.map(f => f.id);
+    _friendsOrderOverride = ids.slice();
+    try {
+        localStorage.setItem('friendsOrder', JSON.stringify(ids));
+    } catch (e) {
+        console.warn('[friends] не удалось записать порядок в localStorage:', e);
+    }
 }
+
 function applyFriendsOrder() {
     let order = loadFriendsOrder();
-    if (!Array.isArray(order)) return;
+    if (!Array.isArray(order) || order.length === 0) return;
     friendsList.sort((a, b) => {
         let ai = order.indexOf(a.id); if (ai === -1) ai = Number.MAX_SAFE_INTEGER;
         let bi = order.indexOf(b.id); if (bi === -1) bi = Number.MAX_SAFE_INTEGER;
@@ -19,21 +44,81 @@ function applyFriendsOrder() {
     });
 }
 
+// ============================================================
+//  ПРОКРУТКА ПО КРУГУ
+// ============================================================
+
+let _rotateFriendsBusy = false;
+
+function rotateFriendsRight() {
+    if (_rotateFriendsBusy) return;
+    if (!Array.isArray(friendsList) || friendsList.length < 2) return;
+
+    _rotateFriendsBusy = true;
+
+    // Отменяем все незавершённые fetchFriends — они не должны
+    // перезаписать порядок своими устаревшими данными.
+    _friendsGeneration++;
+
+    const before = friendsList.map(f => f.id);
+
+    const last = friendsList.pop();
+    friendsList.unshift(last);
+    saveFriendsOrder();
+    _verticalFriendIndex = 0;
+    renderFriendsCalendar();
+
+    const after = friendsList.map(f => f.id);
+
+    // Диагностика: если порядок не изменился — сообщаем в консоль.
+    if (before.length > 1 && before[0] === after[0] && before.join(',') === after.join(',')) {
+        console.warn('[friends] ротация не дала изменений', { before, after });
+    }
+
+    if (typeof _syncFriendsTeachersZone === 'function') {
+        try { _syncFriendsTeachersZone(); } catch (e) {}
+    }
+
+    setTimeout(() => { _rotateFriendsBusy = false; }, 250);
+}
+
 async function fetchFriends() {
+    const myGen = ++_friendsGeneration;
+
     const loader = document.getElementById('friendsLoader');
     if (loader) loader.style.display = 'block';
+
+    let list = [];
     try {
-        let list = await apiLoadFriends();
-        friendsList = Array.isArray(list) ? list : [];
-    } catch (e) { friendsList = []; }
+        list = await apiLoadFriends();
+    } catch (e) {
+        list = [];
+    }
+
+    // Пока шёл запрос — прошла ротация или другой fetch.
+    // Наш ответ устарел, не перезаписываем состояние.
+    if (myGen !== _friendsGeneration) {
+        if (loader) loader.style.display = 'none';
+        return;
+    }
+
+    friendsList = Array.isArray(list) ? list : [];
 
     applyFriendsOrder();
     let ids = new Set(friendsList.map(f => f.id));
     visibleFriends.forEach(id => { if (!ids.has(id)) visibleFriends.delete(id); });
     saveVisibleFriends();
 
+    _verticalFriendIndex = 0;
+
     renderFriendDropdown();
     await fetchAllFriendsSchedules();
+
+    if (myGen !== _friendsGeneration) {
+        if (loader) loader.style.display = 'none';
+        return;
+    }
+
     renderFriendsCalendar();
     if (loader) loader.style.display = 'none';
 }
@@ -154,12 +239,7 @@ async function deleteCustomCategory(catName, e) {
     for (let f of friendsInCat) {
         f.category = '';
         try {
-            await apiUpdateFriend(f.id, {
-                name: f.name,
-                group: f.group,
-                subgroup: f.subgroup,
-                category: ''
-            });
+            await apiUpdateFriend(f.id, {name: f.name, group: f.group, subgroup: f.subgroup, category: ''});
         } catch (err) { console.error('deleteCustomCategory: update friend failed', err); }
     }
 
@@ -244,9 +324,7 @@ async function fetchAllFriendsSchedules() {
 async function syncFriendsSchedules(force = false) {
     if (!force) {
         const now = Date.now();
-        if (window._lastFriendsSync && now - window._lastFriendsSync < 30 * 60 * 1000) {
-            return;
-        }
+        if (window._lastFriendsSync && now - window._lastFriendsSync < 30 * 60 * 1000) return;
     }
     window._lastFriendsSync = Date.now();
 
@@ -386,10 +464,170 @@ function _allPairsMatch(myDaySchedule, friendDaySchedule) {
     );
 }
 
+// ============================================================
+//  ПОДСЧЁТ ОБЩИХ ПАР (для друзей)
+// ============================================================
+
+function _countCommonPairsForFriend(friendDaySchedule, myDaySchedule) {
+    if (!friendDaySchedule.length || !myDaySchedule.length) return 0;
+    let count = 0;
+    friendDaySchedule.forEach(fItem => {
+        let match = myDaySchedule.find(myItem =>
+            myItem.time_range === fItem.time_range &&
+            myItem.lesson === fItem.lesson &&
+            (myItem.location || '').trim().toLowerCase() === (fItem.location || '').trim().toLowerCase()
+        );
+        if (match) count++;
+    });
+    return count;
+}
+
+// ============================================================
+//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: НАВИГАЦИЯ
+// ============================================================
+
+function _isFriendsSectionVertical() {
+    const s = document.getElementById('friendsSection');
+    if (!s) return false;
+    return !_isWideZone(s.parentElement);
+}
+
+function _getVerticalFriendsList() {
+    if (!Array.isArray(friendsList)) return [];
+    return friendsList;
+}
+
+function verticalFriendPrev() {
+    const list = _getVerticalFriendsList();
+    if (list.length === 0) return;
+    _verticalFriendIndex = (_verticalFriendIndex - 1 + list.length) % list.length;
+    renderFriendsCalendar();
+}
+
+function verticalFriendNext() {
+    const list = _getVerticalFriendsList();
+    if (list.length === 0) return;
+    _verticalFriendIndex = (_verticalFriendIndex + 1) % list.length;
+    renderFriendsCalendar();
+}
+
+// ============================================================
+//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: РЕНДЕР
+// ============================================================
+
+function _renderFriendsVertical() {
+    const container = document.getElementById('friendsCalendarsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    container.classList.add('is-vertical');
+
+    const list = _getVerticalFriendsList();
+
+    if (list.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">👥</div>
+                <div class="empty-state-title">Пока никого нет</div>
+                <div class="empty-state-text">Добавьте друга в горизонтальном режиме.</div>
+            </div>`;
+        return;
+    }
+
+    if (_verticalFriendIndex >= list.length) _verticalFriendIndex = 0;
+    const friend = list[_verticalFriendIndex];
+
+    const date = _getVerticalDate();
+    const dateStr = getLocalDateStr(date);
+    const todayStr = getLocalDateStr(new Date());
+    const isToday = dateStr === todayStr;
+
+    const friendSched = friendsSchedules[friend.id] || [];
+    const dayPairs = friendSched
+        .filter(p => p.date === dateStr)
+        .sort((a, b) => (a.n || 0) - (b.n || 0));
+
+    const myDaySched = cachedSchedule.filter(p => p.date === dateStr);
+
+    let summaryHtml = '';
+    if (dayPairs.length === 0) {
+        summaryHtml = `<div class="fv-empty">Выходной</div>`;
+    } else {
+        const fStart = fixTime(dayPairs[0].time_range.split(' - ')[0]);
+        const fEnd   = fixTime(dayPairs[dayPairs.length - 1].time_range.split(' - ')[1]);
+
+        const campuses = new Set();
+        dayPairs.forEach(p => {
+            const c = getCampus(p);
+            if (c && c !== 'unknown') campuses.add(campusNames[c] || c);
+        });
+        const campusStr = [...campuses].join(', ');
+
+        const commonCount = _countCommonPairsForFriend(dayPairs, myDaySched);
+        const commonHtml = commonCount > 0
+            ? `<div class="fv-common">🤝 ${commonCount} ${plural(commonCount, 'общая пара', 'общие пары', 'общих пар')}</div>`
+            : '';
+
+        summaryHtml = `
+            <div class="fv-time">🕒 ${fStart} — ${fEnd}</div>
+            ${campusStr ? `<div class="fv-campus">📍 ${escapeHtml(campusStr)}</div>` : ''}
+            <div class="fv-pairs-count">${dayPairs.length} ${plural(dayPairs.length, 'пара', 'пары', 'пар')}</div>
+            ${commonHtml}
+        `;
+    }
+
+    const dateLabel = date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+
+    const showSwitchBtn = (typeof separateFriendsTeachers !== 'undefined')
+        && !separateFriendsTeachers
+        && (typeof showTeachersSection !== 'undefined') && showTeachersSection;
+
+    const switchHtml = showSwitchBtn
+        ? `<div class="fv-switch-row">
+               <button type="button" class="fv-switch-btn"
+                       onclick="switchFriendsTeachersTab('teachers')"
+                       title="Показать преподавателей">🎓 Преподаватели</button>
+           </div>`
+        : '';
+
+    container.innerHTML = `
+        <div class="friend-vertical-card">
+            <div class="fv-nav-row">
+                <button type="button" class="fv-arrow" onclick="verticalFriendPrev()" title="Предыдущий">‹</button>
+                <div class="fv-name-wrap">
+                    <div class="fv-name">👤 ${escapeHtml(friend.name)}</div>
+                    <div class="fv-group">${escapeHtml(friend.group)}</div>
+                </div>
+                <button type="button" class="fv-arrow" onclick="verticalFriendNext()" title="Следующий">›</button>
+            </div>
+            <div class="fv-counter">${_verticalFriendIndex + 1} / ${list.length}</div>
+
+            <div class="fv-day-row">
+                <button type="button" class="fv-day-arrow" onclick="verticalDayPrev()" title="Предыдущий день">‹</button>
+                <div class="fv-date">${dateLabel}${isToday ? ' · сегодня' : ''}</div>
+                <button type="button" class="fv-day-arrow" onclick="verticalDayNext()" title="Следующий день">›</button>
+            </div>
+
+            <div class="fv-summary">${summaryHtml}</div>
+            ${switchHtml}
+        </div>
+    `;
+}
+
+// ============================================================
+//  ОСНОВНОЙ РЕНДЕР
+// ============================================================
+
 function renderFriendsCalendar(dir = null) {
+    if (_isFriendsSectionVertical()) {
+        _renderFriendsVertical();
+        return;
+    }
+
     let container = document.getElementById("friendsCalendarsContainer");
     if (!container) return;
-    container.innerHTML = "";
+    container.innerHTML = '';
+    container.classList.remove('is-vertical');
 
     let btnPrev = document.getElementById("friendsNavPrev");
     let btnNext = document.getElementById("friendsNavNext");
@@ -550,15 +788,49 @@ function renderFriendsCalendar(dir = null) {
                 if (showFriends) {
                     html += `<div class="mt-2 border-top pt-2">`;
                     daySchedule.forEach(fItem => {
-                        let typeBadge = fItem.type_name ? `<span class="badge bg-secondary ms-1" style="font-size: 0.6em;">${fItem.type_name}</span>` : '';
-                        let teacherHtml = (showTeacher && fItem.teacher) ? `<div class="text-muted mt-1" style="font-size: 0.85em;">${escapeHtml(fItem.teacher)}</div>` : '';
-                        let locHtml = (showLocation && fItem.location) ? `<div class="text-muted" style="font-size: 0.85em;">${escapeHtml(fItem.location)}</div>` : '';
+                        const subjectKey = `${fItem.lesson} (${fItem.type_name})`;
+
+                        let displayLesson   = fItem.lesson;
+                        let lessonLink      = '';
+                        let displayTeacher  = fItem.teacher  || '';
+                        let displayLocation = fItem.location || '';
+
+                        if (cachedSubjectSettings && cachedSubjectSettings[subjectKey]) {
+                            const s = cachedSubjectSettings[subjectKey];
+                            if (s.custom_name) displayLesson   = s.custom_name;
+                            if (s.link)        lessonLink      = s.link;
+                            if (s.teacher)     displayTeacher  = s.teacher;
+                            if (s.location)    displayLocation = s.location;
+                        }
+
+                        let typeBadge = fItem.type_name
+                            ? `<span class="badge bg-secondary" style="font-size: 0.7em;">${escapeHtml(fItem.type_name)}</span>`
+                            : '';
+
+                        let lessonHtml = lessonLink
+                            ? `<a href="${lessonLink}" target="_blank" class="text-decoration-none fw-bold"
+                                  style="color: var(--accent);"
+                                  title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</a>`
+                            : `<span title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</span>`;
+
+                        let teacherHtml = (showTeacher && displayTeacher)
+                            ? `<div class="schedule-item-teacher">${escapeHtml(displayTeacher)}</div>`
+                            : '';
+                        let locationHtml = (showLocation && displayLocation)
+                            ? `<div class="schedule-item-location">${escapeHtml(displayLocation)}</div>`
+                            : '';
+
                         html += `
-                            <div class="bg-white border rounded p-1 mb-1 shadow-sm" style="font-size: 0.75em; border-left: 3px solid var(--border-color) !important;">
-                                <strong class="text-primary">${fixTime(fItem.time_range)}</strong>${typeBadge}<br>
-                                <span title="${escapeHtml(fItem.lesson)}">${escapeHtml(fItem.lesson)}</span>
+                            <div class="schedule-item shadow-sm" style="border-left: 3px solid var(--border-color);">
+                                <div class="schedule-item-top">
+                                    <span class="schedule-item-time">
+                                        <strong class="text-primary">${fixTime(fItem.time_range)}</strong>
+                                    </span>
+                                </div>
+                                ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
+                                <div class="schedule-item-title">${lessonHtml}</div>
                                 ${teacherHtml}
-                                ${locHtml}
+                                ${locationHtml}
                             </div>`;
                     });
                     html += `</div>`;

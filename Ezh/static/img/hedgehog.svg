@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    :root {
+      --hh-body: #f0dcc0;
+      --hh-body-shade: #dec29b;
+      --hh-quills: #8b5e34;
+      --hh-quills-dark: #6b4423;
+      --hh-dark: #1f2937;
+      --hh-blush: #f4a3a3;
+      --hh-accent: #818cf8;
+      --hh-window: #ffffff;
+      --hh-stroke: #3b2a1a;
+      --leg-duration: 0.5s;
+    }
+    @supports (--a: 0) {
+      .s { stroke: var(--hh-stroke); }
+      .fb { fill: var(--hh-body); }
+      .fs { fill: var(--hh-body-shade); }
+      .fq { fill: var(--hh-quills); }
+      .fqd { fill: var(--hh-quills-dark); }
+      .fd { fill: var(--hh-dark); }
+      .fbl { fill: var(--hh-blush); }
+      .fa { fill: var(--hh-accent); }
+      .fw { fill: var(--hh-window); }
+    }
+    .hedgehog-torso {
+      transform-box: fill-box;
+      transform-origin: 50% 65%;
+      animation: hh-tilt 0.6s ease-in-out infinite;
+    }
+    .hedgehog-quills {
+      transform-box: fill-box;
+      transform-origin: 65% 60%;
+      animation: hh-quills 0.5s ease-in-out infinite;
+    }
+    .hedgehog-leg-front,
+    .hedgehog-leg-back {
+      transform-box: fill-box;
+      animation: hh-leg-swing var(--leg-duration, 0.5s) linear infinite;
+    }
+    .hedgehog-leg-front {
+      transform-origin: 35% 20%;
+    }
+    .hedgehog-leg-back {
+      transform-origin: 65% 20%;
+      animation-delay: calc(var(--leg-duration, 0.5s) * -0.5);
+    }
+    .hedgehog-eye {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: hh-blink 3s ease-in-out infinite;
+    }
+    @keyframes hh-leg-swing {
+      0%, 100% { transform: rotate(-16deg); }
+      50% { transform: rotate(16deg); }
+    }
+    @keyframes hh-tilt {
+      0%, 100% { transform: rotate(-6deg); }
+      50% { transform: rotate(6deg); }
+    }
+    @keyframes hh-quills {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-1.5deg); }
+    }
+    @keyframes hh-blink {
+      0%, 94.6%, 98%, 100% { transform: scaleY(1); }
+      96.3% { transform: scaleY(0.1); }
+    }
+  </style>
+
+  <g class="s" stroke="#3b2a1a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Задняя пара лапок (отведена назад) -->
+    <g class="hedgehog-leg-back">
+      <path class="fs" fill="#dec29b" d="M23 41.5c-.8 2.5-2.2 5.2-3.5 6.5-1.1 1.1-3.2.8-3.2-.6 0-1.1 1.2-2.2 2.2-5.9z"/>
+      <path class="fb" fill="#f0dcc0" d="M17.5 41.2c-1 2.8-2.8 6-4.3 7.4-1.3 1.2-3.5.7-3.4-.8.1-1.2 1.5-2.5 2.8-6.6z"/>
+    </g>
+
+    <!-- Передняя пара лапок (выдвинута вперёд) -->
+    <g class="hedgehog-leg-front">
+      <path class="fs" fill="#dec29b" d="M39 40.5c1.5 2.2 3.8 4.8 5.2 5.8 1.2.9 3.1.1 2.8-1.2-.2-1-1.6-2-3.4-5.2z"/>
+      <path class="fb" fill="#f0dcc0" d="M33.5 41.2c1.6 2.5 4 5.5 5.6 6.7 1.3 1 3.4.2 3.1-1.3-.2-1.1-1.8-2.3-3.7-6z"/>
+    </g>
+
+    <!-- Группа корпуса и головы (независимое покачивание ±6°) -->
+    <g class="hedgehog-torso">
+      <!-- Туловище и хвостик -->
+      <g class="hedgehog-body">
+        <path class="fs" fill="#dec29b" d="M8.7 39.2c-2.2.2-3-1.1-1.8-2.2.8-.8 2.1-.4 2.6.4z"/>
+        <path class="fb" fill="#f0dcc0" d="M9 37.5c0 5.2 7.5 6.8 18.5 6.8 4.5 0 8.5-.4 11.5-1.2V33H15.5c-4 0-6.5 2-6.5 4.5z"/>
+      </g>
+
+      <!-- Иголки (основа #8b5e34 + тёмные кончики #6b4423) -->
+      <g class="hedgehog-quills">
+        <path class="fqd" fill="#6b4423" d="M39.5 23.5L36.3 19l-3.2 2-3.8-3.8-3 2.5-4.5-3-2.2 2.8-4.8-2-1.4 3.2-4.8-.6.4 3.5-4.2 1 1.5 3.3-3.2 2.2 2.5 2.7-1.8 2.8 4.8 1.8c6 1.2 19 0 28.3-7.4z"/>
+        <path class="fq" fill="#8b5e34" d="M40.3 24.5l-3-3-2.8 1.6-3.6-3-2.6 2.2-4.2-2.5-2 2.5-4.5-1.5-1.2 2.8-4.4-.2.5 3.2-3.6 1.1 1.5 2.9-2.6 2.1 2.6 2.5-1.2 2.3c5.8 2.4 16.8 2.4 24.5-.2 1.8-3.2 2.2-7.5 6-12.8z"/>
+        <path fill="none" stroke="#6b4423" stroke-width="1.4" d="M14 26.8l4.2-1.1m2.3-.6l4.2-.8m2.8.8l4.2-.2M12.3 31.6l4.5-1.1m2.5-.3l4.5-.8m2.5.6l4.5-.5M14 35.8l4.8-.8m3-.2l4.5-.8"/>
+      </g>
+
+      <!-- Голова целиком (морда, окно в зубах, шарфик, ухо, румянец, нос, глаз) -->
+      <g class="hedgehog-head">
+        <!-- Нижняя часть головы и челюсть (под окном) -->
+        <path class="fb" fill="#f0dcc0" stroke="none" d="M33 37l5-11c3.5 2.2 7 5.2 10.8 7.2l.2 6c-3.5 2.2-8.2 3.6-14.8 3.9z"/>
+        <path fill="none" d="M49.2 39.2c-3.6 2.1-8.5 3.6-14.4 3.9"/>
+
+        <!-- Перетаскиваемое окно-виджет в пасти -->
+        <g class="hedgehog-window" transform="rotate(10 52 39)">
+          <rect class="fw" fill="#ffffff" x="47.8" y="36.2" width="13.2" height="9.6" rx="1.6"/>
+          <path class="fa" fill="#818cf8" d="M47.8 37.8a1.6 1.6 0 0 1 1.6-1.6h10a1.6 1.6 0 0 1 1.6 1.6v1.7H47.8z"/>
+          <path fill="none" stroke="#818cf8" stroke-width="1.2" d="M50.3 42h4.8m-4.8 2h7.6"/>
+        </g>
+
+        <!-- Верхняя часть морды (перекрывает верхний край окна — держит его в зубах) -->
+        <path class="fb" fill="#f0dcc0" stroke="none" d="M33.5 36.5l5.2-12c3.8 2.5 7.6 5.8 11.8 7.8 2.5 1.2 4.8 1.9 4.8 3 0 .9-1.4 1.9-3.4 2.7-2.2.2-4.5-.2-6.2-1.2L35 41z"/>
+        <path fill="none" d="M38.7 24.5c3.8 2.5 7.6 5.8 11.8 7.8 2.5 1.2 4.8 1.9 4.8 3 0 .9-1.5 1.9-3.6 2.7-1.8.2-3.8-.1-5.2-.9"/>
+
+        <!-- Акцентный шарфик (#818cf8) -->
+        <path class="fa" fill="#818cf8" d="M34 36.2c.8 2.8 2.2 5.2 4.4 6.7l-2.6 1c-2.2-1.5-3.6-3.9-4.2-6.8z"/>
+
+        <!-- Ухо -->
+        <path class="fb" fill="#f0dcc0" d="M36 28.8c-1.8-2.2-.8-5.5 1.7-5.2 2.2.3 3.1 3 1.6 5.6"/>
+        <path class="fs" fill="#dec29b" stroke="none" d="M36.9 28.1c-.7-1.3-.2-3 1-2.8 1 .2 1.3 1.5.5 2.9z"/>
+
+        <!-- Румянец и нос -->
+        <ellipse class="fbl" fill="#f4a3a3" stroke="none" cx="45.8" cy="36.2" rx="2.2" ry="1.1"/>
+        <ellipse class="fd" fill="#1f2937" stroke="none" cx="55" cy="35" rx="1.9" ry="1.5" transform="rotate(8 55 35)"/>
+
+        <!-- Глаз (отдельная группа для моргания) -->
+        <g class="hedgehog-eye" stroke="none">
+          <circle class="fd" fill="#1f2937" cx="44.7" cy="32.2" r="1.9"/>
+          <circle fill="#ffffff" cx="45.3" cy="31.6" r="0.6"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,4 +1,8 @@
-// Расписание преподавателей — виджеты-карточки под друзьями.
+// Расписание преподавателей.
+// v3.14.2:
+//   • saveTeachersOrder работает при недоступном localStorage
+//     (in-memory override).
+//   • fetchTrackedTeachers защищён счётчиком поколений.
 
 let teachersAllList = null;
 let trackedTeachers = [];
@@ -7,6 +11,72 @@ let visibleTeachers = new Set(
     JSON.parse(localStorage.getItem('visibleTeachers') || '[]')
 );
 let _teacherInitDone = false;
+
+let _verticalTeacherIndex = 0;
+
+let _teachersOrderOverride = null;
+let _teachersGeneration = 0;
+
+function loadTeachersOrder() {
+    if (Array.isArray(_teachersOrderOverride)) return _teachersOrderOverride.slice();
+    try {
+        const raw = localStorage.getItem('teachersOrder');
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+}
+
+function saveTeachersOrder() {
+    const ids = trackedTeachers.map(t => t.id);
+    _teachersOrderOverride = ids.slice();
+    try {
+        localStorage.setItem('teachersOrder', JSON.stringify(ids));
+    } catch (e) {
+        console.warn('[teachers] не удалось записать порядок в localStorage:', e);
+    }
+}
+
+function applyTeachersOrder() {
+    const order = loadTeachersOrder();
+    if (!Array.isArray(order) || order.length === 0) return;
+    trackedTeachers.sort((a, b) => {
+        let ai = order.indexOf(a.id); if (ai === -1) ai = Number.MAX_SAFE_INTEGER;
+        let bi = order.indexOf(b.id); if (bi === -1) bi = Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+    });
+}
+
+// ============================================================
+//  ПРОКРУТКА ПО КРУГУ
+// ============================================================
+
+let _rotateTeachersBusy = false;
+
+function rotateTeachersRight() {
+    if (_rotateTeachersBusy) return;
+    if (!Array.isArray(trackedTeachers) || trackedTeachers.length < 2) return;
+
+    _rotateTeachersBusy = true;
+    _teachersGeneration++;
+
+    const before = trackedTeachers.map(t => t.id);
+
+    const last = trackedTeachers.pop();
+    trackedTeachers.unshift(last);
+    saveTeachersOrder();
+    _verticalTeacherIndex = 0;
+    renderTeachersCalendars();
+
+    const after = trackedTeachers.map(t => t.id);
+    if (before.length > 1 && before[0] === after[0] && before.join(',') === after.join(',')) {
+        console.warn('[teachers] ротация не дала изменений', { before, after });
+    }
+
+    if (typeof _syncFriendsTeachersZone === 'function') {
+        try { _syncFriendsTeachersZone(); } catch (e) {}
+    }
+
+    setTimeout(() => { _rotateTeachersBusy = false; }, 250);
+}
 
 function toggleTeacherPairDetails(cardEl) {
     if (!cardEl) return;
@@ -113,25 +183,34 @@ async function ensureAllTeachersLoaded() {
 }
 
 async function fetchTrackedTeachers() {
+    const myGen = ++_teachersGeneration;
+
+    let list = [];
     try {
         const resp = await fetch('/api/tracked_teachers');
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        trackedTeachers = await resp.json();
-        let changed = false;
-        trackedTeachers.forEach(t => {
-            if (!visibleTeachers.has(t.id)) {
-                const savedRaw = localStorage.getItem('visibleTeachers');
-                if (savedRaw === null) {
-                    visibleTeachers.add(t.id);
-                    changed = true;
-                }
-            }
-        });
-        if (changed) saveVisibleTeachers();
+        list = await resp.json();
     } catch (e) {
         console.error('[teachers] load tracked failed', e);
-        trackedTeachers = [];
+        list = [];
     }
+
+    if (myGen !== _teachersGeneration) return;
+
+    trackedTeachers = Array.isArray(list) ? list : [];
+    applyTeachersOrder();
+
+    let changed = false;
+    trackedTeachers.forEach(t => {
+        if (!visibleTeachers.has(t.id)) {
+            const savedRaw = localStorage.getItem('visibleTeachers');
+            if (savedRaw === null) {
+                visibleTeachers.add(t.id);
+                changed = true;
+            }
+        }
+    });
+    if (changed) saveVisibleTeachers();
 }
 
 async function fetchAllTeacherSchedules() {
@@ -260,6 +339,7 @@ function renderTeacherSuggestions(query) {
 }
 
 async function addTrackedTeacher(slug, name) {
+    let newId = null;
     try {
         const resp = await fetch('/api/tracked_teachers', {
             method: 'POST',
@@ -269,6 +349,7 @@ async function addTrackedTeacher(slug, name) {
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         if (data && data.id) {
+            newId = data.id;
             visibleTeachers.add(data.id);
             saveVisibleTeachers();
         }
@@ -283,6 +364,16 @@ async function addTrackedTeacher(slug, name) {
     if (modal) modal.hide();
 
     await fetchTrackedTeachers();
+
+    if (newId !== null) {
+        const order = loadTeachersOrder() || [];
+        if (Array.isArray(order) && !order.includes(newId)) {
+            order.push(newId);
+            _teachersOrderOverride = order.slice();
+            try { localStorage.setItem('teachersOrder', JSON.stringify(order)); } catch (e) {}
+        }
+    }
+
     renderTeacherDropdown();
     renderTeachersCalendars();
 
@@ -307,16 +398,208 @@ async function deleteTrackedTeacher(id) {
 
     visibleTeachers.delete(id);
     saveVisibleTeachers();
+    _verticalTeacherIndex = 0;
+
+    const order = loadTeachersOrder();
+    if (Array.isArray(order)) {
+        const idx = order.indexOf(id);
+        if (idx !== -1) {
+            order.splice(idx, 1);
+            _teachersOrderOverride = order.slice();
+            try { localStorage.setItem('teachersOrder', JSON.stringify(order)); } catch (e) {}
+        }
+    }
 
     await fetchTrackedTeachers();
     renderTeacherDropdown();
     renderTeachersCalendars();
 }
 
+// ============================================================
+//  ПОДСЧЁТ ОБЩИХ ПАР (для преподавателей)
+// ============================================================
+
+function _countCommonPairsForTeacher(teacherDayPairs, myDaySchedule) {
+    const myGroup = (document.getElementById('groupSelect')?.value || '').trim().toUpperCase();
+    if (!myGroup || !teacherDayPairs.length || !myDaySchedule.length) return 0;
+
+    let count = 0;
+    teacherDayPairs.forEach(p => {
+        if (!Array.isArray(p.groups)) return;
+        const hasMyGroup = p.groups.some(g => String(g).toUpperCase() === myGroup);
+        if (!hasMyGroup) return;
+        const timeMatch = myDaySchedule.find(m => m.time_range === p.time_range);
+        if (timeMatch) count++;
+    });
+    return count;
+}
+
+// ============================================================
+//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: НАВИГАЦИЯ
+// ============================================================
+
+function _isTeachersSectionVertical() {
+    const s = document.getElementById('teachersSection');
+    if (!s) return false;
+    return !_isWideZone(s.parentElement);
+}
+
+function _getVerticalTeachersList() {
+    if (!Array.isArray(trackedTeachers)) return [];
+    return trackedTeachers;
+}
+
+function verticalTeacherPrev() {
+    const list = _getVerticalTeachersList();
+    if (list.length === 0) return;
+    _verticalTeacherIndex = (_verticalTeacherIndex - 1 + list.length) % list.length;
+    renderTeachersCalendars();
+}
+
+function verticalTeacherNext() {
+    const list = _getVerticalTeachersList();
+    if (list.length === 0) return;
+    _verticalTeacherIndex = (_verticalTeacherIndex + 1) % list.length;
+    renderTeachersCalendars();
+}
+
+// ============================================================
+//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: РЕНДЕР
+// ============================================================
+
+async function _renderTeachersVertical() {
+    const container = document.getElementById('teachersCalendarsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    container.classList.add('is-vertical');
+
+    const list = _getVerticalTeachersList();
+
+    if (list.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎓</div>
+                <div class="empty-state-title">Пока никого нет</div>
+                <div class="empty-state-text">Добавьте преподавателя в горизонтальном режиме.</div>
+            </div>`;
+        return;
+    }
+
+    if (_verticalTeacherIndex >= list.length) _verticalTeacherIndex = 0;
+    const teacher = list[_verticalTeacherIndex];
+
+    const showSwitchBtn = (typeof separateFriendsTeachers !== 'undefined')
+        && !separateFriendsTeachers
+        && (typeof showFriendsSection !== 'undefined') && showFriendsSection;
+
+    const switchHtml = showSwitchBtn
+        ? `<div class="fv-switch-row">
+               <button type="button" class="fv-switch-btn"
+                       onclick="switchFriendsTeachersTab('friends')"
+                       title="Показать друзей">👥 Друзья</button>
+           </div>`
+        : '';
+
+    if (!(teacher.slug in teacherSchedulesCache)) {
+        container.innerHTML = `
+            <div class="teacher-vertical-card">
+                <div class="fv-nav-row">
+                    <button type="button" class="fv-arrow" onclick="verticalTeacherPrev()" title="Предыдущий">‹</button>
+                    <div class="fv-name-wrap">
+                        <div class="fv-name">🎓 ${escapeHtml(teacher.name)}</div>
+                    </div>
+                    <button type="button" class="fv-arrow" onclick="verticalTeacherNext()" title="Следующий">›</button>
+                </div>
+                <div class="fv-counter">${_verticalTeacherIndex + 1} / ${list.length}</div>
+                <div class="fv-empty">Загрузка расписания…</div>
+                ${switchHtml}
+            </div>`;
+        await loadTeacherSchedule(teacher.slug);
+        if (!_isTeachersSectionVertical()) return;
+        if (list[_verticalTeacherIndex] !== teacher) return;
+        renderTeachersCalendars();
+        return;
+    }
+
+    const pairs = teacherSchedulesCache[teacher.slug] || [];
+
+    const date = _getVerticalDate();
+    const dateStr = getLocalDateStr(date);
+    const todayStr = getLocalDateStr(new Date());
+    const isToday = dateStr === todayStr;
+
+    const dayPairs = pairs
+        .filter(p => p.date === dateStr)
+        .sort((a, b) => (a.n || 0) - (b.n || 0));
+
+    const myDaySched = cachedSchedule.filter(p => p.date === dateStr);
+
+    let summaryHtml = '';
+    if (dayPairs.length === 0) {
+        summaryHtml = `<div class="fv-empty">Выходной</div>`;
+    } else {
+        const fStart = dayPairs[0].time_range.split(' - ')[0].trim();
+        const fEnd   = dayPairs[dayPairs.length - 1].time_range.split(' - ')[1].trim();
+
+        const locations = new Set();
+        dayPairs.forEach(p => {
+            if (p.location) locations.add(p.location);
+        });
+        const locStr = [...locations].slice(0, 3).join(', ');
+
+        const commonCount = _countCommonPairsForTeacher(dayPairs, myDaySched);
+        const commonHtml = commonCount > 0
+            ? `<div class="fv-common">🤝 ${commonCount} ${plural(commonCount, 'общая пара', 'общие пары', 'общих пар')}</div>`
+            : '';
+
+        summaryHtml = `
+            <div class="fv-time">🕒 ${fStart} — ${fEnd}</div>
+            ${locStr ? `<div class="fv-campus">📍 ${escapeHtml(locStr)}</div>` : ''}
+            <div class="fv-pairs-count">${dayPairs.length} ${plural(dayPairs.length, 'пара', 'пары', 'пар')}</div>
+            ${commonHtml}
+        `;
+    }
+
+    const dateLabel = date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+
+    container.innerHTML = `
+        <div class="teacher-vertical-card">
+            <div class="fv-nav-row">
+                <button type="button" class="fv-arrow" onclick="verticalTeacherPrev()" title="Предыдущий">‹</button>
+                <div class="fv-name-wrap">
+                    <div class="fv-name">🎓 ${escapeHtml(teacher.name)}</div>
+                </div>
+                <button type="button" class="fv-arrow" onclick="verticalTeacherNext()" title="Следующий">›</button>
+            </div>
+            <div class="fv-counter">${_verticalTeacherIndex + 1} / ${list.length}</div>
+
+            <div class="fv-day-row">
+                <button type="button" class="fv-day-arrow" onclick="verticalDayPrev()" title="Предыдущий день">‹</button>
+                <div class="fv-date">${dateLabel}${isToday ? ' · сегодня' : ''}</div>
+                <button type="button" class="fv-day-arrow" onclick="verticalDayNext()" title="Следующий день">›</button>
+            </div>
+
+            <div class="fv-summary">${summaryHtml}</div>
+            ${switchHtml}
+        </div>
+    `;
+}
+
+// ============================================================
+//  ОСНОВНОЙ РЕНДЕР
+// ============================================================
+
 function renderTeachersCalendars() {
+    if (_isTeachersSectionVertical()) {
+        _renderTeachersVertical();
+        return;
+    }
+
     const container = document.getElementById('teachersCalendarsContainer');
     if (!container) return;
     container.innerHTML = '';
+    container.classList.remove('is-vertical');
 
     if (!trackedTeachers || trackedTeachers.length === 0) {
         container.innerHTML = `

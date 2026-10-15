@@ -1,6 +1,18 @@
 /* ============================================================
    fixes.css — патч поверх style.css
-   v3.6.8
+   v3.9.1
+   ------------------------------------------------------------
+   Изменения относительно v3.6.8:
+     • #underCalendarWidgetsZone переведена в column-раскладку.
+     • Убраны правила body.widget-dragging #widgetMiniCalCard.
+     • Исправлена опечатка //* → /* в секции 20.
+     • v3.7.4: список деталей виджета-графика переработан.
+     • v3.8.1: при драге виджета карточки друзей/преподавателей
+       сворачиваются; при драге самой секции она не скрывается.
+     • v3.9.0: вертикальный режим секций друзей и преподавателей
+       (компактная карточка с навигацией по людям и дням).
+     • v3.9.1: в вертикальном режиме прячем панели управления;
+       добавлен стиль .fv-common для строки общих пар.
    ============================================================ */
 
 /* ============================================================
@@ -228,40 +240,45 @@ textarea {
     position: relative;
     z-index: 1;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     gap: 12px;
-    align-items: flex-start;
+    align-items: stretch;
     min-height: 0;
 }
 
+/* Пустая зона в спокойном состоянии не занимает места. */
 #underCalendarWidgetsZone:empty {
     display: none;
 }
 
-body.widget-dragging #underCalendarWidgetsZone:empty,
-body.widget-dragging #rightWidgetsZone:empty {
+/* Пока пользователь тащит любой виджет — у обеих зон гарантированно
+   ненулевая высота. Без этого elementFromPoint не находит пустую
+   #underCalendarWidgetsZone (0px), и drop в неё не срабатывает.
+   Правило намеренно БЕЗ :empty — :empty капризен и может не матчиться,
+   если в зоне остался невидимый мусор. */
+body.widget-dragging #underCalendarWidgetsZone,
+body.widget-dragging #rightWidgetsZone {
     display: flex;
     min-height: 80px;
+}
+
+/* Красивая подсказка «сюда можно бросить» — только для пустых зон.
+   Для непустой зоны пунктир не рисуется, чтобы не обрамлять виджеты. */
+body.widget-dragging #underCalendarWidgetsZone:empty,
+body.widget-dragging #rightWidgetsZone:empty {
     border: 2px dashed var(--border-color);
     border-radius: 12px;
     background: var(--bg-surface-alt);
+    padding: 12px;
 }
 
 #underCalendarWidgetsZone > .widget-card,
 #underCalendarWidgetsZone > [data-draggable-section] {
-    flex: 1 1 320px;
-    max-width: 420px;
-    min-width: 260px;
-}
-
-#underCalendarWidgetsZone > #widgetMiniCalCard:not(.is-horizontal) {
-    flex: 0 1 340px;
-    max-width: 340px;
-}
-
-#underCalendarWidgetsZone > #widgetMiniCalCard.is-horizontal {
-    flex: 1 1 100%;
+    flex: 0 0 auto;
+    width: 100%;
     max-width: none;
+    min-width: 0;
 }
 
 #mainColumnSections > #widgetMiniCalCard.is-horizontal {
@@ -278,12 +295,13 @@ body.widget-dragging #rightWidgetsZone:empty {
     border: 2px dashed var(--accent);
     border-radius: 12px;
     background: var(--accent-soft);
-    opacity: 0.45;
+    opacity: 0.55;
     pointer-events: none;
     box-sizing: border-box;
     flex: 0 0 auto;
     min-height: 40px;
     min-width: 40px;
+    z-index: 1;
 }
 
 /* ============================================================
@@ -402,21 +420,6 @@ body.widget-dragging #rightWidgetsZone:empty {
     box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-sm);
 }
 
-body.widget-dragging #widgetMiniCalCard {
-    flex: 1 1 320px !important;
-    max-width: 420px !important;
-    min-width: 260px !important;
-    width: auto !important;
-}
-
-body.widget-dragging #widgetMiniCalCard .mini-cal-body-row {
-    display: block !important;
-}
-
-body.widget-dragging #widgetMiniCalCard .mini-cal-events {
-    display: none !important;
-}
-
 body.widget-dragging .widget-card,
 body.widget-dragging .widget-body-row,
 body.widget-dragging .widget-canvas-wrap,
@@ -448,22 +451,30 @@ body.widget-dragging .mini-cal-events {
     display: none;
     flex: 0 0 55%;
     min-width: 0;
-    max-height: 200px;
+    max-height: 260px;
     overflow-y: auto;
     font-size: 0.78em;
+    line-height: 1.3;
     padding-left: 10px;
+    padding-right: 14px;
     border-left: 1px solid var(--border-soft);
+    scrollbar-gutter: stable;
 }
 
 .widget-details-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 8px;
-    padding: 3px 0;
-    border-bottom: 1px solid var(--border-soft);
+    gap: 12px;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.12s ease;
 }
 .widget-details-row:last-child { border-bottom: none; }
+
+.widget-details-row:hover {
+    background: var(--bg-surface-alt);
+}
 
 .widget-details-title {
     flex: 1 1 auto;
@@ -491,8 +502,10 @@ body.widget-dragging .mini-cal-events {
 .widget-card.is-horizontal .widget-details-wrap {
     display: block !important;
     flex: 1 1 auto;
-    max-height: 180px;
+    max-height: 260px;
+    padding-right: 14px;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 /* ============================================================
@@ -1055,15 +1068,12 @@ body.widget-dragging .mini-cal-events {
 }
 
 /* ============================================================
-   20. МИНИ-КАЛЕНДАРЬ В ГОРИЗОНТАЛЬНОМ РЕЖИМЕ
+   20. ГОРИЗОНТАЛЬНЫЙ РЕЖИМ ВИДЖЕТОВ
    ------------------------------------------------------------
-   v3.6.8:
-     • Разделители между календарём и колонками, а также
-       между «Заметками» и «Событиями» — усилены до 2px и
-       цвета --border-color (был --border-soft — почти невидим).
-     • Убран горизонтальный скролл: overflow-x: hidden на
-       колонках и на контейнере. Длинные слова переносятся
-       благодаря min-width: 0 + overflow-wrap: break-word.
+   v3.7.0: убран :is() — селекторы конфликтовали по специфичности
+   с внутренними правилами и давали смешанные стили. Теперь
+   только чистый класс .widget-card.is-horizontal, который
+   навешивает state.js.
    ============================================================ */
 
 .mini-cal-body-row {
@@ -1085,7 +1095,6 @@ body.widget-dragging .mini-cal-events {
     max-width: 340px;
 }
 
-/* Разделитель №1: между календарём и панелью */
 .widget-card.is-horizontal .mini-cal-events {
     display: block;
     flex: 1 1 auto;
@@ -1097,7 +1106,27 @@ body.widget-dragging .mini-cal-events {
     overflow-x: hidden;
 }
 
-/* --- Двухколоночная раскладка --- */
+/* Графиковые виджеты («Остаток пар», «Лабораторные») */
+
+.widget-card.is-horizontal .widget-body-row {
+    align-items: flex-start;
+}
+
+.widget-card.is-horizontal .widget-canvas-wrap {
+    flex: 0 0 180px;
+    height: 180px;
+}
+
+.widget-card.is-horizontal .widget-details-wrap {
+    display: block !important;
+    flex: 1 1 auto;
+    max-height: 260px;
+    padding-right: 14px;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+/* --- Двухколоночная раскладка событий --- */
 
 .mini-cal-events-cols {
     display: flex;
@@ -1119,13 +1148,10 @@ body.widget-dragging .mini-cal-events {
     padding-left: 0;
 }
 
-/* Разделитель №2: между «Заметками» и «Событиями» */
 .mini-cal-events-col:last-child {
     padding-right: 0;
     border-left: 2px solid var(--border-color);
 }
-
-/* --- Заголовок колонки --- */
 
 .mini-cal-events-col-header {
     font-size: 0.82em;
@@ -1141,8 +1167,6 @@ body.widget-dragging .mini-cal-events {
     background: var(--bg-surface);
     z-index: 1;
 }
-
-/* --- Строка события/заметки --- */
 
 .mini-cal-events-item {
     display: flex;
@@ -1199,4 +1223,230 @@ body.widget-dragging .mini-cal-events {
     color: var(--text-muted);
     font-size: 0.82em;
     font-style: italic;
+}
+
+/* ============================================================
+   21. СВОРАЧИВАНИЕ ДРУЗЕЙ И ПРЕПОДАВАТЕЛЕЙ ПРИ ПЕРЕТАСКИВАНИИ
+/* Пока тащат любой виджет ИЛИ саму секцию — карточки внутри
+   сворачиваются. Ручка ⋮⋮ живёт в #friendsControlsPanel /
+   #teachersControlsPanel и остаётся видимой, потому что мы прячем
+   только контейнер с карточками (.friends-list-wrapper /
+   #teachersCalendarsContainer), а не всю секцию.
+
+   Раньше здесь стояло :not(.widget-dragging) — защита от того,
+   что native DnD отменится, если источник скрылся. После перехода
+   на Pointer Events она больше не нужна.
+
+   !important обязателен для #teachersCalendarsContainer:
+   у него класс .d-flex от Bootstrap (display: flex !important). */
+body.widget-dragging #friendsSection:not(.is-vertical) .friends-list-wrapper,
+body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContainer {
+    display: none !important;
+}
+
+/* ============================================================
+   22. ВЕРТИКАЛЬНЫЙ РЕЖИМ СЕКЦИЙ
+   ------------------------------------------------------------
+   Секция попадает в узкую колонку (#rightWidgetsZone) — получает
+   класс .is-vertical (см. _applyHorizontalLayoutSync в state.js).
+   Рендерер в JS переключается на компактную карточку с навигацией
+   по людям (‹ / ›) и дням (‹ / ›). Здесь — только оформление.
+   ============================================================ */
+
+/* Панели «+ Добавить …» и «Кого показывать?» в вертикальном режиме
+   не нужны, но ручка переноса (.section-drag-handle) живёт именно
+   внутри этих панелей — поэтому скрываем только содержимое, а сам
+   контейнер делаем прозрачным без рамок и отступов. */
+[data-draggable-section].is-vertical #friendsControlsPanel,
+[data-draggable-section].is-vertical #teachersControlsPanel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 0 6px 0 !important;
+    gap: 0 !important;
+    min-height: 0 !important;
+}
+
+[data-draggable-section].is-vertical #friendsControlsPanel > *:not(.section-drag-handle),
+[data-draggable-section].is-vertical #teachersControlsPanel > *:not(.section-drag-handle) {
+    display: none !important;
+}
+
+/* Прячем элементы, которые в узкой колонке не нужны */
+[data-draggable-section].is-vertical .friends-nav-btn { display: none !important; }
+[data-draggable-section].is-vertical .friends-list-wrapper { padding: 0; }
+[data-draggable-section].is-vertical #teachersCalendarsContainer { padding-left: 0; padding-right: 0; }
+
+[data-draggable-section].is-vertical #friendsCalendarsContainer,
+[data-draggable-section].is-vertical #teachersCalendarsContainer {
+    margin-bottom: 0;
+}
+
+/* --- Карточка вертикального режима --- */
+
+.friend-vertical-card,
+.teacher-vertical-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fv-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fv-arrow {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    font-size: 1em;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fv-arrow:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    border-color: var(--accent-border);
+}
+
+.fv-name-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+}
+
+.fv-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.9em;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fv-group {
+    color: var(--text-muted);
+    font-size: 0.75em;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fv-counter {
+    text-align: center;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+.fv-day-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.fv-day-arrow {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.fv-day-arrow:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+}
+
+.fv-date {
+    flex: 1 1 auto;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.82em;
+    text-transform: capitalize;
+}
+
+.fv-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-soft);
+}
+.fv-time { color: var(--text-primary); font-weight: 600; }
+.fv-campus { color: var(--text-muted); }
+.fv-pairs-count { font-size: 0.88em; color: var(--text-muted); }
+.fv-empty {
+    padding: 8px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.85em;
+}
+
+/* Строка общих пар в вертикальной карточке */
+.fv-common {
+    color: var(--status-green);
+    font-weight: 600;
+}
+/* Строка с кнопкой переключения виджета (Друзья ↔ Преподаватели)
+   в вертикальном режиме, когда оба объединены. */
+.fv-switch-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.fv-switch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    font-size: 0.78em;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.fv-switch-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    border-color: var(--accent-border);
 }
