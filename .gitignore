@@ -79,6 +79,12 @@ secrets.json
 *.pem
 *.key
 
+# --- СЕССИИ И ДАННЫЕ ЕЖ ПРО (MOODLE) ---
+# ВАЖНО: Здесь хранятся ваши куки авторизации и кэш оценок.
+# НИ В КОЕМ СЛУЧАЕ не коммитить в Git!
+moodle_cookies.json
+moodle_stats_cache.json
+
 # --- IDE ---
 .vscode/
 !.vscode/settings.json
