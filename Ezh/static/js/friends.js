@@ -1,19 +1,16 @@
 // Друзья: список, папки, drag-n-drop, синхронизация расписаний.
-// v3.14.2:
-//   • saveFriendsOrder работает даже при недоступном localStorage —
-//     хранит порядок в памяти (in-memory override).
-//   • fetchFriends защищён счётчиком поколений: ответы, стартовавшие
-//     до ротации, отбрасываются и не откатывают порядок.
+// v3.15.2:
+//   • fetchAllFriendsSchedules и syncFriendsSchedules дедуплицируют
+//     запросы по ключу group__subgroup. Если три друга в одной группе —
+//     уходит один HTTP-запрос, а не три.
+//   • saveFriendsOrder работает при недоступном localStorage.
+//   • fetchFriends защищён счётчиком поколений.
 
 const campusNames = { 'galosha': 'Галоша', 'gogol': 'Гоголя', 'univer': 'Университетская' };
 
 let _verticalFriendIndex = 0;
 
-// In-memory копия порядка. Всегда актуальна; localStorage — лишь персистентный бэкап.
 let _friendsOrderOverride = null;
-
-// Счётчик поколений. Увеличивается при ротации; fetchFriends сравнивает
-// свой начальный номер с текущим и игнорирует устаревший ответ.
 let _friendsGeneration = 0;
 
 function loadFriendsOrder() {
@@ -55,9 +52,6 @@ function rotateFriendsRight() {
     if (!Array.isArray(friendsList) || friendsList.length < 2) return;
 
     _rotateFriendsBusy = true;
-
-    // Отменяем все незавершённые fetchFriends — они не должны
-    // перезаписать порядок своими устаревшими данными.
     _friendsGeneration++;
 
     const before = friendsList.map(f => f.id);
@@ -70,7 +64,6 @@ function rotateFriendsRight() {
 
     const after = friendsList.map(f => f.id);
 
-    // Диагностика: если порядок не изменился — сообщаем в консоль.
     if (before.length > 1 && before[0] === after[0] && before.join(',') === after.join(',')) {
         console.warn('[friends] ротация не дала изменений', { before, after });
     }
@@ -95,8 +88,6 @@ async function fetchFriends() {
         list = [];
     }
 
-    // Пока шёл запрос — прошла ротация или другой fetch.
-    // Наш ответ устарел, не перезаписываем состояние.
     if (myGen !== _friendsGeneration) {
         if (loader) loader.style.display = 'none';
         return;
@@ -306,19 +297,44 @@ function hideAllFriends(e) {
     renderFriendsCalendar();
 }
 
+// ============================================================
+//  ЗАГРУЗКА РАСПИСАНИЙ ДРУЗЕЙ
+// ------------------------------------------------------------
+//  Дедупликация: если несколько друзей в одной группе и
+//  подгруппе, HTTP-запрос уходит один раз, результат
+//  раздаётся всем. Раньше было N запросов на N друзей, и
+//  при 5 друзьях rate-limit /api/schedule_all срабатывал
+//  уже после пятой перезагрузки страницы.
+// ============================================================
+
+function _friendScheduleKey(friend) {
+    return `${friend.group}__${friend.subgroup || '0'}`;
+}
+
 async function fetchAllFriendsSchedules() {
-    let promises = friendsList.map(async (friend) => {
-        if (!friendsSchedules[friend.id]) {
-            try {
-                let data = await apiLoadSchedule(friend.group, friend.subgroup);
-                friendsSchedules[friend.id] = applyTimeFix(data);
-                if (visibleFriends.has(friend.id)) renderFriendsCalendar();
-            } catch (e) {
-                friendsSchedules[friend.id] = [];
-            }
+    const pending = new Map();  // key → Promise<schedule>
+
+    const tasks = friendsList.map(async (friend) => {
+        if (friendsSchedules[friend.id]) return;
+
+        const key = _friendScheduleKey(friend);
+        let p = pending.get(key);
+        if (!p) {
+            p = apiLoadSchedule(friend.group, friend.subgroup)
+                .then(data => applyTimeFix(data))
+                .catch(e => {
+                    console.error('[friends] load failed', key, e);
+                    return [];
+                });
+            pending.set(key, p);
         }
+
+        const data = await p;
+        friendsSchedules[friend.id] = data;
+        if (visibleFriends.has(friend.id)) renderFriendsCalendar();
     });
-    await Promise.all(promises);
+
+    await Promise.all(tasks);
 }
 
 async function syncFriendsSchedules(force = false) {
@@ -328,23 +344,40 @@ async function syncFriendsSchedules(force = false) {
     }
     window._lastFriendsSync = Date.now();
 
+    const pending = new Map();  // key → Promise<schedule|null>
+
     for (let friend of friendsList) {
-        try {
-            let newData = applyTimeFix(await apiSyncSchedule(friend.group, friend.subgroup));
-            if (Array.isArray(newData) && newData.length > 0) {
-                if (friendsSchedules[friend.id] && friendsSchedules[friend.id].length > 0
-                    && newData.length < friendsSchedules[friend.id].length * 0.9) {
-                    continue;
-                }
-                if (isScheduleDifferent(newData, friendsSchedules[friend.id])) {
-                    friendsSchedules[friend.id] = newData;
-                    if (visibleFriends.has(friend.id)) {
-                        renderFriendsCalendar();
-                        showUpdateNotification(`Расписание друга обновилось: ${friend.name}`);
-                    }
-                }
+        const key = _friendScheduleKey(friend);
+
+        let p = pending.get(key);
+        if (!p) {
+            p = apiSyncSchedule(friend.group, friend.subgroup)
+                .then(data => applyTimeFix(data))
+                .catch(e => {
+                    console.error('[friends] sync failed', key, e);
+                    return null;
+                });
+            pending.set(key, p);
+        }
+
+        let newData;
+        try { newData = await p; }
+        catch (e) { continue; }
+
+        if (!Array.isArray(newData) || newData.length === 0) continue;
+
+        if (friendsSchedules[friend.id] && friendsSchedules[friend.id].length > 0
+            && newData.length < friendsSchedules[friend.id].length * 0.9) {
+            continue;
+        }
+
+        if (isScheduleDifferent(newData, friendsSchedules[friend.id])) {
+            friendsSchedules[friend.id] = newData;
+            if (visibleFriends.has(friend.id)) {
+                renderFriendsCalendar();
+                showUpdateNotification(`Расписание друга обновилось: ${friend.name}`);
             }
-        } catch (e) { console.error("Ошибка синхронизации друга", e); }
+        }
     }
 }
 
@@ -464,10 +497,6 @@ function _allPairsMatch(myDaySchedule, friendDaySchedule) {
     );
 }
 
-// ============================================================
-//  ПОДСЧЁТ ОБЩИХ ПАР (для друзей)
-// ============================================================
-
 function _countCommonPairsForFriend(friendDaySchedule, myDaySchedule) {
     if (!friendDaySchedule.length || !myDaySchedule.length) return 0;
     let count = 0;
@@ -481,10 +510,6 @@ function _countCommonPairsForFriend(friendDaySchedule, myDaySchedule) {
     });
     return count;
 }
-
-// ============================================================
-//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: НАВИГАЦИЯ
-// ============================================================
 
 function _isFriendsSectionVertical() {
     const s = document.getElementById('friendsSection');
@@ -510,10 +535,6 @@ function verticalFriendNext() {
     _verticalFriendIndex = (_verticalFriendIndex + 1) % list.length;
     renderFriendsCalendar();
 }
-
-// ============================================================
-//  ВЕРТИКАЛЬНЫЙ РЕЖИМ: РЕНДЕР
-// ============================================================
 
 function _renderFriendsVertical() {
     const container = document.getElementById('friendsCalendarsContainer');
@@ -613,10 +634,6 @@ function _renderFriendsVertical() {
         </div>
     `;
 }
-
-// ============================================================
-//  ОСНОВНОЙ РЕНДЕР
-// ============================================================
 
 function renderFriendsCalendar(dir = null) {
     if (_isFriendsSectionVertical()) {

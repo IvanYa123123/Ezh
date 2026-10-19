@@ -1,0 +1,496 @@
+/* ============================================================
+   animations.css — централизованные анимации
+   ------------------------------------------------------------
+   v3.15.3 — направленная волна календаря переработана:
+
+     • Stagger привязан к классу .fade-in (только первый рендер).
+       Раньше селекторы .calendar-grid > *:nth-child(N) ловили
+       и slide-right/slide-left, поэтому волна била по всем
+       направлениям одинаково — шла слева направо по очереди.
+
+     • При листании (slide-right / slide-left) все колонки
+       анимируются без задержек — как единый блок. Это и даёт
+       эффект «перелистывания», а не «проявления».
+
+     • Направление (см. правила в секции 2):
+         →  (next week)  →  .slide-right  →  enterFromRight
+         ←  (prev week)  →  .slide-left   →  enterFromLeft
+
+   Остальные секции не менялись с v3.15.1.
+   ============================================================ */
+
+/* ============================================================
+   1. KEYFRAMES
+   ============================================================ */
+
+@keyframes animFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes animFadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes animFadeDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes animScaleIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes animSlideInLeft {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes animSlideInRight {
+    from { opacity: 0; transform: translateX(10px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Направленные: колонки календаря --- */
+
+@keyframes dayColEnterFromRight {
+    from { opacity: 0; transform: translateX(48px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dayColEnterFromLeft {
+    from { opacity: 0; transform: translateX(-48px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes animPulseSoft {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+}
+
+@keyframes animDropPulse {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 0.75; }
+}
+
+@keyframes animPulseRing {
+    0%   { box-shadow: 0 0 0 0 currentColor; }
+    70%  { box-shadow: 0 0 0 6px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes animSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@keyframes animBounceUp {
+    0%, 100% { transform: translateY(0); }
+    40%      { transform: translateY(-3px); }
+    60%      { transform: translateY(-1px); }
+}
+
+@keyframes animShake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-2px); }
+    50%      { transform: translateX(2px); }
+    75%      { transform: translateX(-1px); }
+}
+
+@keyframes taskCompletedPulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.97); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================================
+   2. КОЛОНКИ КАЛЕНДАРЯ — НАПРАВЛЕННАЯ ВОЛНА
+   ------------------------------------------------------------
+   Сдвиг только по X. getBoundingClientRect().top не меняется,
+   поэтому _layoutScheduleNotes работает во время анимации.
+
+   Порядок правил важен:
+     1) Отключаем анимацию родителя .calendar-grid.
+     2) Базовая волна + stagger — ТОЛЬКО для .fade-in.
+     3) Направленные override — БЕЗ stagger.
+   ============================================================ */
+
+/* --- Отключаем анимацию родителя ---
+   style.css анимирует .calendar-grid целиком (slideLeft/slideRight/
+   fadeIn). Это накладывается на детские анимации и размывает
+   эффект. Детей достаточно. */
+.calendar-grid.slide-right,
+.calendar-grid.slide-left,
+.calendar-grid.fade-in {
+    animation: none !important;
+}
+
+/* --- Базовая волна: первый рендер (fade-in) ---
+   Строго привязана к .fade-in. Другие режимы (.slide-right,
+   .slide-left) не задевает — у них своя анимация ниже. */
+
+.calendar-grid.fade-in > .day-col,
+.calendar-grid.fade-in > .friend-col,
+.calendar-grid.fade-in > .teacher-col {
+    animation-name: animFadeIn;
+    animation-duration: 0.22s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+/* Stagger — только внутри .fade-in. Все 7 колонок мерцают
+   каскадом слева направо. Уместно только при первом показе
+   недели, не при листании. */
+.calendar-grid.fade-in > *:nth-child(1) { animation-delay: 0.00s; }
+.calendar-grid.fade-in > *:nth-child(2) { animation-delay: 0.04s; }
+.calendar-grid.fade-in > *:nth-child(3) { animation-delay: 0.08s; }
+.calendar-grid.fade-in > *:nth-child(4) { animation-delay: 0.12s; }
+.calendar-grid.fade-in > *:nth-child(5) { animation-delay: 0.16s; }
+.calendar-grid.fade-in > *:nth-child(6) { animation-delay: 0.20s; }
+.calendar-grid.fade-in > *:nth-child(7) { animation-delay: 0.24s; }
+
+/* --- Направленные: листание ---
+   Все 7 колонок двигаются синхронно, единым блоком.
+   Никаких animation-delay — иначе получается волна. */
+
+/* Листание вперёд (→): контент уезжает ВЛЕВО.
+   Колонки стартуют на 48px правее и «доходят» до места. */
+.calendar-grid.slide-right > .day-col,
+.calendar-grid.slide-right > .friend-col,
+.calendar-grid.slide-right > .teacher-col {
+    animation-name: dayColEnterFromRight;
+    animation-duration: 0.38s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: backwards;
+    animation-delay: 0s;
+}
+
+/* Листание назад (←): контент уезжает ВПРАВО.
+   Колонки стартуют на 48px левее и «доходят» до места. */
+.calendar-grid.slide-left > .day-col,
+.calendar-grid.slide-left > .friend-col,
+.calendar-grid.slide-left > .teacher-col {
+    animation-name: dayColEnterFromLeft;
+    animation-duration: 0.38s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: backwards;
+    animation-delay: 0s;
+}
+
+/* Карточка события — попап, отдельно от волны колонок */
+.schedule-item.event-card {
+    animation: animScaleIn 0.24s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+}
+
+/* ============================================================
+   3. ДРУЗЬЯ И ПРЕПОДАВАТЕЛИ
+   ============================================================ */
+
+.friend-wrapper,
+.teacher-wrapper {
+    animation: animFadeUp 0.26s ease-out backwards;
+}
+.friend-wrapper:nth-child(2),
+.teacher-wrapper:nth-child(2) { animation-delay: 0.04s; }
+.friend-wrapper:nth-child(3),
+.teacher-wrapper:nth-child(3) { animation-delay: 0.08s; }
+.friend-wrapper:nth-child(n+4),
+.teacher-wrapper:nth-child(n+4) { animation-delay: 0.12s; }
+
+.friend-vertical-card,
+.teacher-vertical-card {
+    animation: animScaleIn 0.26s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* ============================================================
+   4. СПИСОК ЛАБ В МОДАЛКЕ
+   ============================================================ */
+
+.lab-item-row {
+    animation: animFadeUp 0.24s ease-out backwards;
+}
+.lab-item-row:nth-child(1)    { animation-delay: 0.00s; }
+.lab-item-row:nth-child(2)    { animation-delay: 0.04s; }
+.lab-item-row:nth-child(3)    { animation-delay: 0.08s; }
+.lab-item-row:nth-child(4)    { animation-delay: 0.12s; }
+.lab-item-row:nth-child(5)    { animation-delay: 0.16s; }
+.lab-item-row:nth-child(n+6)  { animation-delay: 0.20s; }
+
+/* ============================================================
+   5. ТЕМП СДАЧИ ЛАБ
+   ============================================================ */
+
+.pacing-row {
+    animation: animSlideInLeft 0.24s ease-out backwards;
+}
+.pacing-row:nth-child(1)    { animation-delay: 0.00s; }
+.pacing-row:nth-child(2)    { animation-delay: 0.03s; }
+.pacing-row:nth-child(3)    { animation-delay: 0.06s; }
+.pacing-row:nth-child(4)    { animation-delay: 0.09s; }
+.pacing-row:nth-child(5)    { animation-delay: 0.12s; }
+.pacing-row:nth-child(6)    { animation-delay: 0.15s; }
+.pacing-row:nth-child(n+7)  { animation-delay: 0.18s; }
+
+.pacing-row:active .pacing-row-counts {
+    animation: animPulseRing 0.5s ease-out;
+}
+
+/* ============================================================
+   6. СТРОКИ ДЕТАЛЕЙ В ГОРИЗОНТАЛЬНЫХ ВИДЖЕТАХ
+   ============================================================ */
+
+.widget-details-row {
+    animation: animSlideInRight 0.20s ease-out backwards;
+}
+.widget-details-row:nth-child(1)  { animation-delay: 0.00s; }
+.widget-details-row:nth-child(2)  { animation-delay: 0.02s; }
+.widget-details-row:nth-child(3)  { animation-delay: 0.04s; }
+.widget-details-row:nth-child(4)  { animation-delay: 0.06s; }
+.widget-details-row:nth-child(5)  { animation-delay: 0.08s; }
+.widget-details-row:nth-child(6)  { animation-delay: 0.10s; }
+.widget-details-row:nth-child(7)  { animation-delay: 0.12s; }
+.widget-details-row:nth-child(8)  { animation-delay: 0.14s; }
+.widget-details-row:nth-child(n+9){ animation-delay: 0.16s; }
+
+/* ============================================================
+   7. АВТОКОМПЛИТ
+   ============================================================ */
+
+.autocomplete-list {
+    animation: animFadeDown 0.15s ease-out;
+}
+.autocomplete-item {
+    transition: background 0.10s ease,
+                color      0.10s ease,
+                padding-left 0.15s ease;
+}
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    padding-left: 18px;
+}
+
+/* ============================================================
+   8. КНОПКИ, СТРЕЛКИ, РУЧКИ
+   ============================================================ */
+
+.btn {
+    transition: background 0.15s ease, color 0.15s ease,
+                border-color 0.15s ease, box-shadow 0.15s ease,
+                transform 0.10s ease;
+}
+.btn:not(:disabled):active {
+    transform: scale(0.97);
+}
+
+.header-icon-btn:active {
+    transform: scale(0.90);
+}
+
+.nav-arrow {
+    transition: color 0.20s ease, transform 0.20s ease;
+}
+.nav-arrow:hover {
+    transform: scale(1.15);
+}
+.nav-arrow:active {
+    transform: scale(0.92);
+}
+
+.day-tasks-wrap .btn.rounded-circle {
+    transition: transform 0.15s ease,
+                background 0.15s ease,
+                box-shadow 0.15s ease;
+}
+.day-tasks-wrap .btn.rounded-circle:hover {
+    transform: scale(1.10);
+}
+.day-tasks-wrap .btn.rounded-circle:active {
+    transform: scale(0.94);
+}
+
+.btn-close {
+    transition: transform 0.20s ease, opacity 0.20s ease;
+}
+.btn-close:hover {
+    transform: rotate(90deg);
+}
+
+.dropdown-toggle::after {
+    transition: transform 0.20s ease;
+}
+.dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* ============================================================
+   9. ВИДЖЕТЫ
+   ============================================================ */
+
+.widget-title.clickable {
+    transition: color 0.15s ease, letter-spacing 0.20s ease;
+}
+.widget-title.clickable:hover {
+    color: var(--accent);
+    letter-spacing: 0.01em;
+}
+
+.widget-icon-btn,
+.widget-header-actions .btn-light {
+    transition: background 0.15s ease,
+                color 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.12s ease;
+}
+.widget-icon-btn:active,
+.widget-header-actions .btn-light:active {
+    transform: scale(0.92);
+}
+
+.widget-drag-handle,
+.section-drag-handle {
+    transition: color 0.20s ease,
+                background 0.20s ease,
+                transform 0.20s ease;
+}
+.widget-drag-handle:hover,
+.section-drag-handle:hover {
+    transform: scale(1.15);
+}
+
+body.widget-dragging .widget-drag-handle,
+body.widget-dragging .section-drag-handle {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.widget-drop-placeholder {
+    animation: animDropPulse 1.4s ease-in-out infinite;
+}
+
+/* ============================================================
+   10. ИНДИКАТОР СВЕЖЕСТИ
+   ============================================================ */
+
+.sync-fresh {
+    transition: opacity 0.20s ease;
+}
+.sync-fresh-cache {
+    animation: animPulseSoft 2.4s ease-in-out infinite;
+}
+
+/* ============================================================
+   11. ИКОНКА ОБНОВЛЕНИЯ
+   ============================================================ */
+
+.refresh-spinning {
+    display: inline-block;
+    animation: animSpin 1s linear infinite;
+}
+
+/* ============================================================
+   12. КАРТОЧКИ ПАР / СОБЫТИЙ
+   ============================================================ */
+
+.schedule-item-edit:active {
+    animation: animShake 0.30s ease-in-out;
+}
+
+.schedule-summary {
+    transition: background 0.20s ease, transform 0.15s ease;
+}
+.schedule-summary:hover {
+    transform: translateY(-1px);
+}
+.schedule-summary:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.teacher-pair-card {
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.teacher-pair-card:hover {
+    transform: translateX(1px);
+}
+
+/* ============================================================
+   13. ЗАДАЧИ
+   ============================================================ */
+
+.task-card {
+    transition: border-left-color 0.35s ease,
+                background-color 0.35s ease,
+                opacity 0.35s ease,
+                box-shadow 0.20s ease,
+                transform 0.20s ease;
+}
+
+.task-btn {
+    transition: color 0.20s ease, transform 0.12s ease;
+}
+.task-btn:active {
+    transform: scale(0.85);
+}
+
+.task-card.task-completed {
+    animation: taskCompletedPulse 0.40s ease-out;
+}
+
+/* ============================================================
+   14. ПУСТЫЕ СОСТОЯНИЯ
+   ============================================================ */
+
+.empty-state-inline-icon {
+    display: inline-block;
+    animation: animBounceUp 2.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   15. ЗАГРУЗЧИК И СТАТУС-СТРОКА
+   ============================================================ */
+
+#globalLoader .spinner-border {
+    animation-duration: 0.9s;
+}
+
+#loaderText {
+    animation: animFadeIn 0.40s ease-out;
+}
+
+.schedule-status {
+    transition: color 0.20s ease;
+}
+
+/* ============================================================
+   16. МОДАЛЬНЫЕ ОКНА
+   ============================================================ */
+
+.modal-backdrop.show {
+    opacity: 0.55;
+}
+
+.modal-body > * {
+    animation: animFadeIn 0.20s ease-out;
+}
+
+/* ============================================================
+   17. ДОСТУПНОСТЬ
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .sync-fresh-cache,
+    .widget-drop-placeholder {
+        animation-duration: 2.4s !important;
+        animation-iteration-count: infinite !important;
+    }
+}

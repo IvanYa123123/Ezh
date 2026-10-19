@@ -1,6 +1,6 @@
 /* ============================================================
    fixes.css — патч поверх style.css
-   v3.9.1
+   v3.15.3
    ------------------------------------------------------------
    Изменения относительно v3.6.8:
      • #underCalendarWidgetsZone переведена в column-раскладку.
@@ -9,10 +9,12 @@
      • v3.7.4: список деталей виджета-графика переработан.
      • v3.8.1: при драге виджета карточки друзей/преподавателей
        сворачиваются; при драге самой секции она не скрывается.
-     • v3.9.0: вертикальный режим секций друзей и преподавателей
-       (компактная карточка с навигацией по людям и дням).
+     • v3.9.0: вертикальный режим секций друзей и преподавателей.
      • v3.9.1: в вертикальном режиме прячем панели управления;
        добавлен стиль .fv-common для строки общих пар.
+     • v3.15.3: удалена секция 18 (версия под логотипом);
+       добавлена секция 23 — сдвиг точки остановки стрелок
+       листания друзей ниже панели управления.
    ============================================================ */
 
 /* ============================================================
@@ -247,24 +249,16 @@ textarea {
     min-height: 0;
 }
 
-/* Пустая зона в спокойном состоянии не занимает места. */
 #underCalendarWidgetsZone:empty {
     display: none;
 }
 
-/* Пока пользователь тащит любой виджет — у обеих зон гарантированно
-   ненулевая высота. Без этого elementFromPoint не находит пустую
-   #underCalendarWidgetsZone (0px), и drop в неё не срабатывает.
-   Правило намеренно БЕЗ :empty — :empty капризен и может не матчиться,
-   если в зоне остался невидимый мусор. */
 body.widget-dragging #underCalendarWidgetsZone,
 body.widget-dragging #rightWidgetsZone {
     display: flex;
     min-height: 80px;
 }
 
-/* Красивая подсказка «сюда можно бросить» — только для пустых зон.
-   Для непустой зоны пунктир не рисуется, чтобы не обрамлять виджеты. */
 body.widget-dragging #underCalendarWidgetsZone:empty,
 body.widget-dragging #rightWidgetsZone:empty {
     border: 2px dashed var(--border-color);
@@ -927,25 +921,9 @@ body.widget-dragging .mini-cal-events {
 }
 
 /* ============================================================
-   18. ВЕРСИЯ ПОД ЛОГОТИПОМ
+   18. (УДАЛЕНО) — блок .version-label больше не используется,
+   т.к. версия убрана из-под логотипа на странице.
    ============================================================ */
-
-.version-label {
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    opacity: 0.45;
-    letter-spacing: 0.08em;
-    font-weight: 500;
-    margin-top: 2px;
-    margin-left: 2px;
-    line-height: 1;
-    user-select: none;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
-.version-label:hover {
-    opacity: 0.85;
-}
 
 /* ============================================================
    19. МОДАЛКА НАСТРОЕК
@@ -1069,11 +1047,6 @@ body.widget-dragging .mini-cal-events {
 
 /* ============================================================
    20. ГОРИЗОНТАЛЬНЫЙ РЕЖИМ ВИДЖЕТОВ
-   ------------------------------------------------------------
-   v3.7.0: убран :is() — селекторы конфликтовали по специфичности
-   с внутренними правилами и давали смешанные стили. Теперь
-   только чистый класс .widget-card.is-horizontal, который
-   навешивает state.js.
    ============================================================ */
 
 .mini-cal-body-row {
@@ -1106,8 +1079,6 @@ body.widget-dragging .mini-cal-events {
     overflow-x: hidden;
 }
 
-/* Графиковые виджеты («Остаток пар», «Лабораторные») */
-
 .widget-card.is-horizontal .widget-body-row {
     align-items: flex-start;
 }
@@ -1125,8 +1096,6 @@ body.widget-dragging .mini-cal-events {
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
-
-/* --- Двухколоночная раскладка событий --- */
 
 .mini-cal-events-cols {
     display: flex;
@@ -1227,18 +1196,8 @@ body.widget-dragging .mini-cal-events {
 
 /* ============================================================
    21. СВОРАЧИВАНИЕ ДРУЗЕЙ И ПРЕПОДАВАТЕЛЕЙ ПРИ ПЕРЕТАСКИВАНИИ
-/* Пока тащат любой виджет ИЛИ саму секцию — карточки внутри
-   сворачиваются. Ручка ⋮⋮ живёт в #friendsControlsPanel /
-   #teachersControlsPanel и остаётся видимой, потому что мы прячем
-   только контейнер с карточками (.friends-list-wrapper /
-   #teachersCalendarsContainer), а не всю секцию.
+   ============================================================ */
 
-   Раньше здесь стояло :not(.widget-dragging) — защита от того,
-   что native DnD отменится, если источник скрылся. После перехода
-   на Pointer Events она больше не нужна.
-
-   !important обязателен для #teachersCalendarsContainer:
-   у него класс .d-flex от Bootstrap (display: flex !important). */
 body.widget-dragging #friendsSection:not(.is-vertical) .friends-list-wrapper,
 body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContainer {
     display: none !important;
@@ -1246,17 +1205,8 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 
 /* ============================================================
    22. ВЕРТИКАЛЬНЫЙ РЕЖИМ СЕКЦИЙ
-   ------------------------------------------------------------
-   Секция попадает в узкую колонку (#rightWidgetsZone) — получает
-   класс .is-vertical (см. _applyHorizontalLayoutSync в state.js).
-   Рендерер в JS переключается на компактную карточку с навигацией
-   по людям (‹ / ›) и дням (‹ / ›). Здесь — только оформление.
    ============================================================ */
 
-/* Панели «+ Добавить …» и «Кого показывать?» в вертикальном режиме
-   не нужны, но ручка переноса (.section-drag-handle) живёт именно
-   внутри этих панелей — поэтому скрываем только содержимое, а сам
-   контейнер делаем прозрачным без рамок и отступов. */
 [data-draggable-section].is-vertical #friendsControlsPanel,
 [data-draggable-section].is-vertical #teachersControlsPanel {
     background: transparent !important;
@@ -1273,7 +1223,6 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     display: none !important;
 }
 
-/* Прячем элементы, которые в узкой колонке не нужны */
 [data-draggable-section].is-vertical .friends-nav-btn { display: none !important; }
 [data-draggable-section].is-vertical .friends-list-wrapper { padding: 0; }
 [data-draggable-section].is-vertical #teachersCalendarsContainer { padding-left: 0; padding-right: 0; }
@@ -1282,8 +1231,6 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 [data-draggable-section].is-vertical #teachersCalendarsContainer {
     margin-bottom: 0;
 }
-
-/* --- Карточка вертикального режима --- */
 
 .friend-vertical-card,
 .teacher-vertical-card {
@@ -1414,13 +1361,11 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     font-size: 0.85em;
 }
 
-/* Строка общих пар в вертикальной карточке */
 .fv-common {
     color: var(--status-green);
     font-weight: 600;
 }
-/* Строка с кнопкой переключения виджета (Друзья ↔ Преподаватели)
-   в вертикальном режиме, когда оба объединены. */
+
 .fv-switch-row {
     display: flex;
     justify-content: flex-end;
@@ -1449,4 +1394,21 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     background: var(--accent-soft);
     color: var(--accent-hover);
     border-color: var(--accent-border);
+}
+
+/* ============================================================
+   23. СТРЕЛКИ ЛИСТАНИЯ ДРУЗЕЙ — ФИКС ТОЧКИ ОСТАНОВКИ
+   ------------------------------------------------------------
+   В style.css: sticky, top: 50vh, margin-top: -20px.
+   При небольшом окне стрелка прилипает прямо к панели
+   управления («+ Добавить друга», «Кого показывать?»).
+
+   Сдвигаем точку остановки на 24px ниже и убираем
+   дополнительный margin-top: -20px. Итого на 44px ниже.
+   Sticky-поведение (ездит по странице) сохраняется.
+   ============================================================ */
+
+.friends-nav-btn {
+    top: calc(50vh + 24px);
+    margin-top: 0;
 }

@@ -32,6 +32,8 @@
     <link href="/static/css/style.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/fixes.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/hedgehog.css?v={{ app_version }}" rel="stylesheet">
+    <link href="/static/css/teachers.css?v={{ app_version }}" rel="stylesheet">
+    <link href="/static/css/animations.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -61,7 +63,6 @@
                     <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
                     <span>дневник</span>
                 </h5>
-                <div class="version-label">v{{ app_version }}</div>
             </div>
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
@@ -84,6 +85,11 @@
                         title="Принудительно обновить расписание с сервера СевГУ">
                     <span id="refreshIcon">&#128260;</span>
                 </button>
+                
+                <!-- Кнопка Еж Про -->
+                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
+                        onclick="openMoodleModal()" title="Еж Про (Moodle)">🌐</button>
+
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
@@ -776,6 +782,49 @@
   </div>
 </div>
 
+<!-- Модалка Еж Про (Moodle) -->
+<div class="modal fade" id="moodleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title fw-bold">🌐 Еж Про: Успеваемость в Moodle</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Форма входа -->
+        <div id="moodleLoginForm">
+          <div class="text-center mb-4">
+            <h5 class="fw-bold">Вход в личный кабинет СевГУ</h5>
+            <p class="text-muted small">Введите данные от do.sevsu.ru. Они используются только для получения сессии и никуда не отправляются.</p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Логин</label>
+            <input type="text" id="moodleUser" class="form-control" placeholder="u24-00-000000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Пароль</label>
+            <input type="password" id="moodlePass" class="form-control" placeholder="••••••••">
+          </div>
+          <div id="moodleLoginError" class="alert alert-danger py-2 small" style="display:none;"></div>
+          <button type="button" id="moodleLoginBtn" class="btn btn-primary w-100 fw-bold" onclick="doMoodleLogin()">Войти</button>
+        </div>
+
+        <!-- Статистика -->
+        <div id="moodleStatsArea" style="display:none;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0 fw-bold">Статистика по заданиям</h6>
+            <button class="btn btn-sm btn-outline-secondary" onclick="loadMoodleStats(true)">🔄 Обновить</button>
+          </div>
+          <div id="moodleStatsContent"></div>
+          <div class="text-end mt-3 border-top pt-3">
+            <button class="btn btn-sm btn-outline-danger" onclick="doMoodleLogout()">Выйти из аккаунта</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script src="/static/js/state.js?v={{ app_version }}"></script>
@@ -785,13 +834,24 @@
 <script src="/static/js/autocomplete.js?v={{ app_version }}"></script>
 <script src="/static/js/weeks.js?v={{ app_version }}"></script>
 <script src="/static/js/mini-calendar.js?v={{ app_version }}"></script>
+
+<!-- Календарь: карточки → день → оркестратор -->
+<script src="/static/js/calendar-cards.js?v={{ app_version }}"></script>
+<script src="/static/js/calendar-day.js?v={{ app_version }}"></script>
 <script src="/static/js/calendar.js?v={{ app_version }}"></script>
+
 <script src="/static/js/navigation.js?v={{ app_version }}"></script>
 <script src="/static/js/status.js?v={{ app_version }}"></script>
 <script src="/static/js/tasks.js?v={{ app_version }}"></script>
 <script src="/static/js/custom-schedule.js?v={{ app_version }}"></script>
 <script src="/static/js/friends.js?v={{ app_version }}"></script>
+
+<!-- Виджеты: поштучные лабы → сводки → графики -->
+<script src="/static/js/lab-items.js?v={{ app_version }}"></script>
+<script src="/static/js/widgets-stats.js?v={{ app_version }}"></script>
+<script src="/static/js/widgets-labs.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets.js?v={{ app_version }}"></script>
+
 <script src="/static/js/search.js?v={{ app_version }}"></script>
 <script src="/static/js/refresh.js?v={{ app_version }}"></script>
 <script src="/static/js/custom-theme.js?v={{ app_version }}"></script>
@@ -800,5 +860,8 @@
 <script src="/static/js/notifications.js?v={{ app_version }}"></script>
 <script src="/static/js/hotkeys.js?v={{ app_version }}"></script>
 <script src="/static/js/teachers.js?v={{ app_version }}"></script>
+
+<!-- Еж Про (Moodle) -->
+<script src="/static/js/moodle-pro.js?v={{ app_version }}"></script>
 </body>
 </html>
