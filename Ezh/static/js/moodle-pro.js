@@ -5,15 +5,23 @@ let proSubjectChart = null;
 let isMoodleRefreshing = false;
 let moodleAbortController = null;
 
+window.hasLoadedMoodleStats = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const status = await apiGet('/api/moodle/status');
         setProMode(status.logged_in);
         if (status.logged_in) {
+            // Загружаем кэш сразу (это быстро и без сети)
             await loadMoodleStats(false);
+            
+            // А фоновое обновление запускаем с задержкой в 10 секунд
             if (!sessionStorage.getItem('moodle_bg_refreshed')) {
                 sessionStorage.setItem('moodle_bg_refreshed', '1');
-                loadMoodleStats(true, true);
+                setTimeout(() => {
+                    console.log('[moodle] starting background refresh after 10s delay');
+                    loadMoodleStats(true, true);
+                }, 10000);
             }
         }
     } catch (e) {}
@@ -46,25 +54,33 @@ function showMoodleStatsView() {
 function setProMode(isActive) {
     const badge = document.getElementById('app-mode-badge');
     window.isProActive = isActive;
-    
+
     if (isActive) {
-        badge.className = 'badge bg-primary ms-2 rounded-pill';
+        badge.className = 'app-mode-badge-stylish pro-mode ms-2';
         badge.textContent = 'Pro';
         badge.title = 'Режим Pro активен (Нажмите для настроек)';
     } else {
-        badge.className = 'badge bg-secondary ms-2 rounded-pill';
+        badge.className = 'app-mode-badge-stylish basic-mode ms-2';
         badge.textContent = 'Basic';
         badge.title = 'Базовая версия (Нажмите для входа)';
+        window.hasLoadedMoodleStats = false;
+
+        if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
+            globalLabChartPro.destroy();
+            globalLabChartPro = null;
+        }
+        if (typeof proSubjectChart !== 'undefined' && proSubjectChart) {
+            proSubjectChart.destroy();
+            proSubjectChart = null;
+        }
     }
 
-    // Переключение тумблеров в настройках
     const proToggles = document.querySelectorAll('.pro-widget-toggle');
     const basicLabsLabel = document.getElementById('label-settingsToggleWidgetLabs');
-    
+
     proToggles.forEach(el => el.style.display = isActive ? '' : 'none');
     if (basicLabsLabel) basicLabsLabel.style.display = isActive ? 'none' : '';
 
-    // Принудительно перерисовываем видимость виджетов
     if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
     if (typeof renderCharts === 'function') renderCharts();
 }
@@ -97,12 +113,20 @@ async function doMoodleLogin() {
     }
 }
 
-async function doMoodleLogout() {
-    if (!confirm('Выйти из аккаунта Moodle?')) return;
+async function doMoodleLogout(forced = false) {
+    if (!forced && !confirm('Выйти из аккаунта Moodle?')) return;
     await apiPost('/api/moodle/logout', {});
     showMoodleLoginView();
     setProMode(false);
     sessionStorage.removeItem('moodle_bg_refreshed');
+
+    if (forced) {
+        const err = document.getElementById('moodleLoginError');
+        if (err) {
+            err.textContent = 'Сессия истекла, войдите заново.';
+            err.style.display = 'block';
+        }
+    }
 }
 
 function formatAge(ts) {
@@ -127,7 +151,7 @@ async function loadMoodleStats(force = false, isBackground = false) {
         cancelMoodleRefresh();
         return;
     }
-    
+
     if (force) {
         isMoodleRefreshing = true;
         moodleAbortController = new AbortController();
@@ -135,7 +159,7 @@ async function loadMoodleStats(force = false, isBackground = false) {
 
     const container = document.getElementById('moodleStatsContent');
     const updateBtn = document.getElementById('moodleUpdateBtn');
-    
+
     if (updateBtn) {
         if (isMoodleRefreshing && !isBackground) {
             updateBtn.className = 'btn btn-sm btn-danger fw-bold';
@@ -147,21 +171,31 @@ async function loadMoodleStats(force = false, isBackground = false) {
             updateBtn.disabled = isBackground;
         }
     }
-    
+
     if (!isBackground && container && document.getElementById('moodleStatsArea').style.display === 'block') {
-        container.innerHTML = '<div class="text-center py-4"><span class="spinner-border text-primary"></span><div class="mt-2 text-muted small">Собираем данные из Moodle (это может занять до 5 минут)...</div></div>';
+        container.innerHTML = `
+            <div class="text-center py-4">
+                ${getHedgehogSvgHtml(80)}
+                <div class="mt-2 text-muted small">Собираем данные из Moodle (это может занять до 5 минут)...</div>
+            </div>`;
     }
-    
+
     if (document.getElementById('app-mode-badge').textContent === 'Pro') {
-        if (!isBackground) document.getElementById('proAvgGradeText').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        if (!isBackground) document.getElementById('proAvgGradeText').innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
     }
 
     try {
         const url = `/api/moodle/stats?force=${force ? '1' : '0'}`;
         const fetchOpts = {};
         if (moodleAbortController) fetchOpts.signal = moodleAbortController.signal;
-        
+
         const rawResp = await fetch(url, fetchOpts);
+
+        if (rawResp.status === 401) {
+            doMoodleLogout(true);
+            return;
+        }
+
         const resp = await rawResp.json();
 
         if (resp.error) {
@@ -176,7 +210,10 @@ async function loadMoodleStats(force = false, isBackground = false) {
 
         moodleStats = resp.data || [];
         moodleStatsTimestamp = resp.timestamp || 0;
-        
+
+        window.hasLoadedMoodleStats = true;
+        if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+
         renderMoodleStats();
         renderProWidgets();
 
@@ -211,7 +248,7 @@ function isCourseInCurrentSchedule(courseName, courseId) {
         return moodleSemesterConfig[courseId] === 'current';
     }
     if (!cachedSchedule || cachedSchedule.length === 0) return true;
-    
+
     let cleanCourse = courseName.replace(/\([^)]*\)/g, '').trim().toLowerCase();
     return cachedSchedule.some(item => {
         let lessonName = item.lesson.toLowerCase();
@@ -231,7 +268,10 @@ function renderMoodleStats() {
     let html = `
         <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded shadow-sm flex-wrap gap-2">
             <div class="small fw-bold text-muted">Показаны предметы текущего семестра (${currentCourses.length})</div>
-            <button class="btn btn-sm btn-success fw-bold" onclick="syncMoodleToWidgets()">📥 Синхронизировать с виджетами</button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-warning fw-bold" onclick="syncMoodleDeadlinesToCalendar()">📅 Дедлайны в календарь</button>
+                <button class="btn btn-sm btn-success fw-bold" onclick="syncMoodleToWidgets()">📥 Синхронизировать с виджетами</button>
+            </div>
         </div>
         <div class="moodle-courses-list">
     `;
@@ -284,6 +324,52 @@ function extractLabNum(name) {
     return match ? match[1] : null;
 }
 
+async function syncMoodleDeadlinesToCalendar() {
+    if (!moodleStats || moodleStats.length === 0) {
+        alert('Нет данных Moodle. Обновите статистику.');
+        return;
+    }
+    if (!confirm('Добавить дедлайны из Moodle в календарь (за 2 дня до сдачи)?')) return;
+
+    let added = 0;
+    let todayStr = getLocalDateStr(new Date());
+
+    for (const course of moodleStats) {
+        if (!isCourseInCurrentSchedule(course.name, course.id)) continue;
+
+        let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim();
+
+        for (const act of course.assignments) {
+            if (act.status === 'Сдано' || act.status === 'На проверке' || act.status === 'Черновик') continue;
+            if (!act.due_iso) continue;
+
+            let [y, m, d] = act.due_iso.split('-').map(Number);
+            let dueDate = new Date(y, m - 1, d);
+            dueDate.setDate(dueDate.getDate() - 2);
+            let taskDateStr = getLocalDateStr(dueDate);
+
+            if (taskDateStr < todayStr) continue;
+
+            let text = `Сдать: ${cleanCourse} — ${act.name}`;
+
+            try {
+                await apiCreateTask({date: taskDateStr, text: text, status: 'red'});
+                added++;
+            } catch (e) {
+                console.error('createTask failed', e);
+            }
+        }
+    }
+
+    if (added > 0) {
+        if (typeof refreshTaskDates === 'function') await refreshTaskDates();
+        if (typeof renderCalendar === 'function') renderCalendar();
+        alert(`Добавлено напоминаний о дедлайнах: ${added}`);
+    } else {
+        alert('Нет актуальных дедлайнов для добавления (все сдано или даты прошли).');
+    }
+}
+
 async function syncMoodleToWidgets() {
     if (!cachedSchedule || cachedSchedule.length === 0) {
         alert("Сначала загрузите расписание, чтобы мы знали, к каким предметам привязывать лабы.");
@@ -324,7 +410,7 @@ async function syncMoodleToWidgets() {
         cachedSchedule.forEach(item => {
             if (item.type_name !== 'ЛЗ' && item.type_name !== 'ПЗ') return;
             let lessonName = item.lesson.toLowerCase();
-            
+
             if (cleanCourse.includes(lessonName) || lessonName.includes(cleanCourse)) {
                 matchingSubjects.add(`${item.lesson} (${item.type_name})`);
             }
@@ -348,36 +434,36 @@ async function syncMoodleToWidgets() {
 
     try {
         await apiSaveLabs(payload);
-        
+
         const group = document.getElementById('groupSelect').value.trim();
         let currentLabItems = await apiLoadLabItems(group);
-        
+
         let itemsToUpdate = [];
         for (const course of moodleStats) {
             if (!isCourseInCurrentSchedule(course.name, course.id)) continue;
             let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-            
+
             cachedSchedule.forEach(item => {
                 if (item.type_name !== 'ЛЗ' && item.type_name !== 'ПЗ') return;
                 let lessonName = item.lesson.toLowerCase();
                 if (!cleanCourse.includes(lessonName) && !lessonName.includes(cleanCourse)) return;
-                
+
                 let subjKey = `${item.lesson} (${item.type_name})`;
                 let labList = currentLabItems[subjKey] || [];
-                
+
                 course.assignments.forEach(a => {
                     if (a.type !== 'assign') return;
                     let num = extractLabNum(a.name);
                     if (!num) return;
-                    
+
                     let isDone = (a.status === 'Сдано' || a.status === 'На проверке' || a.status === 'Черновик');
                     if (!isDone) return;
-                    
+
                     let matchingItem = labList.find(l => {
                         let itemNum = extractLabNum(l.title);
                         return itemNum === num;
                     });
-                    
+
                     if (matchingItem && !matchingItem.completed) {
                         itemsToUpdate.push({ id: matchingItem.id, completed: 1 });
                     }
@@ -413,7 +499,7 @@ function renderProWidgets() {
 
     let totalGradeSum = 0;
     let totalGradeCount = 0;
-    let subjectGrades = {}; 
+    let subjectGrades = {};
 
     currentCourses.forEach(course => {
         let shortName = course.name.split('(')[0].trim();
@@ -433,7 +519,6 @@ function renderProWidgets() {
         avgText.textContent = totalGradeCount > 0 ? (totalGradeSum / totalGradeCount).toFixed(1) : '—';
     }
 
-    // Рендер Pro-виджета Лабораторные
     if (window.isProActive) {
         let done = 0, attached = 0, remaining = 0;
         currentCourses.forEach(c => {
@@ -444,11 +529,18 @@ function renderProWidgets() {
                 else remaining++;
             });
         });
-        
+
+        // ИСПОЛЬЗУЕМ ЦВЕТА: Сдано (базовый), Прикреплено (оранжевый), Осталось (серый)
+        const cDone = getThemeColor('--chart-lab-done', '#14b8a6');
+        const cAttached = getThemeColor('--status-orange', '#f59e0b'); 
+        const cRemaining = getThemeColor('--chart-remaining', '#cbd5e1');
+        const cText = getThemeColor('--text-secondary', '#64748b');
+
         if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
             globalLabChartPro.data.labels = ['Сдано', 'Прикреплено', 'Осталось'];
             globalLabChartPro.data.datasets[0].data = [done, attached, remaining];
-            globalLabChartPro.data.datasets[0].backgroundColor = ['#10b981', '#f59e0b', '#94a3b8'];
+            globalLabChartPro.data.datasets[0].backgroundColor = [cDone, cAttached, cRemaining];
+            globalLabChartPro.options.plugins.legend.labels.color = cText;
             globalLabChartPro.update('none');
         } else {
             const ctx = document.getElementById('labStatsChartPro');
@@ -459,19 +551,22 @@ function renderProWidgets() {
                         labels: ['Сдано', 'Прикреплено', 'Осталось'],
                         datasets: [{
                             data: [done, attached, remaining],
-                            backgroundColor: ['#10b981', '#f59e0b', '#94a3b8'],
-                            borderWidth: 0
+                            backgroundColor: [cDone, cAttached, cRemaining],
+                            borderWidth: 0,
+                            hoverOffset: 8,
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } }
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { color: cText } } 
+                        }
                     }
                 });
             }
         }
-        
+
         renderProLabDetails();
     }
 
@@ -482,7 +577,7 @@ function renderProWidgets() {
         let currentVal = select.value;
         select.innerHTML = '';
         let keys = Object.keys(subjectGrades).filter(k => subjectGrades[k].length > 0);
-        
+
         if (keys.length === 0) {
             select.innerHTML = '<option value="">Нет оцененных работ</option>';
             if (proSubjectChart) proSubjectChart.destroy();
@@ -496,7 +591,7 @@ function renderProWidgets() {
             select.appendChild(opt);
         });
         if (keys.includes(currentVal)) select.value = currentVal;
-        
+
         renderProSubjectChart();
     }
 }
@@ -506,7 +601,7 @@ function renderProLabDetails() {
     if (!el) return;
 
     let currentCourses = moodleStats.filter(c => isCourseInCurrentSchedule(c.name, c.id));
-    let subjectStats = {}; 
+    let subjectStats = {};
 
     currentCourses.forEach(course => {
         let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
@@ -522,7 +617,7 @@ function renderProLabDetails() {
 
         matchingSubjects.forEach(subj => {
             if (!subjectStats[subj]) subjectStats[subj] = { done: 0, attached: 0, remaining: 0 };
-            
+
             course.assignments.forEach(a => {
                 if (a.type !== 'assign') return;
                 if (a.status === 'Сдано') subjectStats[subj].done++;
@@ -543,12 +638,12 @@ function renderProLabDetails() {
         let st = subjectStats[subj];
         let total = st.done + st.attached + st.remaining;
         if (total === 0) return;
-        
+
         html += `
             <div class="widget-details-row" title="${escapeHtml(subj)}">
                 <span class="widget-details-title">${escapeHtml(subj)}</span>
                 <span class="widget-details-nums">
-                    <span style="color:var(--status-green);">${st.done}</span> / 
+                    <span style="color:var(--chart-lab-done);">${st.done}</span> / 
                     <span style="color:var(--status-orange);">${st.attached}</span> / 
                     <span style="color:var(--text-muted);">${st.remaining}</span>
                 </span>
@@ -561,14 +656,14 @@ function renderProLabDetails() {
 function renderProAvgDetails() {
     const el = document.getElementById('proAvgGradeDetails');
     if (!el) return;
-    
+
     let subjectStats = {};
     let currentCourses = moodleStats.filter(c => isCourseInCurrentSchedule(c.name, c.id));
 
     currentCourses.forEach(course => {
         let shortName = course.name.split('(')[0].trim();
         if (!subjectStats[shortName]) subjectStats[shortName] = { sum: 0, count: 0 };
-        
+
         course.assignments.forEach(act => {
             if (act.grade_num !== null && act.grade_num > 0) {
                 subjectStats[shortName].sum += act.grade_num;
@@ -601,7 +696,7 @@ function renderProAvgDetails() {
 function renderProSubjectChart() {
     const select = document.getElementById('proSubjectSelect');
     if (!select || !select.value) return;
-    
+
     let currentCourses = moodleStats.filter(c => isCourseInCurrentSchedule(c.name, c.id));
     let subjectName = select.value;
     let allLabs = [];
@@ -630,7 +725,7 @@ function renderProSubjectChart() {
     let labels = sortedNums.map(n => 'ЛР ' + n);
     let data = sortedLabs.map(a => a.grade_num || null);
     let validGrades = data.filter(x => x !== null);
-    
+
     let avgGrade = validGrades.length > 0 ? (validGrades.reduce((a,b)=>a+b, 0) / validGrades.length) : 0;
     let maxGrade = validGrades.length > 0 ? Math.max(...validGrades) : 100;
 
@@ -653,6 +748,10 @@ function renderProSubjectChart() {
     if (proSubjectChart) proSubjectChart.destroy();
     const ctx = document.getElementById('proSubjectChart');
     if (ctx && ctx.offsetParent !== null) {
+        const cAccent = getThemeColor('--accent', '#6366f1');
+        const cText = getThemeColor('--text-secondary', '#64748b');
+        const cGrid = getThemeColor('--border-color', '#e2e8f0');
+        
         proSubjectChart = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
@@ -662,7 +761,7 @@ function renderProSubjectChart() {
                         type: 'bar',
                         label: 'Балл',
                         data: data,
-                        backgroundColor: '#6366f1',
+                        backgroundColor: cAccent,
                         borderRadius: 4,
                         barPercentage: 0.6
                     },
@@ -670,12 +769,12 @@ function renderProSubjectChart() {
                         type: 'line',
                         label: 'Соединение',
                         data: data,
-                        borderColor: '#10b981',
+                        borderColor: getThemeColor('--chart-lab-done', '#14b8a6'),
                         borderWidth: 2,
                         tension: 0.3,
                         spanGaps: true,
                         pointBackgroundColor: '#fff',
-                        pointBorderColor: '#10b981',
+                        pointBorderColor: getThemeColor('--chart-lab-done', '#14b8a6'),
                         pointBorderWidth: 2,
                         pointRadius: 4
                     },
@@ -683,7 +782,7 @@ function renderProSubjectChart() {
                         type: 'line',
                         label: 'Среднее',
                         data: Array(labels.length).fill(avgGrade),
-                        borderColor: '#f59e0b',
+                        borderColor: getThemeColor('--status-orange', '#f59e0b'),
                         borderDash: [5, 5],
                         borderWidth: 2,
                         pointRadius: 0
@@ -694,15 +793,24 @@ function renderProSubjectChart() {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
+                    x: {
+                        ticks: { color: cText },
+                        grid: { color: cGrid }
+                    },
                     y: {
                         min: 50,
                         max: Math.max(100, Math.ceil(maxGrade / 10) * 10), 
-                        title: { display: true, text: 'Баллы' }
+                        title: { display: true, text: 'Баллы', color: cText },
+                        ticks: { color: cText },
+                        grid: { color: cGrid }
                     }
                 },
                 plugins: { 
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: getThemeColor('--chart-tooltip-bg', 'rgba(15, 23, 42, 0.92)'),
+                        titleColor: getThemeColor('--chart-tooltip-text', '#f8fafc'),
+                        bodyColor: getThemeColor('--chart-tooltip-text', '#f8fafc'),
                         callbacks: {
                             label: function(context) {
                                 if (context.dataset.label === 'Среднее') return 'Среднее: ' + context.raw.toFixed(1);
@@ -713,6 +821,52 @@ function renderProSubjectChart() {
                 }
             }
         });
+    }
+}
+
+function refreshProChartsTheme() {
+    const tooltipOpts = typeof _buildTooltipOpts === 'function' ? _buildTooltipOpts() : {};
+
+    if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
+        try {
+            const cText = getThemeColor('--text-secondary', '#64748b');
+            const cDone = getThemeColor('--chart-lab-done', '#14b8a6');
+            const cAttached = getThemeColor('--status-orange', '#f59e0b');
+            const cRemaining = getThemeColor('--chart-remaining', '#cbd5e1');
+
+            globalLabChartPro.data.datasets[0].backgroundColor = [cDone, cAttached, cRemaining];
+            globalLabChartPro.options.plugins.legend.labels.color = cText;
+            if (tooltipOpts.backgroundColor) {
+                globalLabChartPro.options.plugins.tooltip = Object.assign({}, globalLabChartPro.options.plugins.tooltip, tooltipOpts);
+            }
+            globalLabChartPro.update('none');
+        } catch(e) { console.error(e); }
+    }
+
+    if (typeof proSubjectChart !== 'undefined' && proSubjectChart) {
+        try {
+            const cText = getThemeColor('--text-secondary', '#64748b');
+            const cGrid = getThemeColor('--border-color', '#e2e8f0');
+            const cAccent = getThemeColor('--accent', '#6366f1');
+            const cGreen = getThemeColor('--chart-lab-done', '#14b8a6');
+            const cOrange = getThemeColor('--status-orange', '#f59e0b');
+            
+            proSubjectChart.data.datasets[0].backgroundColor = cAccent;
+            proSubjectChart.data.datasets[1].borderColor = cGreen;
+            proSubjectChart.data.datasets[1].pointBorderColor = cGreen;
+            proSubjectChart.data.datasets[2].borderColor = cOrange;
+            
+            proSubjectChart.options.scales.x.ticks.color = cText;
+            proSubjectChart.options.scales.x.grid.color = cGrid;
+            proSubjectChart.options.scales.y.ticks.color = cText;
+            proSubjectChart.options.scales.y.title.color = cText;
+            proSubjectChart.options.scales.y.grid.color = cGrid;
+
+            if (tooltipOpts.backgroundColor) {
+                proSubjectChart.options.plugins.tooltip = Object.assign({}, proSubjectChart.options.plugins.tooltip, tooltipOpts);
+            }
+            proSubjectChart.update('none');
+        } catch(e) { console.error(e); }
     }
 }
 
@@ -748,10 +902,6 @@ function openMoodleSetupModal() {
     const modalEl = document.getElementById('moodleSetupModal');
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
-}
-
-function allowDrop(ev) {
-    ev.preventDefault();
 }
 
 function handleSemesterDrop(ev, targetColumn) {

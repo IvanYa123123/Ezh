@@ -1,8 +1,14 @@
-// Обёртки над fetch. Все запросы автоматически проверяют на ошибки HTTP.
+// Обёртки над fetch. Все запросы автоматически проверяют на ошибки HTTP
+// и прокидывают err.status, чтобы вызывающий код мог обрабатывать 401/429
+// без парсинга строки сообщения.
 
 async function apiGet(url) {
     const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    if (!r.ok) {
+        const err = new Error(`HTTP ${r.status} for ${url}`);
+        err.status = r.status;
+        throw err;
+    }
     return r.json();
 }
 
@@ -12,7 +18,11 @@ async function apiPost(url, body) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    if (!r.ok) {
+        const err = new Error(`HTTP ${r.status} for ${url}`);
+        err.status = r.status;
+        throw err;
+    }
     return r.json();
 }
 
@@ -22,13 +32,21 @@ async function apiPut(url, body) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    if (!r.ok) {
+        const err = new Error(`HTTP ${r.status} for ${url}`);
+        err.status = r.status;
+        throw err;
+    }
     return r.json();
 }
 
 async function apiDelete(url) {
     const r = await fetch(url, { method: 'DELETE' });
-    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    if (!r.ok) {
+        const err = new Error(`HTTP ${r.status} for ${url}`);
+        err.status = r.status;
+        throw err;
+    }
     return r.json();
 }
 
@@ -58,14 +76,6 @@ async function apiSyncScheduleForce(group, sg){ return apiGet(`/api/schedule_syn
 
 // ============================================================
 //  ЛАБЫ ПОШТУЧНО (lab_items)
-// ------------------------------------------------------------
-//  • apiLoadLabItems(group)              — { subject: [ {id, idx, title, completed}, ... ] }
-//  • apiSyncLabItems(group, items)       — создать недостающие записи
-//    (items: [{subject, count}]). Работает ТОЛЬКО в плюс:
-//    не удаляет лишние, чтобы ручное добавление не затиралось.
-//  • apiUpdateLabItem(id, {title, completed}) — обновить одну запись
-//  • apiAddLabItem(group, subject)       — добавить одну в конец списка
-//  • apiRemoveLastLabItem(group, subject)— удалить последнюю запись
 // ============================================================
 async function apiLoadLabItems(group)               { return apiGet(`/api/lab_items?group=${encodeURIComponent(group)}`); }
 async function apiSyncLabItems(group, items)        { return apiPost('/api/lab_items/sync', {group, items}); }

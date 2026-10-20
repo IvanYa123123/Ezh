@@ -146,6 +146,38 @@ def _stable_uid(*parts):
     return hashlib.md5(s.encode('utf-8')).hexdigest()[:16]
 
 
+def _fold_ics_line(line: str, limit: int = 75) -> str:
+    """RFC 5545 line folding: строки не длиннее 75 октетов.
+    Продолжение начинается с пробела. Учитываем, что кириллица
+    в UTF-8 весит 2 байта, поэтому режем посимвольно, а не
+    побайтно — иначе разрубим многобайтовый символ пополам.
+    """
+    if not line:
+        return line
+    encoded = line.encode('utf-8')
+    if len(encoded) <= limit:
+        return line
+
+    parts = []
+    current = b''
+    first = True
+    for char in line:
+        char_bytes = char.encode('utf-8')
+        # Первая строка — до limit байт, продолжения — ' ' + 74 байт
+        effective_limit = limit if first else limit - 1
+        if len(current) + len(char_bytes) > effective_limit:
+            parts.append(current.decode('utf-8'))
+            current = b' ' if not first or True else b''
+            # На первой итерации при флаше first станет False
+            if first:
+                first = False
+                current = b' '
+        current += char_bytes
+    if current:
+        parts.append(current.decode('utf-8'))
+    return '\r\n'.join(parts)
+
+
 def _generate_ics(schedule, group_name):
     lines = [
         "BEGIN:VCALENDAR",
@@ -202,7 +234,11 @@ def _generate_ics(schedule, group_name):
         lines.append("END:VEVENT")
 
     lines.append("END:VCALENDAR")
-    return "\r\n".join(lines) + "\r\n"
+
+    # Складываем длинные строки — Outlook и другие строгие
+    # ICS-клиенты ругаются на строки > 75 октетов.
+    folded = [_fold_ics_line(line) for line in lines]
+    return "\r\n".join(folded) + "\r\n"
 
 
 @bp.route("/api/schedule.ics")

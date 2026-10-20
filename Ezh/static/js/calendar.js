@@ -1,7 +1,5 @@
 // Оркестратор календаря: строит сетку из карточек, разложенных
 // в calendar-cards.js, и делегирует взаимодействие в calendar-day.js.
-//
-// v3.15.0: распилен на три файла.
 
 // ============================================================
 //  КАСТОМНЫЕ ЭЛЕМЕНТЫ (события и пары, добавленные вручную)
@@ -238,6 +236,11 @@ async function renderCalendar() {
 
     if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
     if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
+    
+    // ВЫЗОВ ВИДЖЕТА "ПРЕДЛОЖЕНИЯ"
+    if (typeof renderSuggestions === 'function') {
+        try { renderSuggestions(); } catch (e) { console.error(e); }
+    }
 
     if (expandedDayDateStr) {
         let grid = document.querySelector('.calendar-grid');

@@ -1,8 +1,4 @@
 // Расписание преподавателей.
-// v3.14.2:
-//   • saveTeachersOrder работает при недоступном localStorage
-//     (in-memory override).
-//   • fetchTrackedTeachers защищён счётчиком поколений.
 
 let teachersAllList = null;
 let trackedTeachers = [];
@@ -98,7 +94,14 @@ async function initTeachers() {
     await fetchTrackedTeachers();
     renderTeacherDropdown();
     renderTeachersCalendars();
-    fetchAllTeacherSchedules().then(() => renderTeachersCalendars());
+    
+    // Загружаем расписания преподавателей и обновляем виджет предложений
+    fetchAllTeacherSchedules().then(() => {
+        renderTeachersCalendars();
+        if (typeof renderSuggestions === 'function') {
+            try { renderSuggestions(true); } catch (e) { console.error(e); }
+        }
+    });
 }
 
 function saveVisibleTeachers() {
@@ -377,7 +380,11 @@ async function addTrackedTeacher(slug, name) {
     renderTeacherDropdown();
     renderTeachersCalendars();
 
-    loadTeacherSchedule(slug).then(() => renderTeachersCalendars());
+    loadTeacherSchedule(slug).then(() => {
+        renderTeachersCalendars();
+        // Обновляем предложения после добавления препода
+        if (typeof renderSuggestions === 'function') renderSuggestions(true);
+    });
 
     if (typeof showUpdateNotification === 'function') showUpdateNotification(`Добавлен: ${name}`);
 }
@@ -413,6 +420,9 @@ async function deleteTrackedTeacher(id) {
     await fetchTrackedTeachers();
     renderTeacherDropdown();
     renderTeachersCalendars();
+    
+    // Обновляем предложения после удаления препода
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }
 
 // ============================================================
@@ -710,4 +720,5 @@ async function teacherRefresh(slug) {
     await loadTeacherSchedule(slug, true);
     renderTeachersCalendars();
     if (typeof showUpdateNotification === 'function') showUpdateNotification('Расписание преподавателя обновлено');
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }

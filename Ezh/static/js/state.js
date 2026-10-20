@@ -1,8 +1,4 @@
 // Глобальное состояние приложения.
-//
-// v3.15.0:
-//   • Добавлена поддержка Pro-виджетов (Moodle).
-//   • Добавлена функция hideWidget для скрытия виджетов крестиком.
 
 let currentBaseDate = new Date();
 currentBaseDate.setDate(currentBaseDate.getDate() - (currentBaseDate.getDay() === 0 ? 6 : currentBaseDate.getDay() - 1));
@@ -12,7 +8,7 @@ let cachedLabs = {};
 let cachedSubjectSettings = {};
 let globalChart = null;
 let globalLabChart = null;
-let globalLabChartPro = null; // Новый график для Pro-лабораторных
+let globalLabChartPro = null;
 let currentSubjectsList = [];
 
 let validGroups = new Set();
@@ -75,6 +71,7 @@ function saveVisibleFriends() {
 let showWidgetMiniCal = localStorage.getItem('showWidgetMiniCal') !== 'false';
 let showWidgetGlobal  = localStorage.getItem('showWidgetGlobal')  !== 'false';
 let showWidgetLabs    = localStorage.getItem('showWidgetLabs')    !== 'false';
+let showWidgetSuggestions = localStorage.getItem('showWidgetSuggestions') !== 'false';
 let showWidgetPacing  = localStorage.getItem('showWidgetPacing')  !== 'false';
 let showWidgetNotes   = localStorage.getItem('showWidgetNotes')   !== 'false';
 
@@ -93,18 +90,22 @@ let friendsTeachersTab = localStorage.getItem('friendsTeachersTab') || 'friends'
 //  ВИДИМОСТЬ ВИДЖЕТОВ И ПРО-РЕЖИМ
 // ============================================================
 
-// Функция для скрытия виджета по крестику
 function hideWidget(widgetId, toggleId) {
     const widget = document.getElementById(widgetId);
     if (widget) widget.style.display = 'none';
-    
+
+    if (toggleId === 'settingsToggleWidgetMiniCal') { showWidgetMiniCal = false; localStorage.setItem('showWidgetMiniCal', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetGlobal') { showWidgetGlobal = false; localStorage.setItem('showWidgetGlobal', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetLabs') { showWidgetLabs = false; localStorage.setItem('showWidgetLabs', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetSuggestions') { showWidgetSuggestions = false; localStorage.setItem('showWidgetSuggestions', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetPacing') { showWidgetPacing = false; localStorage.setItem('showWidgetPacing', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetNotes') { showWidgetNotes = false; localStorage.setItem('showWidgetNotes', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetLabsPro') { showWidgetLabsPro = false; localStorage.setItem('showWidgetLabsPro', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetMoodleAvg') { showWidgetMoodleAvg = false; localStorage.setItem('showWidgetMoodleAvg', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetMoodleSubj') { showWidgetMoodleSubj = false; localStorage.setItem('showWidgetMoodleSubj', 'false'); }
+
     const checkbox = document.getElementById(toggleId);
-    if (checkbox) {
-        checkbox.checked = false;
-        if (typeof saveSettingsFromUI === 'function') {
-            saveSettingsFromUI();
-        }
-    }
+    if (checkbox) checkbox.checked = false;
 }
 
 // ============================================================
@@ -154,14 +155,6 @@ function applyFriendsTeachersVisibility() {
     }
 }
 
-// ------------------------------------------------------------
-//  Синхронизация зоны размещения.
-//  В объединённом режиме обе секции должны лежать в одной
-//  зоне (#mainColumnSections или #rightWidgetsZone). Иначе
-//  при переключении вкладки скрытая секция остаётся в старой
-//  зоне, и пользователь видит «прыжок» раздела между областями.
-// ------------------------------------------------------------
-
 function _syncFriendsTeachersZone() {
     if (separateFriendsTeachers) return;
 
@@ -180,7 +173,6 @@ function _syncFriendsTeachersZone() {
         activeEl = teachersEl;
         inactiveEl = friendsEl;
     } else {
-        // Обе видны (раздельный или init) или обе скрыты — синхронизировать нечего.
         return;
     }
 
@@ -188,7 +180,6 @@ function _syncFriendsTeachersZone() {
     if (!activeZone) return;
     if (inactiveEl.parentElement === activeZone) return;
 
-    // Переносим неактивную секцию сразу за активной — порядок в зоне сохраняется.
     activeZone.insertBefore(inactiveEl, activeEl.nextSibling);
 
     if (typeof _saveLayout === 'function') {
@@ -204,10 +195,7 @@ function switchFriendsTeachersTab(tab) {
     friendsTeachersTab = tab;
     try { localStorage.setItem('friendsTeachersTab', tab); } catch (e) {}
 
-    // ВАЖНО: синхронизация зоны ДО смены display — чтобы неактивная
-    // секция уже стояла в целевой зоне, когда мы её покажем.
     _syncFriendsTeachersZone();
-
     applyFriendsTeachersVisibility();
 
     if (typeof renderTeachersCalendars === 'function') {
@@ -291,12 +279,6 @@ function onNotesWidgetInput(el) {
     if (!el) return;
     try { localStorage.setItem('notesWidget', el.value); } catch (e) {}
 }
-
-function moveNotesWidget() {
-    console.warn('[state] moveNotesWidget() устарела');
-}
-
-function restoreNotesWidgetZone() {}
 
 // ============================================================
 //  ВЕРТИКАЛЬНЫЙ РЕЖИМ: ДЕНЬ
@@ -543,9 +525,6 @@ function initWidgetDragAndDrop() {
 
     _applyHorizontalLayoutSync();
 
-    // После восстановления раскладки могли оказаться ситуации,
-    // когда в объединённом режиме секции лежат в разных зонах.
-    // Подтягиваем скрытую к видимой.
     if (typeof _syncFriendsTeachersZone === 'function') {
         try { _syncFriendsTeachersZone(); } catch (e) {}
     }
@@ -559,7 +538,7 @@ function _preloadHedgehogSvg() {
         })
         .then(text => { _hedgehogSvgMarkup = text; })
         .catch(e => {
-            console.warn('[drag] не удалось загрузить hedgehog.svg:', e);
+            console.warn('[drag] не удалось загрузить hedgehog:', e);
             _hedgehogSvgMarkup = '<div style="font-size:56px;line-height:1;">🦔</div>';
         });
 }
@@ -575,10 +554,6 @@ function _isWideZone(el) {
 function _isRowWrapZone(el) {
     return !!(el && el.id && _ROW_WRAP_ZONE_IDS.indexOf(el.id) !== -1);
 }
-
-// ============================================================
-//  ИНИЦИАЛИЗАЦИЯ ЗОНЫ
-// ============================================================
 
 function _initSortableZone(zoneId) {
     const zone = document.getElementById(zoneId);
@@ -600,10 +575,6 @@ function _initSortableZone(zoneId) {
         _startDrag(card, e);
     });
 }
-
-// ============================================================
-//  СТАРТ / ДВИЖЕНИЕ / КОНЕЦ
-// ============================================================
 
 function _startDrag(card, e) {
     _dragState = {
@@ -746,10 +717,6 @@ function _endDrag() {
     _refreshAfterMove(card);
 }
 
-// ============================================================
-//  SVG-ЁЖИК-ПРИЗРАК
-// ============================================================
-
 function _createGhost(x, y) {
     _destroyGhost();
 
@@ -786,10 +753,6 @@ function _destroyGhost() {
     }
     _ghostEl = null;
 }
-
-// ============================================================
-//  ОПРЕДЕЛЕНИЕ ЗОНЫ ПОД КУРСОРОМ
-// ============================================================
 
 function _zoneUnderPoint(x, y) {
     const el = document.elementFromPoint(x, y);
@@ -828,10 +791,6 @@ function _zoneUnderPoint(x, y) {
     return best;
 }
 
-// ============================================================
-//  АВТОСКРОЛЛ У КРАЯ
-// ============================================================
-
 function _autoScrollIfNearEdge(e) {
     if (!_dragState) return;
 
@@ -849,10 +808,6 @@ function _autoScrollIfNearEdge(e) {
         window.scrollBy(0, _DRAG_EDGE_STEP);
     }
 }
-
-// ============================================================
-//  ФОРМАТ ВИДЖЕТА
-// ============================================================
 
 let _hLayoutRaf = null;
 
@@ -897,10 +852,6 @@ function _scheduleDragLayoutRefresh() {
         _updateHorizontalLayout();
     }, 60);
 }
-
-// ============================================================
-//  ПОЗИЦИОНИРОВАНИЕ ПЛЕЙСХОЛДЕРА
-// ============================================================
 
 function _visibleCards(zone, excluded) {
     return [...zone.querySelectorAll(_widgetZoneSelector())]
@@ -972,10 +923,6 @@ function _positionPlaceholder(zone, dragged, e) {
 
     _showDropPlaceholder(targetCard, before);
 }
-
-// ============================================================
-//  ПЛЕЙСХОЛДЕР
-// ============================================================
 
 function _calcPlaceholderSize(zone, dragged) {
     if (_isWideZone(zone)) {
@@ -1066,8 +1013,6 @@ function _refreshAfterMove(card) {
         if (typeof renderFriendsCalendar === 'function') renderFriendsCalendar();
         if (typeof renderTeachersCalendars === 'function') renderTeachersCalendars();
 
-        // После перетаскивания одной из секций в объединённом режиме
-        // подтягиваем вторую, чтобы они не разъехались по зонам.
         if (typeof _syncFriendsTeachersZone === 'function') {
             try { _syncFriendsTeachersZone(); } catch (e) {}
         }
@@ -1081,6 +1026,12 @@ function _refreshAfterMove(card) {
         if (card.id === 'widgetLabsProCard' && typeof renderProLabDetails === 'function') {
             try { renderProLabDetails(); } catch (e) { console.error(e); }
         }
+        
+        // ДОБАВЛЕНО: Перерисовка виджета предложений при смене режима
+        if (card.id === 'widgetSuggestionsCard' && typeof renderSuggestionsHtml === 'function' && _suggestionsCache) {
+            try { renderSuggestionsHtml(_suggestionsCache); } catch (e) { console.error(e); }
+        }
+
         if (typeof renderCharts === 'function') {
             try { renderCharts(); } catch (e) { console.error(e); }
         }

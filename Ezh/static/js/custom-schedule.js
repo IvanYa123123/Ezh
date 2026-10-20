@@ -241,10 +241,6 @@ async function deleteCustomSchedule() {
     await refreshCustomSchedule();
 }
 
-// v3.6.8: прямое обновление панели событий миникалендаря.
-// Раньше цепочка шла через renderCalendar → renderMiniCalendar,
-// но в некоторых сценариях (виджет свёрнут или вне видимости)
-// обновление терялось. Теперь вызываем явно.
 async function refreshCustomSchedule() {
     let group = document.getElementById('groupSelect').value.trim();
     try { customScheduleItems = await apiLoadCustomSchedule(group); }
@@ -290,4 +286,7 @@ async function saveSubjectSettings() {
 
     await fetchSubjectSettings();
     renderCalendar();
+    
+    // ДИНАМИЧЕСКОЕ ОБНОВЛЕНИЕ ВИДЖЕТА ПРИ СМЕНЕ НАЗВАНИЯ ПРЕДМЕТА
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }

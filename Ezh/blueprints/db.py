@@ -40,9 +40,16 @@ def get_db():
 
 
 def close_db(exc=None):
+    """Закрывает соединение в конце запроса. Регистрируется в app.py
+    через app.teardown_appcontext(close_db). Без этого SQLite-
+    соединения жили до сборки мусора — латентная утечка fd
+    и WAL-локов."""
     db = g.pop('db', None)
     if db is not None:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 def _column_exists(conn, table, column):
@@ -60,86 +67,99 @@ def _add_column_if_missing(conn, table, column, ddl):
 
 
 def init_db(retries: int = 5):
-    """Создаёт таблицы и индексы. Быстрая операция — можно из before_request."""
+    """Создаёт таблицы и индексы.
+
+    ВАЖНО: `with sqlite3.connect(...) as conn:` НЕ закрывает соединение
+    — контекст-менеджер делает только commit/rollback. Раньше здесь
+    использовался `with`, из-за чего соединение жило до сборки мусора.
+    Теперь явный try/finally с close().
+    """
     last_err = None
     for attempt in range(retries):
+        conn = None
         try:
-            with sqlite3.connect(runtime.DB_FILE, timeout=30) as conn:
-                conn.execute("PRAGMA journal_mode = WAL")
-                conn.execute("PRAGMA synchronous = NORMAL")
-                conn.execute("PRAGMA mmap_size = 268435456")
-                conn.execute("PRAGMA temp_store = MEMORY")
-                conn.execute("PRAGMA cache_size = -64000")
+            conn = sqlite3.connect(runtime.DB_FILE, timeout=30)
+            conn.execute("PRAGMA journal_mode = WAL")
+            conn.execute("PRAGMA synchronous = NORMAL")
+            conn.execute("PRAGMA mmap_size = 268435456")
+            conn.execute("PRAGMA temp_store = MEMORY")
+            conn.execute("PRAGMA cache_size = -64000")
 
-                conn.execute('''CREATE TABLE IF NOT EXISTS tasks
-                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 date TEXT NOT NULL,
-                                 text TEXT NOT NULL,
-                                 status TEXT NOT NULL DEFAULT 'green')''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS lab_progress
-                                (group_name TEXT NOT NULL,
-                                 subject TEXT NOT NULL,
-                                 completed INTEGER NOT NULL DEFAULT 0,
-                                 total INTEGER NOT NULL DEFAULT 0,
-                                 PRIMARY KEY(group_name, subject))''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS lab_items
-                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 group_name TEXT NOT NULL,
-                                 subject TEXT NOT NULL,
-                                 idx INTEGER NOT NULL,
-                                 title TEXT NOT NULL,
-                                 completed INTEGER NOT NULL DEFAULT 0,
-                                 UNIQUE(group_name, subject, idx))''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS friends
-                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 name TEXT NOT NULL,
-                                 group_name TEXT NOT NULL,
-                                 subgroup TEXT NOT NULL DEFAULT '0',
-                                 category TEXT DEFAULT 'Мои друзья')''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS subject_settings
-                                (subject TEXT PRIMARY KEY,
-                                 custom_name TEXT,
-                                 link TEXT)''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS custom_schedule
-                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 group_name TEXT,
-                                 base_date TEXT,
-                                 time_range TEXT,
-                                 lesson TEXT,
-                                 type_name TEXT,
-                                 teacher TEXT,
-                                 location TEXT,
-                                 is_event INTEGER,
-                                 recurrence TEXT,
-                                 exceptions TEXT DEFAULT '[]')''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS tracked_teachers
-                                (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 name TEXT NOT NULL,
-                                 slug TEXT NOT NULL UNIQUE)''')
-                conn.execute('''CREATE TABLE IF NOT EXISTS _meta
-                                (key TEXT PRIMARY KEY,
-                                 value TEXT)''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS tasks
+                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             date TEXT NOT NULL,
+                             text TEXT NOT NULL,
+                             status TEXT NOT NULL DEFAULT 'green')''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS lab_progress
+                            (group_name TEXT NOT NULL,
+                             subject TEXT NOT NULL,
+                             completed INTEGER NOT NULL DEFAULT 0,
+                             total INTEGER NOT NULL DEFAULT 0,
+                             PRIMARY KEY(group_name, subject))''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS lab_items
+                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             group_name TEXT NOT NULL,
+                             subject TEXT NOT NULL,
+                             idx INTEGER NOT NULL,
+                             title TEXT NOT NULL,
+                             completed INTEGER NOT NULL DEFAULT 0,
+                             UNIQUE(group_name, subject, idx))''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS friends
+                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             name TEXT NOT NULL,
+                             group_name TEXT NOT NULL,
+                             subgroup TEXT NOT NULL DEFAULT '0',
+                             category TEXT DEFAULT 'Мои друзья')''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS subject_settings
+                            (subject TEXT PRIMARY KEY,
+                             custom_name TEXT,
+                             link TEXT)''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS custom_schedule
+                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             group_name TEXT,
+                             base_date TEXT,
+                             time_range TEXT,
+                             lesson TEXT,
+                             type_name TEXT,
+                             teacher TEXT,
+                             location TEXT,
+                             is_event INTEGER,
+                             recurrence TEXT,
+                             exceptions TEXT DEFAULT '[]')''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS tracked_teachers
+                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             name TEXT NOT NULL,
+                             slug TEXT NOT NULL UNIQUE)''')
+            conn.execute('''CREATE TABLE IF NOT EXISTS _meta
+                            (key TEXT PRIMARY KEY,
+                             value TEXT)''')
 
-                _add_column_if_missing(conn, "subject_settings", "teacher", "TEXT")
-                _add_column_if_missing(conn, "subject_settings", "location", "TEXT")
-                _add_column_if_missing(conn, "friends", "category", "TEXT DEFAULT 'Мои друзья'")
-                _add_column_if_missing(conn, "custom_schedule", "exceptions", "TEXT DEFAULT '[]'")
+            _add_column_if_missing(conn, "subject_settings", "teacher", "TEXT")
+            _add_column_if_missing(conn, "subject_settings", "location", "TEXT")
+            _add_column_if_missing(conn, "friends", "category", "TEXT DEFAULT 'Мои друзья'")
+            _add_column_if_missing(conn, "custom_schedule", "exceptions", "TEXT DEFAULT '[]'")
 
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_date_status ON tasks(date, status)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_friends_category ON friends(category)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_group ON lab_progress(group_name)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_items_group ON lab_items(group_name, subject)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_custom_group ON custom_schedule(group_name)")
-                conn.execute("CREATE INDEX IF NOT EXISTS idx_tracked_slug ON tracked_teachers(slug)")
-                conn.commit()
-                return
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_date ON tasks(date)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_date_status ON tasks(date, status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_friends_category ON friends(category)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_group ON lab_progress(group_name)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_lab_items_group ON lab_items(group_name, subject)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_custom_group ON custom_schedule(group_name)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tracked_slug ON tracked_teachers(slug)")
+            conn.commit()
+            return
         except sqlite3.OperationalError as e:
             last_err = e
             if attempt < retries - 1:
                 time.sleep(0.2 * (attempt + 1))
             else:
                 raise
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
     if last_err:
         raise last_err
 

@@ -1,10 +1,4 @@
 // Заметки: создание, редактирование, цвета, drag-n-drop, undo.
-// Обновление карточки — in-place, чтобы CSS-transition плавно менял
-// border-left-color при переключении статуса.
-//
-// v3.6.1: после успешного apiUpdateTask дёргаем refreshMiniCalEvents(),
-// чтобы панель заметок/событий справа от миникалендаря (в горизонтальном
-// режиме) всегда была синхронна с данными в БД.
 
 const _taskBlurTimers = {};
 
@@ -176,6 +170,18 @@ function _fillTaskActions(actions, task) {
     if (task.status === 'completed') { btnDel.innerHTML = '🗑️'; }
     else { btnDel.innerHTML = '×'; btnDel.style.fontSize = '1.3em'; }
     btnDel.onclick = () => handleTaskDeleteClick(task);
+
+    // ВОТ ОНО (пункт 4): ПКМ по корзине восстанавливает заметку
+    btnDel.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (task.status === 'completed') {
+            task.status = 'green'; // Возвращаем стандартный цвет
+            updateTaskRequest(task);
+            if (typeof showUpdateNotification === 'function') showUpdateNotification('Заметка восстановлена');
+        }
+    };
+
     actions.appendChild(btnDel);
 }
 
@@ -194,8 +200,8 @@ function _updateTaskCard(div, task) {
     const safeText = task.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const shortEl = div.querySelector('.task-text-short');
     const fullEl  = div.querySelector('.task-text-full');
-    if (shortEl) shortEl.textContent = safeText;
-    if (fullEl)  fullEl.textContent  = safeText;
+    if (shortEl) shortEl.innerHTML = safeText;
+    if (fullEl)  fullEl.innerHTML  = safeText;
 
     const actions = div.querySelector('.task-actions');
     if (actions) _fillTaskActions(actions, task);
@@ -208,9 +214,6 @@ function _updateTaskCard(div, task) {
     div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", JSON.stringify(task)); };
 }
 
-// v3.6.1: после успешного апдейта дёргаем refreshMiniCalEvents() —
-// панель событий справа от миникалендаря обновится (задача могла
-// стать completed, переехать на другую дату или переименоваться).
 function updateTaskRequest(task) {
     renderTask(task);
     apiUpdateTask(task.id, {date: task.date, text: task.text, status: task.status})

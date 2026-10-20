@@ -9,7 +9,6 @@ import time
 from moodle_pro import moodle_bp
 
 from flask import Flask, g, request, jsonify
-from flask_limiter.util import get_remote_address
 
 from planner import SevSUPlanner
 from teacher_planner import SevSUTeacherPlanner
@@ -99,11 +98,17 @@ limiter.init_app(app)
 
 # ============================================================
 #  АУТЕНТИФИКАЦИЯ
+# ------------------------------------------------------------
+#  APP_TOKEN — опциональный общий токен (для шаринга по сети).
+#  /api/moodle/* намеренно исключён: у него своя аутентификация
+#  через cookies Moodle (login/status должны работать до логина,
+#  logout — после). Если закрыть их токеном, Pro-режим ломается.
 # ============================================================
 
 import secrets
 APP_TOKEN = os.environ.get("APP_TOKEN", "").strip()
 _AUTH_EXEMPT_PATHS = {"/", "/api/health"}
+_AUTH_EXEMPT_PREFIXES = ("/api/moodle/", "/static/")
 
 
 def _check_auth():
@@ -120,8 +125,9 @@ def _enforce_auth():
     path = request.path or ""
     if path in _AUTH_EXEMPT_PATHS:
         return
-    if path.startswith("/static/"):
-        return
+    for prefix in _AUTH_EXEMPT_PREFIXES:
+        if path.startswith(prefix):
+            return
     if not _check_auth():
         return jsonify({"error": "unauthorized"}), 401
 
@@ -225,11 +231,15 @@ def _security_headers(response):
 #  ИНИЦИАЛИЗАЦИЯ БД + ФОНОВАЯ МИГРАЦИЯ
 # ============================================================
 
-from blueprints.db import init_db, _migrate_ps_lz_swap
+from blueprints.db import init_db, close_db, _migrate_ps_lz_swap
 
 _db_init_lock = threading.Lock()
 _db_ready = False
 _migration_started = False
+
+# Закрываем SQLite-соединение в конце каждого запроса. Без этого
+# соединения жили до сборки мусора — латентная утечка fd и WAL-локов.
+app.teardown_appcontext(close_db)
 
 
 def _start_background_migration():
@@ -277,7 +287,7 @@ app.register_blueprint(bp_tasks)
 app.register_blueprint(bp_labs)
 
 # РЕГИСТРАЦИЯ ЕЖ ПРО (MOODLE)
-app.register_blueprint(moodle_bp)  # <--- ДОБАВЛЕНА ЭТА СТРОКА
+app.register_blueprint(moodle_bp)
 
 
 # ============================================================

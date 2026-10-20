@@ -1,13 +1,4 @@
 // Оркестратор виджетов: сводка лаб, графики Chart.js, тема.
-//
-// v3.15.1:
-//   • Анимация появления графиков (rotate + scale, 900ms, easeOutQuart).
-//   • При обновлении — анимация только если данные реально изменились,
-//     иначе update('none') — при драге виджета и смене размера окна
-//     график не «дёргается».
-//   • refreshChartsTheme больше не destroy+recreate: цвета обновляются
-//     на месте. Иначе при перетаскивании пикера цвета график мерцал.
-//   • hoverOffset: 8 — сектор графика отъезжает от центра на hover.
 
 // ============================================================
 //  СВОДКА ЛАБ
@@ -38,9 +29,6 @@ function _setCanvasInitialSize(canvasEl) {
     }
 }
 
-// Общие настройки анимации для обоих doughnut-графиков.
-// animateRotate + animateScale дают появление «сектор растёт
-// из центра и проворачивается в кольцо».
 const _CHART_ANIM = {
     duration: 900,
     easing: 'easeOutQuart',
@@ -52,8 +40,6 @@ function _chartAnimationConfig() {
     return Object.assign({}, _CHART_ANIM);
 }
 
-// Собирает общие tooltip-настройки. Вызывается при каждом renderCharts,
-// потому что цвета темы могли поменяться.
 function _buildTooltipOpts() {
     return {
         backgroundColor: getThemeColor('--chart-tooltip-bg',   'rgba(15, 23, 42, 0.92)'),
@@ -79,6 +65,18 @@ function _chartDataChanged(chart, newData) {
     return false;
 }
 
+function _ensureChartCanvas(chart, canvasId, chartName) {
+    if (!chart) return false;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        chart.destroy();
+        if (chartName === 'globalChart') globalChart = null;
+        if (chartName === 'globalLabChart') globalLabChart = null;
+        return false;
+    }
+    return true;
+}
+
 function renderCharts() {
     if (typeof Chart === 'undefined') {
         console.warn("Chart.js не загружен — графики пропущены.");
@@ -100,6 +98,9 @@ function renderCharts() {
 
     const canvas1 = document.getElementById('globalStatsChart');
     if (canvas1) {
+        if (globalChart && !_ensureChartCanvas(globalChart, 'globalStatsChart', 'globalChart')) {
+            // График был удалён, globalChart сброшен
+        }
         if (globalChart) {
             const newData = [passed, remaining];
             const changed = _chartDataChanged(globalChart, newData);
@@ -111,8 +112,6 @@ function renderCharts() {
                 {}, globalChart.options.plugins.tooltip, tooltipOpts
             );
 
-            // Если данные реально изменились — обновляем с анимацией.
-            // Если нет (drag/theme/resize) — мгновенно, чтобы не мигало.
             globalChart.update(changed ? undefined : 'none');
         } else {
             _setCanvasInitialSize(canvas1);
@@ -156,6 +155,9 @@ function renderCharts() {
 
     const canvas2 = document.getElementById('labStatsChart');
     if (canvas2) {
+        if (globalLabChart && !_ensureChartCanvas(globalLabChart, 'labStatsChart', 'globalLabChart')) {
+            // График был удалён
+        }
         if (globalLabChart) {
             const changed = _chartDataChanged(globalLabChart, labData);
 
@@ -195,21 +197,16 @@ function renderCharts() {
     }
 
     // Боковые панели в горизонтальном режиме + темп сдачи
-    _renderGlobalStatsDetails();
-    _renderLabStatsDetails();
-    renderLabPacing();
+    if (typeof _renderGlobalStatsDetails === 'function') _renderGlobalStatsDetails();
+    if (typeof _renderLabStatsDetails === 'function') _renderLabStatsDetails();
+    if (typeof renderLabPacing === 'function') renderLabPacing();
 }
 
 // ============================================================
 //  СМЕНА ТЕМЫ
-// ------------------------------------------------------------
-//  Раньше здесь был destroy + пересоздание — при перетаскивании
-//  пикера цвета график мерцал и переанимировался десятки раз
-//  в секунду. Теперь просто перекрашиваем на месте, без анимации.
 // ============================================================
 
 function refreshChartsTheme() {
-    const cText      = getThemeColor('--text-secondary', '--');
     const tooltipOpts = _buildTooltipOpts();
 
     if (typeof globalChart !== 'undefined' && globalChart) {
@@ -242,5 +239,10 @@ function refreshChartsTheme() {
         } catch (e) {
             console.error('[theme] globalLabChart update failed', e);
         }
+    }
+
+    // Перекрашиваем Pro-графики
+    if (typeof refreshProChartsTheme === 'function') {
+        try { refreshProChartsTheme(); } catch (e) { console.error('[theme] pro charts update failed', e); }
     }
 }

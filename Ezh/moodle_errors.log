@@ -1,0 +1,2499 @@
+
+[2026-10-20 21:32:41] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 21:32:41] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 21:32:46] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 21:39:51] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 21:39:51] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 21:39:55] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 21:39:56] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 21:39:58] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 21:40:00] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 21:40:01] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 21:40:03] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 21:40:04] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 21:40:05] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 21:40:07] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 21:40:10] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 21:40:11] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 21:40:13] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 21:40:14] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 21:40:15] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 21:40:17] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 21:40:18] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 21:40:20] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 21:40:21] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 21:40:25] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:40:27] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:40:28] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 21:40:29] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 21:40:31] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 21:40:32] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 21:40:34] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 21:40:35] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 21:40:36] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 21:40:38] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 21:40:39] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 21:40:41] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 21:40:42] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 21:40:47] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 21:40:48] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 21:40:49] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 21:40:49] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 21:40:51] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 21:40:52] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 21:40:52] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 21:40:53] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 21:40:55] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 21:40:56] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 21:40:58] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 21:40:59] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 21:41:00] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 21:41:02] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 21:41:03] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 21:41:05] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 21:41:06] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 21:41:06] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 21:41:07] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 21:41:09] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 21:41:09] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 21:41:10] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 21:41:11] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 21:41:11] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 21:41:13] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 21:41:14] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 21:41:14] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 21:41:16] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 21:41:17] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 21:41:18] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-20 21:41:21] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:41:21] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-20 21:41:23] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:41:23] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-20 21:41:25] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-20 21:41:25] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-20 21:41:26] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-20 21:41:26] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-20 21:41:28] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-20 21:41:28] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-20 21:41:30] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-20 21:41:30] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-20 21:41:31] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-20 21:41:31] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-20 21:41:32] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-20 21:41:32] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-20 21:41:34] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-20 21:41:34] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-20 21:41:35] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-20 21:41:35] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-20 21:42:16] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 21:42:16] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 21:42:21] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 21:42:23] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 21:42:24] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 21:42:26] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 21:42:27] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 21:42:29] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 21:42:30] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 21:42:32] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 21:42:33] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 21:42:36] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 21:42:38] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 21:42:39] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 21:42:41] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 21:42:42] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 21:42:44] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 21:42:45] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 21:42:46] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 21:42:48] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 21:42:52] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:42:53] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:42:54] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 21:42:56] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 21:42:57] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 21:42:59] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 21:43:00] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 21:43:01] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 21:43:03] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 21:43:04] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 21:43:06] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 21:43:07] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 21:43:08] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 21:43:13] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 21:43:14] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 21:43:15] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 21:43:15] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 21:43:17] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 21:43:18] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 21:43:18] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 21:43:20] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 21:43:21] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 21:43:22] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 21:43:24] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 21:43:25] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 21:43:27] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 21:43:28] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 21:43:30] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 21:43:32] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 21:43:33] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 21:43:33] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 21:43:35] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 21:43:36] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 21:43:36] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 21:43:38] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 21:43:39] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 21:43:39] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 21:43:41] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 21:43:42] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 21:43:42] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 21:43:44] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 21:43:45] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 21:43:47] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-20 21:43:50] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:43:50] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-20 21:43:51] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:43:51] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-20 21:43:52] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-20 21:43:52] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-20 21:43:54] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-20 21:43:54] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-20 21:43:55] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-20 21:43:55] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-20 21:43:57] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-20 21:43:57] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-20 21:43:58] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-20 21:43:58] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-20 21:44:00] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-20 21:44:00] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-20 21:44:01] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-20 21:44:01] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-20 21:44:03] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-20 21:44:03] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-20 21:44:08] stats: status not recognized for assign 687760
+  extra: name='Лабораторная работа 3'
+
+[2026-10-20 21:44:11] stats: status not recognized for assign 299917
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 21:44:16] stats: status not recognized for assign 702805
+  extra: name='ЛР №1. Встроенный язык 1С. Универсальные коллекции значений. Виды модулей.'
+
+[2026-10-20 21:44:17] stats: status not recognized for assign 654581
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий. архив'
+
+[2026-10-20 21:44:19] stats: status not recognized for assign 702807
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий.'
+
+[2026-10-20 21:44:20] stats: status not recognized for assign 654582
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода. архив'
+
+[2026-10-20 21:44:21] stats: status not recognized for assign 702809
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода.'
+
+[2026-10-20 21:44:23] stats: status not recognized for assign 654583
+  extra: name='ЛР №4. Язык запросов 1С архив'
+
+[2026-10-20 21:47:36] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 21:47:36] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 21:47:40] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 21:47:41] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 21:47:43] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 21:47:44] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 21:50:48] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 21:50:48] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 21:50:52] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 21:50:53] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 21:50:55] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 21:50:56] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 21:50:57] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 21:50:59] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 21:51:00] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 21:51:02] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 21:51:03] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 21:51:06] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 21:51:08] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 21:51:09] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 21:51:11] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 21:51:12] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 21:51:14] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 21:51:15] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 21:51:16] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 21:51:18] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 21:51:21] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:51:22] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 21:51:24] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 21:51:25] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 21:51:27] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 21:51:28] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 21:51:30] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 21:51:31] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 21:51:32] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 21:51:34] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 21:51:35] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 21:51:37] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 21:51:38] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 21:51:42] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 21:51:44] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 21:51:45] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 21:51:45] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 21:51:47] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 21:51:48] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 21:51:48] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 21:51:50] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 21:51:51] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 21:51:52] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 21:51:54] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 21:51:55] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 21:51:57] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 21:51:58] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 21:52:00] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 21:52:01] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 21:52:02] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 21:52:02] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 21:52:04] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 21:52:05] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 21:52:05] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 21:52:07] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 21:52:09] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 21:52:09] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 21:52:10] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 21:52:11] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 21:52:11] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 21:52:13] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 21:52:15] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 21:52:16] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-20 21:52:19] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:52:19] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-20 21:52:21] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 21:52:21] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-20 21:52:23] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-20 21:52:23] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-20 21:52:24] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-20 21:52:24] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-20 21:52:26] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-20 21:52:26] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-20 21:52:27] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-20 21:52:27] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-20 21:52:29] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-20 21:52:29] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-20 21:52:30] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-20 21:52:30] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-20 21:52:32] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-20 21:52:32] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-20 21:52:33] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-20 21:52:33] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-20 21:52:39] stats: status not recognized for assign 687760
+  extra: name='Лабораторная работа 3'
+
+[2026-10-20 21:52:42] stats: status not recognized for assign 299917
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 21:52:47] stats: status not recognized for assign 702805
+  extra: name='ЛР №1. Встроенный язык 1С. Универсальные коллекции значений. Виды модулей.'
+
+[2026-10-20 21:52:48] stats: status not recognized for assign 654581
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий. архив'
+
+[2026-10-20 21:52:49] stats: status not recognized for assign 702807
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий.'
+
+[2026-10-20 21:52:51] stats: status not recognized for assign 654582
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода. архив'
+
+[2026-10-20 21:52:52] stats: status not recognized for assign 702809
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода.'
+
+[2026-10-20 21:52:54] stats: status not recognized for assign 654583
+  extra: name='ЛР №4. Язык запросов 1С архив'
+
+[2026-10-20 21:52:55] stats: status not recognized for assign 702810
+  extra: name='ЛР №4. Язык запросов 1С'
+
+[2026-10-20 21:52:57] stats: status not recognized for assign 654584
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков. архив'
+
+[2026-10-20 21:52:58] stats: status not recognized for assign 702811
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков.'
+
+[2026-10-20 21:53:00] stats: status not recognized for assign 654585
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки. архив'
+
+[2026-10-20 21:53:01] stats: status not recognized for assign 702812
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки.'
+
+[2026-10-20 21:53:02] stats: status not recognized for assign 654586
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных. архив'
+
+[2026-10-20 21:53:04] stats: status not recognized for assign 702813
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных.'
+
+[2026-10-20 21:53:05] stats: status not recognized for assign 654587
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера. архив'
+
+[2026-10-20 21:53:07] stats: status not recognized for assign 702814
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера.'
+
+[2026-10-20 21:53:25] stats: unhandled exception
+  ConnectionError: HTTPSConnectionPool(host='do.sevsu.ru', port=443): Read timed out.
+Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 929, in _error_catcher
+    yield
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 1459, in read_chunked
+    self._update_chunk_length()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 1367, in _update_chunk_length
+    line = self._fp.fp.readline(_MAX_CHUNK_LINE_LENGTH + 1)  # type: ignore[union-attr]
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\socket.py", line 725, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\ssl.py", line 1304, in recv_into
+    return self.read(nbytes, buffer)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\ssl.py", line 1138, in read
+    return self._sslobj.read(len, buffer)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\models.py", line 937, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 1284, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 1436, in read_chunked
+    with self._error_catcher():
+         ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\response.py", line 934, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='do.sevsu.ru', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Admin\Desktop\Ezh\moodle_pro.py", line 318, in get_stats
+    cr = session.get(f"{MOODLE_URL}/course/view.php?id={c['id']}", timeout=15)
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 827, in send
+    r.content
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\models.py", line 1042, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Admin\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\models.py", line 943, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='do.sevsu.ru', port=443): Read timed out.
+
+[2026-10-20 22:01:42] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 22:01:42] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 22:01:46] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:01:48] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 22:01:49] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 22:01:50] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 22:01:52] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 22:01:53] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 22:01:55] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 22:01:56] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 22:01:57] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 22:02:01] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 22:02:02] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 22:02:04] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 22:02:05] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 22:02:07] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 22:02:08] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 22:02:09] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 22:02:11] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 22:02:12] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 22:02:16] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 22:02:17] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 22:02:19] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 22:02:20] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 22:02:22] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 22:02:23] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 22:02:25] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 22:02:26] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 22:02:27] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 22:02:29] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 22:02:30] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 22:02:32] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 22:02:33] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 22:02:37] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 22:02:39] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 22:02:40] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 22:02:40] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 22:02:41] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 22:02:43] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 22:02:43] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 22:02:44] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 22:02:46] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 22:02:47] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 22:02:49] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 22:02:50] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 22:02:51] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 22:02:53] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 22:02:54] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 22:02:56] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 22:02:57] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 22:02:57] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 22:02:58] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 22:03:00] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 22:03:00] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 22:03:01] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 22:03:03] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 22:03:03] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 22:03:04] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 22:03:05] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 22:03:05] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 22:03:07] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 22:03:08] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 22:03:09] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-20 22:03:12] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 22:03:12] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-20 22:03:14] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 22:03:14] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-20 22:03:15] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-20 22:03:15] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-20 22:03:16] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-20 22:03:16] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-20 22:03:18] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-20 22:03:18] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-20 22:03:19] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-20 22:03:19] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-20 22:03:21] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-20 22:03:21] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-20 22:03:22] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-20 22:03:22] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-20 22:03:24] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-20 22:03:24] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-20 22:03:25] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-20 22:03:25] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-20 22:03:30] stats: status not recognized for assign 687760
+  extra: name='Лабораторная работа 3'
+
+[2026-10-20 22:03:33] stats: status not recognized for assign 299917
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 22:03:37] stats: status not recognized for assign 702805
+  extra: name='ЛР №1. Встроенный язык 1С. Универсальные коллекции значений. Виды модулей.'
+
+[2026-10-20 22:03:39] stats: status not recognized for assign 654581
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий. архив'
+
+[2026-10-20 22:03:40] stats: status not recognized for assign 702807
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий.'
+
+[2026-10-20 22:03:42] stats: status not recognized for assign 654582
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода. архив'
+
+[2026-10-20 22:03:43] stats: status not recognized for assign 702809
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода.'
+
+[2026-10-20 22:03:44] stats: status not recognized for assign 654583
+  extra: name='ЛР №4. Язык запросов 1С архив'
+
+[2026-10-20 22:03:46] stats: status not recognized for assign 702810
+  extra: name='ЛР №4. Язык запросов 1С'
+
+[2026-10-20 22:03:47] stats: status not recognized for assign 654584
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков. архив'
+
+[2026-10-20 22:03:48] stats: status not recognized for assign 702811
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков.'
+
+[2026-10-20 22:03:50] stats: status not recognized for assign 654585
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки. архив'
+
+[2026-10-20 22:03:51] stats: status not recognized for assign 702812
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки.'
+
+[2026-10-20 22:03:53] stats: status not recognized for assign 654586
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных. архив'
+
+[2026-10-20 22:03:54] stats: status not recognized for assign 702813
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных.'
+
+[2026-10-20 22:03:55] stats: status not recognized for assign 654587
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера. архив'
+
+[2026-10-20 22:03:57] stats: status not recognized for assign 702814
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера.'
+
+[2026-10-20 22:04:06] stats: status not recognized for assign 686476
+  extra: name='Задание к этапу запуск проекта (осень 2026)'
+
+[2026-10-20 22:04:06] stats: due parse miss for assign 686476
+  extra: due='Четверг'
+
+[2026-10-20 22:04:07] stats: status not recognized for assign 691121
+  extra: name='Задание к этапу исследование'
+
+[2026-10-20 22:04:07] stats: due parse miss for assign 691121
+  extra: due='Пятница'
+
+[2026-10-20 22:04:08] stats: status not recognized for assign 691122
+  extra: name='Презентация для предзащиты проекта (осенний семестр 2026)'
+
+[2026-10-20 22:04:10] stats: status not recognized for assign 691123
+  extra: name='Задание к этапу разработка решения'
+
+[2026-10-20 22:04:10] stats: due parse miss for assign 691123
+  extra: due='Пятница'
+
+[2026-10-20 22:04:11] stats: status not recognized for assign 691124
+  extra: name='Задание к этапу экономика проекта'
+
+[2026-10-20 22:04:11] stats: due parse miss for assign 691124
+  extra: due='Пятница'
+
+[2026-10-20 22:04:13] stats: status not recognized for assign 691125
+  extra: name='Задание к этапу упаковка проекта (осень 2026)'
+
+[2026-10-20 22:04:13] stats: due parse miss for assign 691125
+  extra: due='Пятница'
+
+[2026-10-20 22:04:14] stats: status not recognized for assign 589975
+  extra: name='Курсовой проект'
+
+[2026-10-20 22:04:16] stats: status not recognized for assign 644297
+  extra: name='Задание для ЗФО (9 семестр)'
+
+[2026-10-20 22:04:17] stats: status not recognized for assign 661880
+  extra: name='Курсовой проект ЗФО (10 семестр)'
+
+[2026-10-20 22:04:19] stats: status not recognized for assign 699143
+  extra: name='Ликвидация задолженности по курсу'
+
+[2026-10-20 22:05:50] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 22:05:51] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 22:05:55] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:05:56] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 22:05:58] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 22:05:59] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 22:06:01] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 22:06:02] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 22:06:04] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 22:06:05] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 22:06:06] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 22:06:09] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 22:06:11] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 22:06:13] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 22:06:15] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 22:06:16] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 22:06:18] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 22:06:19] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 22:06:21] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 22:06:22] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 22:06:25] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 22:06:59] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 22:07:00] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 22:07:04] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:07:05] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 22:07:07] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 22:07:08] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 22:07:10] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 22:07:11] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 22:07:13] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 22:07:14] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 22:07:16] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 22:35:01] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 22:35:01] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 22:35:06] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:35:21] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 22:35:21] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 22:35:26] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:35:27] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 22:35:29] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 22:35:30] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 22:35:32] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 22:35:33] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 22:35:35] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 22:35:36] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 22:35:37] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 22:35:41] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 22:35:42] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 22:35:44] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 22:35:45] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 22:35:46] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 22:35:48] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 22:35:49] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 22:35:51] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 22:35:52] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 22:35:56] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 22:35:57] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 22:35:59] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 22:36:00] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 22:36:02] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 22:36:03] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 22:36:04] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 22:36:06] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 22:36:07] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 22:36:09] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 22:36:10] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 22:36:11] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 22:36:13] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 22:36:18] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 22:36:20] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 22:36:21] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 22:36:21] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 22:36:23] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 22:36:24] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 22:36:24] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 22:36:26] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 22:36:27] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 22:36:28] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 22:36:30] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 22:36:31] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 22:36:33] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 22:36:34] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 22:36:35] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 22:36:37] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 22:36:38] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 22:36:38] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 22:36:40] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 22:36:41] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 22:36:41] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 22:36:43] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 22:36:45] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 22:36:45] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 22:36:47] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 22:36:48] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 22:36:48] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 22:36:50] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 22:36:51] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 22:36:52] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-20 22:36:55] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 22:36:55] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-20 22:36:57] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-20 22:36:57] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-20 22:36:58] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-20 22:36:58] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-20 22:37:00] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-20 22:37:00] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-20 22:37:01] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-20 22:37:01] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-20 22:37:03] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-20 22:37:03] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-20 22:37:04] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-20 22:37:04] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-20 22:37:05] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-20 22:37:05] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-20 22:37:07] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-20 22:37:07] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-20 22:37:08] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-20 22:37:08] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-20 22:37:14] stats: status not recognized for assign 687760
+  extra: name='Лабораторная работа 3'
+
+[2026-10-20 22:37:17] stats: status not recognized for assign 299917
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-20 22:37:21] stats: status not recognized for assign 702805
+  extra: name='ЛР №1. Встроенный язык 1С. Универсальные коллекции значений. Виды модулей.'
+
+[2026-10-20 22:37:23] stats: status not recognized for assign 654581
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий. архив'
+
+[2026-10-20 22:37:24] stats: status not recognized for assign 702807
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий.'
+
+[2026-10-20 22:37:26] stats: status not recognized for assign 654582
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода. архив'
+
+[2026-10-20 22:37:27] stats: status not recognized for assign 702809
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода.'
+
+[2026-10-20 22:37:29] stats: status not recognized for assign 654583
+  extra: name='ЛР №4. Язык запросов 1С архив'
+
+[2026-10-20 22:37:30] stats: status not recognized for assign 702810
+  extra: name='ЛР №4. Язык запросов 1С'
+
+[2026-10-20 22:37:32] stats: status not recognized for assign 654584
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков. архив'
+
+[2026-10-20 22:37:33] stats: status not recognized for assign 702811
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков.'
+
+[2026-10-20 22:37:35] stats: status not recognized for assign 654585
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки. архив'
+
+[2026-10-20 22:37:36] stats: status not recognized for assign 702812
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки.'
+
+[2026-10-20 22:37:37] stats: status not recognized for assign 654586
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных. архив'
+
+[2026-10-20 22:37:39] stats: status not recognized for assign 702813
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных.'
+
+[2026-10-20 22:37:40] stats: status not recognized for assign 654587
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера. архив'
+
+[2026-10-20 22:37:41] stats: status not recognized for assign 702814
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера.'
+
+[2026-10-20 22:37:50] stats: status not recognized for assign 686476
+  extra: name='Задание к этапу запуск проекта (осень 2026)'
+
+[2026-10-20 22:37:50] stats: due parse miss for assign 686476
+  extra: due='Четверг'
+
+[2026-10-20 22:37:52] stats: status not recognized for assign 691121
+  extra: name='Задание к этапу исследование'
+
+[2026-10-20 22:37:52] stats: due parse miss for assign 691121
+  extra: due='Пятница'
+
+[2026-10-20 22:37:53] stats: status not recognized for assign 691122
+  extra: name='Презентация для предзащиты проекта (осенний семестр 2026)'
+
+[2026-10-20 22:37:55] stats: status not recognized for assign 691123
+  extra: name='Задание к этапу разработка решения'
+
+[2026-10-20 22:37:55] stats: due parse miss for assign 691123
+  extra: due='Пятница'
+
+[2026-10-20 22:37:56] stats: status not recognized for assign 691124
+  extra: name='Задание к этапу экономика проекта'
+
+[2026-10-20 22:37:56] stats: due parse miss for assign 691124
+  extra: due='Пятница'
+
+[2026-10-20 22:37:57] stats: status not recognized for assign 691125
+  extra: name='Задание к этапу упаковка проекта (осень 2026)'
+
+[2026-10-20 22:37:57] stats: due parse miss for assign 691125
+  extra: due='Пятница'
+
+[2026-10-20 22:37:59] stats: status not recognized for assign 589975
+  extra: name='Курсовой проект'
+
+[2026-10-20 22:38:00] stats: status not recognized for assign 644297
+  extra: name='Задание для ЗФО (9 семестр)'
+
+[2026-10-20 22:38:02] stats: status not recognized for assign 661880
+  extra: name='Курсовой проект ЗФО (10 семестр)'
+
+[2026-10-20 22:38:03] stats: status not recognized for assign 699143
+  extra: name='Ликвидация задолженности по курсу'
+
+[2026-10-20 22:38:06] stats: status not recognized for assign 345912
+  extra: name='Лабораторная работа №1 Технологии и программное обеспечение'
+
+[2026-10-20 22:38:07] stats: status not recognized for assign 378675
+  extra: name='Лабораторная работа №2 Некоторые модели Жизненного цикла'
+
+[2026-10-20 22:38:09] stats: status not recognized for assign 378760
+  extra: name='Лкабораторная работа №3 Разработка документа: Техническое'
+
+[2026-10-20 22:38:10] stats: status not recognized for assign 696290
+  extra: name='Лкабораторная работа №3 Разработка документа: Техническое задание (продолжение)'
+
+[2026-10-20 22:38:12] stats: status not recognized for assign 388019
+  extra: name='Лабораторная работа № 4 Расчет LOC-метрик'
+
+[2026-10-20 22:38:14] stats: status not recognized for assign 698836
+  extra: name='Лабораторная работа № 4 Расчет метрик и эксплуатационных расходов'
+
+[2026-10-20 22:38:15] stats: status not recognized for assign 395233
+  extra: name='Лабораторная работа № 7 Организация дружественных функций и класс ostream'
+
+[2026-10-20 22:38:16] stats: status not recognized for assign 395229
+  extra: name='Практическая работа № 8 Абстрактные данные класса. Дружественные классы'
+
+[2026-10-20 22:38:18] stats: status not recognized for assign 393357
+  extra: name='Лабораторная работа № 8 Организация перегруженных функций'
+
+[2026-10-20 22:38:19] stats: status not recognized for assign 395232
+  extra: name='Практическая работа № 9 Многофайловые программы'
+
+[2026-10-20 22:38:21] stats: status not recognized for assign 395963
+  extra: name='Лабораторная работа № 9. Пошаговая реализация тестирования'
+
+[2026-10-20 22:38:24] stats: due parse miss for assign 168129
+  extra: due='Четверг'
+
+[2026-10-20 22:38:26] stats: due parse miss for assign 473004
+  extra: due='Суббота'
+
+[2026-10-20 22:38:27] stats: status not recognized for assign 168138
+  extra: name='Лабораторное занятие 3. Лабораторная работа 3 "Формирование и обработка табличных структур данных".'
+
+[2026-10-20 22:38:27] stats: due parse miss for assign 168138
+  extra: due='Суббота'
+
+[2026-10-20 22:38:29] stats: status not recognized for assign 168121
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №1. Входной контроль. Итерационные алгоритмы'
+
+[2026-10-20 22:38:29] stats: due parse miss for assign 168121
+  extra: due='Среда'
+
+[2026-10-20 22:38:30] stats: status not recognized for assign 683147
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №1. Входной контроль. Итерационные алгоритмы'
+
+[2026-10-20 22:38:30] stats: due parse miss for assign 683147
+  extra: due='Среда'
+
+[2026-10-20 22:38:32] stats: status not recognized for assign 683172
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №1. Лабораторная работа 1 "Исследование свойств системы программирования" (копия)'
+
+[2026-10-20 22:38:32] stats: due parse miss for assign 683172
+  extra: due='Четверг'
+
+[2026-10-20 22:38:33] stats: status not recognized for assign 692516
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №2. Операции языка Си'
+
+[2026-10-20 22:38:33] stats: due parse miss for assign 692516
+  extra: due='Среда'
+
+[2026-10-20 22:38:35] stats: status not recognized for assign 692559
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №2. Операции языка Си (копия)'
+
+[2026-10-20 22:38:35] stats: due parse miss for assign 692559
+  extra: due='Среда'
+
+[2026-10-20 22:38:36] stats: status not recognized for assign 689954
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №2. Лабораторная работа 2 "Формирование и обработка линейных списковых структур данных" (копия)'
+
+[2026-10-20 22:38:36] stats: due parse miss for assign 689954
+  extra: due='Суббота'
+
+[2026-10-20 22:38:38] stats: status not recognized for assign 697086
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №3. ПОЛИЗ простых выражений'
+
+[2026-10-20 22:38:38] stats: due parse miss for assign 697086
+  extra: due='Среда'
+
+[2026-10-20 22:38:39] stats: status not recognized for assign 697091
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №3. ПОЛИЗ простых выражений (копия)'
+
+[2026-10-20 22:38:39] stats: due parse miss for assign 697091
+  extra: due='Среда'
+
+[2026-10-20 22:38:40] stats: status not recognized for assign 696005
+  extra: name='Лабораторное занятие 3. Лабораторная работа 3 "Формирование и обработка табличных структур данных". (копия)'
+
+[2026-10-20 22:38:40] stats: due parse miss for assign 696005
+  extra: due='Суббота'
+
+[2026-10-20 22:38:42] stats: status not recognized for assign 699231
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №4. Дерево двоичного поиска, операции. Дерево операций для арифметического выражения'
+
+[2026-10-20 22:38:42] stats: due parse miss for assign 699231
+  extra: due='Среда'
+
+[2026-10-20 22:38:43] stats: status not recognized for assign 168148
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №4 .Лабораторная работа 4 "Формирование и обработка древовидных структур данных".'
+
+[2026-10-20 22:38:43] stats: due parse miss for assign 168148
+  extra: due='Суббота'
+
+[2026-10-20 22:38:45] stats: status not recognized for assign 699235
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №4 .Лабораторная работа 4 "Формирование и обработка древовидных структур данных". (копия)'
+
+[2026-10-20 22:38:45] stats: due parse miss for assign 699235
+  extra: due='Суббота'
+
+[2026-10-20 22:38:47] stats: status not recognized for assign 620662
+  extra: name='Отчёт по лабораторной работе № 1'
+
+[2026-10-20 22:38:49] stats: status not recognized for assign 46201
+  extra: name='Отчёт по лабораторной работе № 2'
+
+[2026-10-20 22:38:50] stats: status not recognized for assign 46202
+  extra: name='Отчёт по лабораторной работе № 3'
+
+[2026-10-20 22:38:52] stats: status not recognized for assign 46203
+  extra: name='Отчёт по лабораторной работе № 4'
+
+[2026-10-20 22:38:53] stats: status not recognized for assign 46204
+  extra: name='Отчёт по лабораторной работе № 5'
+
+[2026-10-20 22:38:55] stats: status not recognized for assign 46205
+  extra: name='Отчёт по лабораторной работе № 6'
+
+[2026-10-20 22:38:56] stats: status not recognized for assign 46206
+  extra: name='Отчёт по лабораторной работе № 7'
+
+[2026-10-20 22:38:57] stats: status not recognized for assign 46207
+  extra: name='Отчёт по лабораторной работе № 8'
+
+[2026-10-20 22:38:59] stats: status not recognized for assign 333322
+  extra: name='Контрольная работа'
+
+[2026-10-20 22:39:03] stats: status not recognized for assign 699199
+  extra: name='Лабораторная работа №2'
+
+[2026-10-20 22:39:04] stats: status not recognized for assign 699200
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 22:39:06] stats: status not recognized for assign 699201
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 22:39:07] stats: status not recognized for assign 699202
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 22:39:10] stats: status not recognized for assign 306022
+  extra: name='Лабораторная работа №1. Базовые сведения для интерактивной работы в среде Лисп'
+
+[2026-10-20 22:39:11] stats: status not recognized for assign 40125
+  extra: name='Практическое занятие №1. Выдача индивидуальных заданий в среде WEKA'
+
+[2026-10-20 22:39:13] stats: status not recognized for assign 40126
+  extra: name='Лабораторная работа №2. Разработка и исследование функций обработки арифметических выражений на Лиспе'
+
+[2026-10-20 22:39:15] stats: status not recognized for assign 498877
+  extra: name='Практическое занятие №2. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:16] stats: status not recognized for assign 40127
+  extra: name='Лабораторная работа №3. Разработка и исследование логических функций на Лиспе'
+
+[2026-10-20 22:39:17] stats: status not recognized for assign 654694
+  extra: name='Практическое занятие №3. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:19] stats: status not recognized for assign 40128
+  extra: name='Лабораторная работа №4. Разработка и исследование функций обработки символьных выражений на Лиспе'
+
+[2026-10-20 22:39:20] stats: status not recognized for assign 40129
+  extra: name='Лабораторная работа №5.Разработка и исследование ввода-вывода'
+
+[2026-10-20 22:39:22] stats: status not recognized for assign 40130
+  extra: name='Лабораторная работа №6. Разработка и исследование рекурсивных функций на Лиспе'
+
+[2026-10-20 22:39:23] stats: status not recognized for assign 40131
+  extra: name='Лабораторная работа №7. Разработка и исследование файлового ввода-вывода на Лиспе'
+
+[2026-10-20 22:39:25] stats: status not recognized for assign 498880
+  extra: name='Практическое занятие №4. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:26] stats: status not recognized for assign 40158
+  extra: name='Лабораторная работа №1. ВЫПОЛНЕНИЕ И ТРАССИРОВКА ЛОГИЧЕСКИХ ПРОГРАММ В СРЕДЕ PIE'
+
+[2026-10-20 22:39:27] stats: status not recognized for assign 40159
+  extra: name='Лабораторная работа №2. ОСНОВЫ ПРОГРАММИРОВАНИЯ НА ЯЗЫКЕ ПРОЛОГ'
+
+[2026-10-20 22:39:29] stats: status not recognized for assign 306023
+  extra: name='Практическое занятие №5.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:30] stats: status not recognized for assign 40160
+  extra: name='Лабораторная работа №3. СТРУКТУРА ПРОГРАММЫ НА ЯЗЫКЕ ПРОЛОГ. ИНТЕРФЕЙС СРЕДЫ РАЗРАБОТКИ'
+
+[2026-10-20 22:39:32] stats: status not recognized for assign 40161
+  extra: name='Лабораторная работа №4. РЕКУРСИВНАЯ ОБРАБОТКА ДАННЫХ'
+
+[2026-10-20 22:39:33] stats: status not recognized for assign 498886
+  extra: name='Практическое занятие №6. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:35] stats: status not recognized for assign 40162
+  extra: name='Лабораторная работа №5. ОБРАБОТКА СПИСКОВ'
+
+[2026-10-20 22:39:36] stats: status not recognized for assign 498887
+  extra: name='Практическое занятие №7.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:38] stats: status not recognized for assign 40163
+  extra: name='Лабораторная работа №6. ТИПОВЫЕ ОПЕРАЦИИ С БИНАРНЫМИ ДЕРЕВЬЯМИ'
+
+[2026-10-20 22:39:39] stats: status not recognized for assign 498888
+  extra: name='Практическое занятие №7.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-20 22:39:41] stats: status not recognized for assign 498889
+  extra: name='Практическое занятие.Оформление и представление отчета по практической работе'
+
+[2026-10-20 22:39:43] stats: status not recognized for assign 498890
+  extra: name='Лабораторная работа. Итоговое занятие'
+
+[2026-10-20 22:39:45] stats: course list empty after both parsers
+
+[2026-10-20 23:58:31] stats: status not recognized for assign 574666
+  extra: name='задачи от партнеров'
+
+[2026-10-20 23:58:31] stats: due parse miss for assign 574666
+  extra: due='Вторник'
+
+[2026-10-20 23:58:36] stats: status not recognized for assign 621315
+  extra: name='Лабораторная работа №3'
+
+[2026-10-20 23:58:37] stats: status not recognized for assign 621316
+  extra: name='Лабораторная работа №4'
+
+[2026-10-20 23:58:39] stats: status not recognized for assign 621318
+  extra: name='Лабораторная работа №5'
+
+[2026-10-20 23:58:40] stats: status not recognized for assign 621319
+  extra: name='Лабораторная работа №6'
+
+[2026-10-20 23:58:42] stats: status not recognized for assign 621320
+  extra: name='Лабораторная работа №7'
+
+[2026-10-20 23:58:43] stats: status not recognized for assign 621321
+  extra: name='Лабораторная работа №8'
+
+[2026-10-20 23:58:45] stats: status not recognized for assign 621324
+  extra: name='Лабораторная работа №9'
+
+[2026-10-20 23:58:46] stats: status not recognized for assign 621325
+  extra: name='Лабораторная работа №10'
+
+[2026-10-20 23:58:47] stats: status not recognized for assign 621326
+  extra: name='Лабораторная работа №11'
+
+[2026-10-20 23:58:50] stats: status not recognized for assign 166268
+  extra: name='Лабораторная работа 1. Исследование работы элементов компьютерной логики'
+
+[2026-10-20 23:58:52] stats: status not recognized for assign 166283
+  extra: name='Лабораторная работа 2. Синтез комбинационных и триггерных схем'
+
+[2026-10-20 23:58:53] stats: status not recognized for assign 166296
+  extra: name='Лабораторная работа 3. Выполнение микроопераций в регистрах'
+
+[2026-10-20 23:58:55] stats: status not recognized for assign 166309
+  extra: name='Лабораторная работа 4. Комбинационные двоичные счетчики'
+
+[2026-10-20 23:58:56] stats: status not recognized for assign 166323
+  extra: name='Лабораторная работа 5. Накапливающие двоичные счетчики'
+
+[2026-10-20 23:58:57] stats: status not recognized for assign 166336
+  extra: name='Лабораторная работа 6. Схемы сравнения кодов'
+
+[2026-10-20 23:58:59] stats: status not recognized for assign 513090
+  extra: name='Лабораторная работа №7. "Дешифраторы (шифраторы) и мультиплексоры (демультиплексоры). Использование дешифраторов и мультиплексоров для организации передач в системе регистров"'
+
+[2026-10-20 23:59:00] stats: status not recognized for assign 166372
+  extra: name='Лабораторная работа 8. Двоичные сумматоры'
+
+[2026-10-20 23:59:02] stats: status not recognized for assign 519832
+  extra: name='Лабораторная работа 9. Синтез управляющего автомата с программируемой логикой, естественной адресацией микрокоманд, горизонтальным кодированием микроопераций'
+
+[2026-10-20 23:59:06] stats: status not recognized for assign 689729
+  extra: name='Практическая работа 2, часть 1 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 23:59:08] stats: status not recognized for assign 689730
+  extra: name='Практическая работа 2, часть 2 "Физиологические факторы обеспечения безопасности человека"'
+
+[2026-10-20 23:59:09] stats: status not recognized for assign 689738
+  extra: name='Практическая работа 3 "Оценка уровня шума"'
+
+[2026-10-20 23:59:11] stats: status not recognized for assign 689740
+  extra: name='Практическая работа 4 "ОЦЕНКА ХИМИЧЕСКОЙ ОБСТАНОВКИ ПРИ АВАРИИ С ВЫБРОСОМ АХОВ"'
+
+[2026-10-20 23:59:12] stats: status not recognized for assign 689743
+  extra: name='Практическая работа 5 "Оценка воздействия вредных веществ, содержащихся в воздухе"'
+
+[2026-10-20 23:59:14] stats: status not recognized for assign 689749
+  extra: name='Практическая работа 6 "Расчет данных при эвакуации"'
+
+[2026-10-20 23:59:15] stats: status not recognized for assign 689750
+  extra: name='Практическая работа 7.1. "Расчет естественного освещения"'
+
+[2026-10-20 23:59:16] stats: status not recognized for assign 696205
+  extra: name='Практическая работа 7.2. "Расчет искусственного освещения"'
+
+[2026-10-20 23:59:18] stats: status not recognized for assign 696206
+  extra: name='Практическая работа 8 "Методы анализа производственного травматизма"'
+
+[2026-10-20 23:59:19] stats: status not recognized for assign 696208
+  extra: name='Практическая работа 9 "Общеобменная вентиляция. Расчеты"'
+
+[2026-10-20 23:59:21] stats: status not recognized for assign 696209
+  extra: name='Практическая работа 10 "Оценка качества питьевой воды"'
+
+[2026-10-20 23:59:22] stats: status not recognized for assign 696222
+  extra: name='Практическая работа 10 "Эвакуация людей при пожаре"'
+
+[2026-10-20 23:59:24] stats: status not recognized for assign 687894
+  extra: name='зачет по дисциплине'
+
+[2026-10-20 23:59:28] stats: status not recognized for assign 584558
+  extra: name='Практическое задание №1'
+
+[2026-10-20 23:59:30] stats: status not recognized for assign 612173
+  extra: name='Тесты Тема №1'
+
+[2026-10-20 23:59:31] stats: status not recognized for assign 584560
+  extra: name='Практическое задание №2.'
+
+[2026-10-20 23:59:31] stats: due parse miss for assign 584560
+  extra: due='Пятница'
+
+[2026-10-20 23:59:32] stats: status not recognized for assign 612176
+  extra: name='Тесты Тема №2'
+
+[2026-10-20 23:59:34] stats: status not recognized for assign 584562
+  extra: name='Практическое задание №3.'
+
+[2026-10-20 23:59:34] stats: due parse miss for assign 584562
+  extra: due='Пятница'
+
+[2026-10-20 23:59:35] stats: status not recognized for assign 612179
+  extra: name='Тесты Тема№3'
+
+[2026-10-20 23:59:36] stats: status not recognized for assign 612181
+  extra: name='Практическое задание №4'
+
+[2026-10-20 23:59:38] stats: status not recognized for assign 612183
+  extra: name='Тесты Тема №4'
+
+[2026-10-20 23:59:39] stats: status not recognized for assign 612185
+  extra: name='Практическое задание Тема №5'
+
+[2026-10-20 23:59:40] stats: status not recognized for assign 612186
+  extra: name='Тесты Тема №5'
+
+[2026-10-20 23:59:42] stats: status not recognized for assign 612187
+  extra: name='Задачи Тема №5'
+
+[2026-10-20 23:59:43] stats: status not recognized for assign 612189
+  extra: name='Практическое задание №6.'
+
+[2026-10-20 23:59:44] stats: status not recognized for assign 612193
+  extra: name='Тесты Тема №6'
+
+[2026-10-20 23:59:46] stats: status not recognized for assign 612194
+  extra: name='Задачи Тема №6'
+
+[2026-10-20 23:59:47] stats: status not recognized for assign 584564
+  extra: name='ПЗ. Тема 7. Понятие и природа смежных прав.'
+
+[2026-10-20 23:59:47] stats: due parse miss for assign 584564
+  extra: due='Пятница'
+
+[2026-10-20 23:59:49] stats: status not recognized for assign 612197
+  extra: name='Тесты и задачи Тема №7'
+
+[2026-10-20 23:59:50] stats: status not recognized for assign 584563
+  extra: name='ПЗ. Тема 8. Товарные знаки и знаки обслуживания: понятие и виды.'
+
+[2026-10-20 23:59:50] stats: due parse miss for assign 584563
+  extra: due='Пятница'
+
+[2026-10-20 23:59:52] stats: status not recognized for assign 612200
+  extra: name='Тесты и задачи Тема №8'
+
+[2026-10-20 23:59:53] stats: status not recognized for assign 584561
+  extra: name='ПЗ. Тема 9. Понятие и способы защиты интеллектуальных прав'
+
+[2026-10-20 23:59:53] stats: due parse miss for assign 584561
+  extra: due='Пятница'
+
+[2026-10-20 23:59:54] stats: status not recognized for assign 612202
+  extra: name='Тесты и задачи Тема №9'
+
+[2026-10-20 23:59:56] stats: status not recognized for assign 584559
+  extra: name='ПЗ. Тема 10. Охраноспособность программ и их отдельных элементов.'
+
+[2026-10-20 23:59:56] stats: due parse miss for assign 584559
+  extra: due='Пятница'
+
+[2026-10-20 23:59:57] stats: status not recognized for assign 612204
+  extra: name='Тесты и задачи Тема №10'
+
+[2026-10-20 23:59:59] stats: status not recognized for assign 520064
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-21 00:00:00] stats: status not recognized for assign 612205
+  extra: name='Итоговый тест'
+
+[2026-10-21 00:00:03] stats: status not recognized for assign 656947
+  extra: name='Лабораторная работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-21 00:00:03] stats: due parse miss for assign 656947
+  extra: due='Среда'
+
+[2026-10-21 00:00:04] stats: status not recognized for assign 656983
+  extra: name='Практическая работа 1. Статистические распределения и их основные характеристики'
+
+[2026-10-21 00:00:04] stats: due parse miss for assign 656983
+  extra: due='Среда'
+
+[2026-10-21 00:00:06] stats: status not recognized for assign 656952
+  extra: name='Лабораторная работа 2. Регрессионный анализ'
+
+[2026-10-21 00:00:06] stats: due parse miss for assign 656952
+  extra: due='Среда'
+
+[2026-10-21 00:00:07] stats: status not recognized for assign 656979
+  extra: name='Практическая работа 2. Регрессионный анализ'
+
+[2026-10-21 00:00:07] stats: due parse miss for assign 656979
+  extra: due='Среда'
+
+[2026-10-21 00:00:09] stats: status not recognized for assign 656953
+  extra: name='Лабораторная работа 3. Экстремальные задачи'
+
+[2026-10-21 00:00:09] stats: due parse miss for assign 656953
+  extra: due='Среда'
+
+[2026-10-21 00:00:10] stats: status not recognized for assign 656955
+  extra: name='Лабораторная работа 4. Однопараметрическая оптимизация'
+
+[2026-10-21 00:00:10] stats: due parse miss for assign 656955
+  extra: due='Среда'
+
+[2026-10-21 00:00:11] stats: status not recognized for assign 656958
+  extra: name='Лабораторная работа 5. Методы решения задач линейного программирования'
+
+[2026-10-21 00:00:11] stats: due parse miss for assign 656958
+  extra: due='Среда'
+
+[2026-10-21 00:00:13] stats: status not recognized for assign 656960
+  extra: name='Лабораторная работа 6. Двойственность в линейном программировании'
+
+[2026-10-21 00:00:13] stats: due parse miss for assign 656960
+  extra: due='Среда'
+
+[2026-10-21 00:00:14] stats: status not recognized for assign 656981
+  extra: name='Практическая работа 3. Оценка параметров парной линейной регрессионной модели'
+
+[2026-10-21 00:00:14] stats: due parse miss for assign 656981
+  extra: due='Среда'
+
+[2026-10-21 00:00:16] stats: status not recognized for assign 678422
+  extra: name='Курсовая работа'
+
+[2026-10-21 00:00:16] stats: due parse miss for assign 678422
+  extra: due='Ни одной попытки'
+
+[2026-10-21 00:00:21] stats: status not recognized for assign 687760
+  extra: name='Лабораторная работа 3'
+
+[2026-10-21 00:00:24] stats: status not recognized for assign 299917
+  extra: name='Экзамен (зачет) по дисциплине'
+
+[2026-10-21 00:00:29] stats: status not recognized for assign 702805
+  extra: name='ЛР №1. Встроенный язык 1С. Универсальные коллекции значений. Виды модулей.'
+
+[2026-10-21 00:00:30] stats: status not recognized for assign 654581
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий. архив'
+
+[2026-10-21 00:00:31] stats: status not recognized for assign 702807
+  extra: name='ЛР №2. Справочники и документы. Обработчики событий.'
+
+[2026-10-21 00:00:33] stats: status not recognized for assign 654582
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода. архив'
+
+[2026-10-21 00:00:34] stats: status not recognized for assign 702809
+  extra: name='ЛР №3. Регистры сведений. Виртуальные таблицы срезов. Клиент-серверное разделение кода.'
+
+[2026-10-21 00:00:35] stats: status not recognized for assign 654583
+  extra: name='ЛР №4. Язык запросов 1С архив'
+
+[2026-10-21 00:00:37] stats: status not recognized for assign 702810
+  extra: name='ЛР №4. Язык запросов 1С'
+
+[2026-10-21 00:00:38] stats: status not recognized for assign 654584
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков. архив'
+
+[2026-10-21 00:00:40] stats: status not recognized for assign 702811
+  extra: name='ЛР №5. Регистры накопления. Остатки и обороты. Контроль остатков.'
+
+[2026-10-21 00:00:41] stats: status not recognized for assign 654585
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки. архив'
+
+[2026-10-21 00:00:42] stats: status not recognized for assign 702812
+  extra: name='ЛР №6. Стратегии списания взаиморасчетов. Управляемые блокировки.'
+
+[2026-10-21 00:00:44] stats: status not recognized for assign 654586
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных. архив'
+
+[2026-10-21 00:00:45] stats: status not recognized for assign 702813
+  extra: name='ЛР №7. Отчеты. Схема компоновки данных.'
+
+[2026-10-21 00:00:47] stats: status not recognized for assign 654587
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера. архив'
+
+[2026-10-21 00:00:48] stats: status not recognized for assign 702814
+  extra: name='ЛР №8. Сереализация и десереализация. Передача двоичных данных на сервер / с сервера.'
+
+[2026-10-21 00:00:56] stats: status not recognized for assign 686476
+  extra: name='Задание к этапу запуск проекта (осень 2026)'
+
+[2026-10-21 00:00:56] stats: due parse miss for assign 686476
+  extra: due='Четверг'
+
+[2026-10-21 00:00:58] stats: status not recognized for assign 691121
+  extra: name='Задание к этапу исследование'
+
+[2026-10-21 00:00:58] stats: due parse miss for assign 691121
+  extra: due='Пятница'
+
+[2026-10-21 00:00:59] stats: status not recognized for assign 691122
+  extra: name='Презентация для предзащиты проекта (осенний семестр 2026)'
+
+[2026-10-21 00:01:00] stats: status not recognized for assign 691123
+  extra: name='Задание к этапу разработка решения'
+
+[2026-10-21 00:01:00] stats: due parse miss for assign 691123
+  extra: due='Пятница'
+
+[2026-10-21 00:01:02] stats: status not recognized for assign 691124
+  extra: name='Задание к этапу экономика проекта'
+
+[2026-10-21 00:01:02] stats: due parse miss for assign 691124
+  extra: due='Пятница'
+
+[2026-10-21 00:01:03] stats: status not recognized for assign 691125
+  extra: name='Задание к этапу упаковка проекта (осень 2026)'
+
+[2026-10-21 00:01:03] stats: due parse miss for assign 691125
+  extra: due='Пятница'
+
+[2026-10-21 00:01:04] stats: status not recognized for assign 589975
+  extra: name='Курсовой проект'
+
+[2026-10-21 00:01:06] stats: status not recognized for assign 644297
+  extra: name='Задание для ЗФО (9 семестр)'
+
+[2026-10-21 00:01:07] stats: status not recognized for assign 661880
+  extra: name='Курсовой проект ЗФО (10 семестр)'
+
+[2026-10-21 00:01:08] stats: status not recognized for assign 699143
+  extra: name='Ликвидация задолженности по курсу'
+
+[2026-10-21 00:01:11] stats: status not recognized for assign 345912
+  extra: name='Лабораторная работа №1 Технологии и программное обеспечение'
+
+[2026-10-21 00:01:13] stats: status not recognized for assign 378675
+  extra: name='Лабораторная работа №2 Некоторые модели Жизненного цикла'
+
+[2026-10-21 00:01:14] stats: status not recognized for assign 378760
+  extra: name='Лкабораторная работа №3 Разработка документа: Техническое'
+
+[2026-10-21 00:01:16] stats: status not recognized for assign 696290
+  extra: name='Лкабораторная работа №3 Разработка документа: Техническое задание (продолжение)'
+
+[2026-10-21 00:01:17] stats: status not recognized for assign 388019
+  extra: name='Лабораторная работа № 4 Расчет LOC-метрик'
+
+[2026-10-21 00:01:18] stats: status not recognized for assign 698836
+  extra: name='Лабораторная работа № 4 Расчет метрик и эксплуатационных расходов'
+
+[2026-10-21 00:01:20] stats: status not recognized for assign 395233
+  extra: name='Лабораторная работа № 7 Организация дружественных функций и класс ostream'
+
+[2026-10-21 00:01:21] stats: status not recognized for assign 395229
+  extra: name='Практическая работа № 8 Абстрактные данные класса. Дружественные классы'
+
+[2026-10-21 00:01:23] stats: status not recognized for assign 393357
+  extra: name='Лабораторная работа № 8 Организация перегруженных функций'
+
+[2026-10-21 00:01:24] stats: status not recognized for assign 395232
+  extra: name='Практическая работа № 9 Многофайловые программы'
+
+[2026-10-21 00:01:25] stats: status not recognized for assign 395963
+  extra: name='Лабораторная работа № 9. Пошаговая реализация тестирования'
+
+[2026-10-21 00:01:29] stats: due parse miss for assign 168129
+  extra: due='Четверг'
+
+[2026-10-21 00:01:31] stats: due parse miss for assign 473004
+  extra: due='Суббота'
+
+[2026-10-21 00:01:32] stats: status not recognized for assign 168138
+  extra: name='Лабораторное занятие 3. Лабораторная работа 3 "Формирование и обработка табличных структур данных".'
+
+[2026-10-21 00:01:32] stats: due parse miss for assign 168138
+  extra: due='Суббота'
+
+[2026-10-21 00:01:34] stats: status not recognized for assign 168121
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №1. Входной контроль. Итерационные алгоритмы'
+
+[2026-10-21 00:01:34] stats: due parse miss for assign 168121
+  extra: due='Среда'
+
+[2026-10-21 00:01:35] stats: status not recognized for assign 683147
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №1. Входной контроль. Итерационные алгоритмы'
+
+[2026-10-21 00:01:35] stats: due parse miss for assign 683147
+  extra: due='Среда'
+
+[2026-10-21 00:01:37] stats: status not recognized for assign 683172
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №1. Лабораторная работа 1 "Исследование свойств системы программирования" (копия)'
+
+[2026-10-21 00:01:37] stats: due parse miss for assign 683172
+  extra: due='Четверг'
+
+[2026-10-21 00:01:38] stats: status not recognized for assign 692516
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №2. Операции языка Си'
+
+[2026-10-21 00:01:38] stats: due parse miss for assign 692516
+  extra: due='Среда'
+
+[2026-10-21 00:01:40] stats: status not recognized for assign 692559
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №2. Операции языка Си (копия)'
+
+[2026-10-21 00:01:40] stats: due parse miss for assign 692559
+  extra: due='Среда'
+
+[2026-10-21 00:01:41] stats: status not recognized for assign 689954
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №2. Лабораторная работа 2 "Формирование и обработка линейных списковых структур данных" (копия)'
+
+[2026-10-21 00:01:41] stats: due parse miss for assign 689954
+  extra: due='Суббота'
+
+[2026-10-21 00:01:43] stats: status not recognized for assign 697086
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №3. ПОЛИЗ простых выражений'
+
+[2026-10-21 00:01:43] stats: due parse miss for assign 697086
+  extra: due='Среда'
+
+[2026-10-21 00:01:44] stats: status not recognized for assign 697091
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №3. ПОЛИЗ простых выражений (копия)'
+
+[2026-10-21 00:01:44] stats: due parse miss for assign 697091
+  extra: due='Среда'
+
+[2026-10-21 00:01:46] stats: status not recognized for assign 696005
+  extra: name='Лабораторное занятие 3. Лабораторная работа 3 "Формирование и обработка табличных структур данных". (копия)'
+
+[2026-10-21 00:01:46] stats: due parse miss for assign 696005
+  extra: due='Суббота'
+
+[2026-10-21 00:01:47] stats: status not recognized for assign 699231
+  extra: name='ПРАКТИЧЕСКОЕ ЗАНЯТИЕ №4. Дерево двоичного поиска, операции. Дерево операций для арифметического выражения'
+
+[2026-10-21 00:01:47] stats: due parse miss for assign 699231
+  extra: due='Среда'
+
+[2026-10-21 00:01:49] stats: status not recognized for assign 168148
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №4 .Лабораторная работа 4 "Формирование и обработка древовидных структур данных".'
+
+[2026-10-21 00:01:49] stats: due parse miss for assign 168148
+  extra: due='Суббота'
+
+[2026-10-21 00:01:50] stats: status not recognized for assign 699235
+  extra: name='ЛАБОРАТОРНОЕ ЗАНЯТИЕ №4 .Лабораторная работа 4 "Формирование и обработка древовидных структур данных". (копия)'
+
+[2026-10-21 00:01:50] stats: due parse miss for assign 699235
+  extra: due='Суббота'
+
+[2026-10-21 00:01:53] stats: status not recognized for assign 620662
+  extra: name='Отчёт по лабораторной работе № 1'
+
+[2026-10-21 00:01:54] stats: status not recognized for assign 46201
+  extra: name='Отчёт по лабораторной работе № 2'
+
+[2026-10-21 00:01:55] stats: status not recognized for assign 46202
+  extra: name='Отчёт по лабораторной работе № 3'
+
+[2026-10-21 00:01:57] stats: status not recognized for assign 46203
+  extra: name='Отчёт по лабораторной работе № 4'
+
+[2026-10-21 00:01:58] stats: status not recognized for assign 46204
+  extra: name='Отчёт по лабораторной работе № 5'
+
+[2026-10-21 00:02:00] stats: status not recognized for assign 46205
+  extra: name='Отчёт по лабораторной работе № 6'
+
+[2026-10-21 00:02:01] stats: status not recognized for assign 46206
+  extra: name='Отчёт по лабораторной работе № 7'
+
+[2026-10-21 00:02:02] stats: status not recognized for assign 46207
+  extra: name='Отчёт по лабораторной работе № 8'
+
+[2026-10-21 00:02:04] stats: status not recognized for assign 333322
+  extra: name='Контрольная работа'
+
+[2026-10-21 00:02:08] stats: status not recognized for assign 699199
+  extra: name='Лабораторная работа №2'
+
+[2026-10-21 00:02:09] stats: status not recognized for assign 699200
+  extra: name='Лабораторная работа №3'
+
+[2026-10-21 00:02:11] stats: status not recognized for assign 699201
+  extra: name='Лабораторная работа №4'
+
+[2026-10-21 00:02:12] stats: status not recognized for assign 699202
+  extra: name='Лабораторная работа №5'
+
+[2026-10-21 00:02:15] stats: status not recognized for assign 306022
+  extra: name='Лабораторная работа №1. Базовые сведения для интерактивной работы в среде Лисп'
+
+[2026-10-21 00:02:16] stats: status not recognized for assign 40125
+  extra: name='Практическое занятие №1. Выдача индивидуальных заданий в среде WEKA'
+
+[2026-10-21 00:02:18] stats: status not recognized for assign 40126
+  extra: name='Лабораторная работа №2. Разработка и исследование функций обработки арифметических выражений на Лиспе'
+
+[2026-10-21 00:02:19] stats: status not recognized for assign 498877
+  extra: name='Практическое занятие №2. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:21] stats: status not recognized for assign 40127
+  extra: name='Лабораторная работа №3. Разработка и исследование логических функций на Лиспе'
+
+[2026-10-21 00:02:22] stats: status not recognized for assign 654694
+  extra: name='Практическое занятие №3. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:23] stats: status not recognized for assign 40128
+  extra: name='Лабораторная работа №4. Разработка и исследование функций обработки символьных выражений на Лиспе'
+
+[2026-10-21 00:02:25] stats: status not recognized for assign 40129
+  extra: name='Лабораторная работа №5.Разработка и исследование ввода-вывода'
+
+[2026-10-21 00:02:26] stats: status not recognized for assign 40130
+  extra: name='Лабораторная работа №6. Разработка и исследование рекурсивных функций на Лиспе'
+
+[2026-10-21 00:02:28] stats: status not recognized for assign 40131
+  extra: name='Лабораторная работа №7. Разработка и исследование файлового ввода-вывода на Лиспе'
+
+[2026-10-21 00:02:29] stats: status not recognized for assign 498880
+  extra: name='Практическое занятие №4. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:31] stats: status not recognized for assign 40158
+  extra: name='Лабораторная работа №1. ВЫПОЛНЕНИЕ И ТРАССИРОВКА ЛОГИЧЕСКИХ ПРОГРАММ В СРЕДЕ PIE'
+
+[2026-10-21 00:02:32] stats: status not recognized for assign 40159
+  extra: name='Лабораторная работа №2. ОСНОВЫ ПРОГРАММИРОВАНИЯ НА ЯЗЫКЕ ПРОЛОГ'
+
+[2026-10-21 00:02:33] stats: status not recognized for assign 306023
+  extra: name='Практическое занятие №5.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:35] stats: status not recognized for assign 40160
+  extra: name='Лабораторная работа №3. СТРУКТУРА ПРОГРАММЫ НА ЯЗЫКЕ ПРОЛОГ. ИНТЕРФЕЙС СРЕДЫ РАЗРАБОТКИ'
+
+[2026-10-21 00:02:36] stats: status not recognized for assign 40161
+  extra: name='Лабораторная работа №4. РЕКУРСИВНАЯ ОБРАБОТКА ДАННЫХ'
+
+[2026-10-21 00:02:37] stats: status not recognized for assign 498886
+  extra: name='Практическое занятие №6. Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:39] stats: status not recognized for assign 40162
+  extra: name='Лабораторная работа №5. ОБРАБОТКА СПИСКОВ'
+
+[2026-10-21 00:02:40] stats: status not recognized for assign 498887
+  extra: name='Практическое занятие №7.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:42] stats: status not recognized for assign 40163
+  extra: name='Лабораторная работа №6. ТИПОВЫЕ ОПЕРАЦИИ С БИНАРНЫМИ ДЕРЕВЬЯМИ'
+
+[2026-10-21 00:02:43] stats: status not recognized for assign 498888
+  extra: name='Практическое занятие №7.Выполнение индивидуального задания в среде Weka.'
+
+[2026-10-21 00:02:44] stats: status not recognized for assign 498889
+  extra: name='Практическое занятие.Оформление и представление отчета по практической работе'
+
+[2026-10-21 00:02:46] stats: status not recognized for assign 498890
+  extra: name='Лабораторная работа. Итоговое занятие'

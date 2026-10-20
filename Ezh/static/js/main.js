@@ -39,13 +39,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-function updateDisplayPrefs() {
-    showTeacher  = localStorage.getItem('showTeacher')  !== 'false';
-    showLocation = localStorage.getItem('showLocation') !== 'false';
-    showFriends  = localStorage.getItem('showFriends')  !== 'false';
-    renderCalendar();
-}
-
 async function ensureGroupsLoaded() {
     if (groupsLoaded) return;
     try {
@@ -65,26 +58,17 @@ async function ensureGroupsLoaded() {
 }
 
 // ------------------------------------------------------------
-//  Разбор ошибок от api.js. Все обёртки бросают Error с
-//  текстом "HTTP NNN for <url>", поэтому статус достаём
-//  регуляркой.
+//  Разбор ошибок от api.js.
+//  Благодаря правкам в api.js, err.status теперь всегда есть.
 // ------------------------------------------------------------
-function _extractHttpStatus(err) {
-    if (!err) return null;
-    if (typeof err.status === 'number') return err.status;
-    const m = /HTTP (\d+)/.exec(err.message || '');
-    return m ? parseInt(m[1], 10) : null;
-}
-
 function _errorText(err) {
-    const status = _extractHttpStatus(err);
-    if (status === 429) {
+    if (err && err.status === 429) {
         return 'Слишком много запросов. Подожди минуту и обнови страницу.';
     }
-    if (status === 401) {
+    if (err && err.status === 401) {
         return 'Требуется авторизация.';
     }
-    if (status >= 500) {
+    if (err && err.status >= 500) {
         return 'Ошибка на сервере. Загляни в окно консоли приложения.';
     }
     return 'Не удалось загрузить расписание.';
@@ -132,8 +116,7 @@ async function fetchSemesterData() {
     } catch (e) {
         console.error("fetchSemesterData failed:", e);
         const msg = _errorText(e);
-        const status = _extractHttpStatus(e);
-        const extra = status ? `<div class="text-muted small mt-2">HTTP ${status}</div>` : '';
+        const extra = e.status ? `<div class="text-muted small mt-2">HTTP ${e.status}</div>` : '';
         document.getElementById("calendar").innerHTML = `
             <div class="empty-state empty-state-wide">
                 <div class="empty-state-icon">⚠️</div>
@@ -184,10 +167,7 @@ async function syncSemesterData(group, subgroup) {
         if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
 
     } catch (e) {
-        // 429 в фоновой синхронизации не критичен: пользователь
-        // этого не видит, следующий F5 или manualRefresh подтянет.
-        const status = _extractHttpStatus(e);
-        if (status === 429) {
+        if (e.status === 429) {
             console.warn("[sync] rate-limited, попробуем позже");
             return;
         }

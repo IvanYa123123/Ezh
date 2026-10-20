@@ -2,6 +2,8 @@
 
 const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6);
 
+let _weekDropdownListenerAdded = false;
+
 function _weekParityLabel(weekDate) {
     const d = new Date(Date.UTC(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate()));
     const days = Math.floor((d - _WEEK_PARITY_ANCHOR_MS) / 86400000);
@@ -55,12 +57,16 @@ function updateWeekDropdown() {
     const btnParity = _weekParityLabel(dBtn);
     btn.innerHTML = `📅 ${dBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} - ${endDBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} <span class="week-badge ${btnParity.cls}">${btnParity.label}</span>`;
 
-    btn.addEventListener('shown.bs.dropdown', () => {
-        setTimeout(() => {
-            let active = menu.querySelector('.dropdown-item.active');
-            if (active) active.scrollIntoView({ block: 'center' });
-        }, 30);
-    }, { once: true });
+    // Фикс накопления слушателей: добавляем один раз
+    if (!_weekDropdownListenerAdded) {
+        _weekDropdownListenerAdded = true;
+        btn.addEventListener('shown.bs.dropdown', () => {
+            setTimeout(() => {
+                let active = menu.querySelector('.dropdown-item.active');
+                if (active) active.scrollIntoView({ block: 'center' });
+            }, 30);
+        });
+    }
 }
 
 function jumpToWeek(offsetVal) {

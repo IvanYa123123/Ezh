@@ -1,10 +1,5 @@
 // Глобальный поиск по заметкам и событиям.
-//
-// Особенности:
-//   • Debounce 220 мс.
-//   • Защита от гонок: если пользователь набрал новый запрос — старый ответ игнорируется.
-//   • Ошибки показываются прямо в модалке, а не молча в консоли.
-//   • В подвале модалки — диагностическая строка с запросом и числом результатов.
+// v3.16.0: используется err.status из api.js.
 
 let _searchDebounceTimer = null;
 let _searchResults = { tasks: [], events: [] };
@@ -89,7 +84,6 @@ async function runSearch(rawQuery) {
 
     try {
         const data = await apiSearch(q);
-        // Защита от гонки: пользователь мог набрать другое за время запроса
         if (q !== _searchLastQuery) return;
 
         _searchResults = {
@@ -185,7 +179,6 @@ function renderSearchResults() {
         });
     }
 
-    // Диагностическая строка внизу — помогает понять, что сервер вообще ответил
     html += `<div class="search-meta">Запрос: «${escapeHtml(q)}» · Найдено: ${_searchMeta.count}</div>`;
 
     container.innerHTML = html;

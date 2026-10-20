@@ -1,20 +1,6 @@
 /* ============================================================
    fixes.css — патч поверх style.css
-   v3.15.3
-   ------------------------------------------------------------
-   Изменения относительно v3.6.8:
-     • #underCalendarWidgetsZone переведена в column-раскладку.
-     • Убраны правила body.widget-dragging #widgetMiniCalCard.
-     • Исправлена опечатка //* → /* в секции 20.
-     • v3.7.4: список деталей виджета-графика переработан.
-     • v3.8.1: при драге виджета карточки друзей/преподавателей
-       сворачиваются; при драге самой секции она не скрывается.
-     • v3.9.0: вертикальный режим секций друзей и преподавателей.
-     • v3.9.1: в вертикальном режиме прячем панели управления;
-       добавлен стиль .fv-common для строки общих пар.
-     • v3.15.3: удалена секция 18 (версия под логотипом);
-       добавлена секция 23 — сдвиг точки остановки стрелок
-       листания друзей ниже панели управления.
+   v3.16.5
    ============================================================ */
 
 /* ============================================================
@@ -921,8 +907,7 @@ body.widget-dragging .mini-cal-events {
 }
 
 /* ============================================================
-   18. (УДАЛЕНО) — блок .version-label больше не используется,
-   т.к. версия убрана из-под логотипа на странице.
+   18. (УДАЛЕНО) — блок .version-label больше не используется
    ============================================================ */
 
 /* ============================================================
@@ -1398,17 +1383,333 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 
 /* ============================================================
    23. СТРЕЛКИ ЛИСТАНИЯ ДРУЗЕЙ — ФИКС ТОЧКИ ОСТАНОВКИ
-   ------------------------------------------------------------
-   В style.css: sticky, top: 50vh, margin-top: -20px.
-   При небольшом окне стрелка прилипает прямо к панели
-   управления («+ Добавить друга», «Кого показывать?»).
-
-   Сдвигаем точку остановки на 24px ниже и убираем
-   дополнительный margin-top: -20px. Итого на 44px ниже.
-   Sticky-поведение (ездит по странице) сохраняется.
    ============================================================ */
 
 .friends-nav-btn {
     top: calc(50vh + 24px);
     margin-top: 0;
+}
+
+/* ============================================================
+   24. СТИЛИ ВИДЖЕТОВ (перенесено из index.html)
+   ============================================================ */
+
+.widget-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1em;
+    line-height: 1;
+    padding: 0 4px;
+    margin-left: 4px;
+    cursor: pointer;
+    transition: color 0.15s, transform 0.15s;
+}
+.widget-close-btn:hover {
+    color: var(--status-red);
+    transform: scale(1.1);
+}
+
+/* Pro-графики в горизонтальном режиме */
+#widgetMoodleSubjectGradesCard.is-horizontal .widget-canvas-wrap {
+    flex: 1 1 65% !important;
+    height: 220px !important;
+    min-width: 0 !important;
+}
+#widgetMoodleSubjectGradesCard.is-horizontal .widget-details-wrap {
+    flex: 0 0 35% !important;
+    max-height: 220px !important;
+}
+#widgetMoodleSubjectGradesCard .widget-canvas-wrap {
+    display: flex;
+    flex-direction: column;
+}
+#widgetMoodleSubjectGradesCard .widget-canvas-wrap canvas {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* ============================================================
+   25. СТИЛЬНЫЙ БЕЙДЖ PRO/BASIC
+   ============================================================ */
+
+.app-mode-badge-stylish {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 10px;
+    font-size: 0.45em;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    vertical-align: middle;
+}
+
+.app-mode-badge-stylish::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+}
+
+.app-mode-badge-stylish:hover::after {
+    left: 200%;
+}
+
+.app-mode-badge-stylish.basic-mode {
+    background: linear-gradient(135deg, #64748b, #334155);
+    color: #f8fafc !important;
+}
+
+.app-mode-badge-stylish.basic-mode:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(100, 116, 139, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.app-mode-badge-stylish.pro-mode {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.app-mode-badge-stylish.pro-mode:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================================
+   26. РЕОРГАНИЗОВАННОЕ ОКНО НАСТРОЕК (ВКЛАДКИ)
+   ============================================================ */
+
+.settings-tabs {
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 8px;
+    gap: 6px;
+}
+
+.settings-tabs .nav-link {
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 600;
+    padding: 8px 10px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.settings-tabs .nav-link:hover {
+    background-color: var(--bg-surface-alt);
+    color: var(--text-primary);
+}
+
+.settings-tabs .nav-link.active {
+    background-color: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+}
+
+/* Контент вкладок */
+.settings-tab-content .settings-group:first-child {
+    padding-top: 12px;
+}
+.settings-tab-content .settings-group:last-child {
+    padding-bottom: 4px;
+}
+
+/* Сетка виджетов */
+.widgets-grid .col-6 {
+    transition: transform 0.1s;
+}
+.widgets-grid .col-6:active {
+    transform: scale(0.98);
+}
+
+/* ============================================================
+   27. НОВЫЙ ВЫБОР ТЕМЫ (КАРТОЧКИ)
+   ============================================================ */
+
+.theme-category {
+    margin-bottom: 12px;
+}
+
+.theme-category-title {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+    padding-left: 2px;
+}
+
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+}
+
+.theme-btn {
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.theme-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+}
+
+.theme-btn.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-hover);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+/* ============================================================
+   28. ВИДЖЕТ «ПРЕДЛОЖЕНИЯ»
+   ============================================================ */
+
+.suggestions-nav-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 0.8em;
+}
+
+.suggestions-counter {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 2px;
+}
+
+/* --- ВЕРТИКАЛЬНЫЙ РЕЖИМ --- */
+.widget-card:not(.is-horizontal) .suggestions-list {
+    height: auto;         /* Больше не режем по высоте */
+    overflow: visible;
+    display: block;
+}
+
+/* --- ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (сетка) --- */
+.widget-card.is-horizontal .suggestions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Карточка */
+.suggestion-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: var(--bg-surface-soft);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    gap: 10px;
+    transition: background 0.15s, box-shadow 0.15s;
+    height: auto;         /* Растягивается под контент */
+}
+
+.suggestion-card:hover {
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.suggestion-info {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestion-title {
+    font-weight: 700;
+    font-size: 0.85em;
+    color: var(--text-primary);
+    line-height: 1.25;
+    margin-bottom: 6px;
+    overflow-wrap: break-word;
+    word-break: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Разрешаем до 3 строк для длинных названий */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.suggestion-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.suggestion-meta .badge {
+    font-size: 0.68em;
+    padding: 3px 6px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.suggestion-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.75em;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.suggestion-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.suggestion-actions .btn {
+    font-size: 0.72em;
+    white-space: nowrap;
+    padding: 4px 8px;
+}
+
+/* Скроллбар для горизонтального режима (на всякий случай) */
+.widget-card.is-horizontal .suggestions-list::-webkit-scrollbar {
+    width: 6px;
+}
+.widget-card.is-horizontal .suggestions-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
 }

@@ -1,14 +1,8 @@
 /* ============================================================
    hedgehog.css — контейнеры и адаптивная палитра SVG-маскота.
-   Все анимации (лапки, наклон, иголки, моргание) определены
-   внутри самого hedgehog.svg — здесь их нет, чтобы избежать
-   конфликта специфичности между внешним и встроенным <style>.
    ============================================================ */
 
-/* --- Палитра по умолчанию (светлая тема) ---
-   Карамельный мех, насыщенные шоколадные иголки,
-   чёткий контур. Ёжик выделяется на белом фоне, но
-   не «орёт». */
+/* --- Палитра по умолчанию (светлая тема) --- */
 :root {
   --hh-body:        #f5d9a8;
   --hh-body-shade:  #dcb87c;
@@ -19,16 +13,10 @@
   --hh-window:      #ffffff;
   --hh-stroke:      #2a1505;
   --hh-shadow:      rgba(0, 0, 0, 0.28);
-
-  /* Акцент ёжика идёт за акцентным цветом приложения. */
   --hh-accent: var(--accent, #818cf8);
 }
 
-/* --- Тёмная тема: «лунный ёжик» ---
-   Серебристо-лавандовый мех, глубокие индиго-фиолетовые иглы,
-   светлая лавандовая обводка. Глаз почти чёрный, сливается
-   с фоном — настоящий ночной зверёк. Тень — мягкое индиговое
-   свечение в цвет акцента темы. */
+/* --- Тёмная тема: «лунный ёжик» --- */
 :root[data-theme="dark"] {
   --hh-body:        #c8c3dc;
   --hh-body-shade:  #a09ab8;
@@ -40,9 +28,7 @@
   --hh-shadow:      rgba(129, 140, 248, 0.28);
 }
 
-/* --- Лесная тема ---
-   Светлое тело под мхом + тёмно-хвойные иголки.
-   Настоящий обитатель ельника. */
+/* --- Лесная тема --- */
 :root[data-theme="forest"] {
   --hh-body:        #d4b88a;
   --hh-body-shade:  #b89b6a;
@@ -53,9 +39,7 @@
   --hh-shadow:      rgba(20, 60, 30, 0.32);
 }
 
-/* --- Закат ---
-   Багряные иглы — как закатное небо за спиной.
-   Тело — золотисто-розовое. */
+/* --- Закат --- */
 :root[data-theme="sunset"] {
   --hh-body:        #f6c89a;
   --hh-body-shade:  #d99d6e;
@@ -66,7 +50,7 @@
   --hh-shadow:      rgba(90, 30, 10, 0.32);
 }
 
-/* --- Океан --- (без изменений, нравится) */
+/* --- Океан --- */
 :root[data-theme="ocean"] {
   --hh-body:        #e0dcd0;
   --hh-body-shade:  #b9c0c4;
@@ -75,10 +59,7 @@
   --hh-stroke:      #2a3a48;
 }
 
-/* --- Ёжики --- (без изменений, родная тема) */
-/* Базовый :root выше уже даёт ей всё нужное, отдельный блок не нужен. */
-
-/* --- Южный парк --- (без изменений) */
+/* --- Южный парк --- */
 :root[data-theme="southpark"] {
   --hh-body:        #f6e2bc;
   --hh-body-shade:  #d8b878;
@@ -87,7 +68,7 @@
   --hh-stroke:      #2a1a10;
 }
 
-/* --- Аниме --- (без изменений) */
+/* --- Аниме --- */
 :root[data-theme="anime"] {
   --hh-body:        #fbe6dc;
   --hh-body-shade:  #e9bcb0;
@@ -97,10 +78,7 @@
   --hh-stroke:      #5a2e3e;
 }
 
-/* --- OLED Deep ---
-   Киберпанк: холодный голубоватый мех, тёмно-синие иглы,
-   неоновая голубая обводка и свечение вместо чёрной тени.
-   На чистом чёрном фоне ёжик выглядит «подсвеченным». */
+/* --- OLED Deep --- */
 :root[data-theme="oled"] {
   --hh-body:        #c8d4e0;
   --hh-body-shade:  #9aacbe;
@@ -112,7 +90,7 @@
   --hh-shadow:      rgba(0, 212, 255, 0.35);
 }
 
-/* --- OLED Warm --- (без изменений, нравится) */
+/* --- OLED Warm --- */
 :root[data-theme="oled-warm"] {
   --hh-body:        #e8d4a8;
   --hh-body-shade:  #c0a070;
@@ -124,7 +102,7 @@
 }
 
 /* ============================================================
-   Контейнеры (без изменений от v3.10.3)
+   Контейнеры для drag-n-drop
    ============================================================ */
 
 .drag-hedgehog-wrap {
@@ -149,10 +127,6 @@
   pointer-events: none;
   user-select: none;
   line-height: 0;
-
-  /* Мягкая тень под ёжиком — переменная, чтобы на каждой
-     теме была своей (на OLED — свечение неона, на светлой —
-     лёгкая чёрная). */
   filter: drop-shadow(0 8px 16px var(--hh-shadow, rgba(0, 0, 0, 0.28)));
 }
 
@@ -165,7 +139,210 @@
   overflow: visible;
 }
 
-/* Мгновенный разворот влево при движении курсора влево */
 .drag-hedgehog.is-flipped svg {
   transform: scaleX(-1);
+}
+
+/* ============================================================
+   ПРЕЛОАДЕР V2.1 (Плавный морфинг и пыль)
+   ============================================================ */
+
+.hh-preloader {
+  width: 100px;
+  height: 100px;
+  display: inline-block;
+  overflow: visible;
+}
+
+.hh-preloader path,
+.hh-preloader circle,
+.hh-preloader ellipse {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- ДВИЖЕНИЕ --- */
+
+.hh-state-ball {
+  transform-origin: 50px 58px;
+  animation: hh-ball-switch 8s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hh-ball-spinner {
+  transform-origin: 50px 58px;
+  animation: hh-ball-spin 8s infinite linear;
+}
+
+.hh-state-run {
+  transform-origin: 48px 60px;
+  animation: hh-run-switch 8s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hh-runner-bounce {
+  transform-origin: 50px 60px;
+  animation: hh-run-bob 0.25s infinite ease-in-out;
+}
+
+.hh-ear {
+  transform-origin: 50px 48px;
+  animation: hh-ear-wiggle 0.25s infinite ease-in-out alternate;
+}
+
+/* Лапки */
+.hh-leg-1 { animation: hh-leg-cycle 0.28s infinite linear 0s; }
+.hh-leg-2 { animation: hh-leg-cycle 0.28s infinite linear -0.14s; }
+.hh-leg-3 { animation: hh-leg-cycle 0.28s infinite linear -0.07s; }
+.hh-leg-4 { animation: hh-leg-cycle 0.28s infinite linear -0.21s; }
+
+/* Пыль при ударе/раскрытии */
+.hh-puff {
+  transform-origin: 20px 76px;
+  animation: hh-puff-anim 8s infinite ease-out;
+}
+.hh-puff-2 {
+  transform-origin: 30px 80px;
+  animation: hh-puff-anim 8s infinite ease-out 0.1s;
+}
+
+/* Тень и линии скорости на земле */
+.hh-shadow {
+  transform-origin: 50px 80px;
+  animation: hh-shadow-morph 8s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.hh-dust-1 { animation: hh-ground-move 0.55s infinite linear; }
+.hh-dust-2 { animation: hh-ground-move 0.55s infinite linear -0.27s; }
+
+
+/* ==========================================================================
+   KEYFRAMES
+   ========================================================================== */
+
+/* Вращение шара */
+@keyframes hh-ball-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(2880deg); }
+}
+
+/* 0-60%: катится
+   60-62.5%: сжимается (подготовка)
+   62.5-65%: вытягивается и исчезает
+   65-94%: скрыт
+   94-96%: приземляется с отскоком
+   96-100%: катится */
+@keyframes hh-ball-switch {
+  0%, 60% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 1;
+  }
+  /* Сжатие перед раскрытием */
+  61.5% {
+    transform: translate(2px, 3px) scale(1.15, 0.85);
+    opacity: 1;
+  }
+  /* Растягивается по земле и растворяется */
+  64% {
+    transform: translate(-4px, 4px) scale(1.2, 0.4);
+    opacity: 0;
+  }
+  65%, 93.5% {
+    transform: translate(-10px, 4px) scale(0.1);
+    opacity: 0;
+  }
+  /* Появление из кувырка */
+  95.5% {
+    transform: translate(4px, -1px) scale(0.8, 1.2);
+    opacity: 0.9;
+  }
+  /* Отскок */
+  97% {
+    transform: translate(1px, 2px) scale(1.1, 0.9);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 1;
+  }
+}
+
+/* 0-60%: скрыт
+   61.5-64%: раскрывается (выпрыгивает)
+   64-66%: приземляется, сплющивается
+   66-92%: бежит
+   92-94%: поджимает лапки (кувырок)
+   94-100%: исчезает в шаре */
+@keyframes hh-run-switch {
+  0%, 60% {
+    transform: translate(-10px, 3px) scale(0.2) rotate(-45deg);
+    opacity: 0;
+  }
+  /* Выкатывается вперед из клубка */
+  61.5% {
+    transform: translate(-4px, 2px) scale(0.6, 0.5) rotate(-20deg);
+    opacity: 0.7;
+  }
+  /* Резко вытягивается вперед */
+  64% {
+    transform: translate(5px, -2px) scale(1.15, 0.85) rotate(5deg);
+    opacity: 1;
+  }
+  /* Приземление со сплющиванием */
+  65.5% {
+    transform: translate(2px, 1px) scale(0.95, 1.05) rotate(-1deg);
+    opacity: 1;
+  }
+  /* Бег */
+  67%, 92% {
+    transform: translate(2px, 0px) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  /* Кувырок вперед */
+  94% {
+    transform: translate(6px, 2px) scale(0.9, 0.9) rotate(25deg);
+    opacity: 1;
+  }
+  /* Сжимается обратно в клубок */
+  96%, 100% {
+    transform: translate(10px, 4px) scale(0.2) rotate(80deg);
+    opacity: 0;
+  }
+}
+
+/* Пыль */
+@keyframes hh-puff-anim {
+  0%, 61% { transform: scale(0); opacity: 0; }
+  63.5%   { transform: scale(1.5); opacity: 0.6; }
+  67%     { transform: scale(2.5); opacity: 0; }
+  100%    { transform: scale(0); opacity: 0; }
+}
+
+/* Остальные анимации без изменений */
+@keyframes hh-run-bob {
+  0%, 100% { transform: translateY(0.8px) rotate(0.8deg); }
+  50%      { transform: translateY(-2.2px) rotate(-1.2deg); }
+}
+
+@keyframes hh-ear-wiggle {
+  0%   { transform: rotate(-4deg); }
+  100% { transform: rotate(6deg); }
+}
+
+@keyframes hh-leg-cycle {
+  0%   { transform: translate(4.5px, -1px) rotate(-25deg); }
+  25%  { transform: translate(4px, 1.5px) rotate(-10deg); }
+  50%  { transform: translate(-4.5px, 1.5px) rotate(25deg); }
+  75%  { transform: translate(-1px, -3.5px) rotate(5deg); }
+  100% { transform: translate(4.5px, -1px) rotate(-25deg); }
+}
+
+@keyframes hh-shadow-morph {
+  0%, 60%, 96%, 100% { transform: scaleX(0.78); opacity: 0.22; }
+  63%, 94%           { transform: translateX(2px) scaleX(1.18); opacity: 0.28; }
+}
+
+@keyframes hh-ground-move {
+  0%   { transform: translateX(30px) scaleX(0.4); opacity: 0; }
+  25%  { opacity: 0.45; }
+  75%  { opacity: 0.45; }
+  100% { transform: translateX(-32px) scaleX(1.1); opacity: 0; }
 }

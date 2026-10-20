@@ -1,20 +1,5 @@
 // ============================================================
 //  СВОЯ ТЕМА + СОХРАНЁННЫЕ ПРЕСЕТЫ + INDEXEDDB ДЛЯ ФОТО
-// ------------------------------------------------------------
-//  Цвета, стикеры, прозрачности — в localStorage (маленькие).
-//  Фото — в IndexedDB (десятки МБ лимит). Пресеты хранят только
-//  ссылку на фото, поэтому несколько тем могут делить одно фото.
-//
-//  Загрузка фото — только с компьютера (file input).
-//
-//  Секции панели (Цвета / Фон / Стикеры) сворачиваются и по
-//  умолчанию СВЁРНУТЫ. Состояние хранится в customThemeSections_v2.
-//
-//  «Взять за основу готовую тему»: временно применяем выбранную
-//  базовую тему к <html>, считываем вычисленные значения CSS-
-//  переменных через getComputedStyle, потом возвращаем всё на место
-//  и сохраняем как кастомную. Стили (в т.ч. --font-display для особых
-//  тем) наследуются.
 // ============================================================
 
 const CUSTOM_THEME_STORAGE_KEY  = 'customTheme';
@@ -34,10 +19,6 @@ let _customThemeApplyToken = 0;
 let _idbAvailable = null;
 let _customThemeAdvancedShown = localStorage.getItem(CUSTOM_THEME_ADVANCED_KEY) === 'true';
 let _lastPromptedPhotoId = null;
-
-// ============================================================
-//  ПОЛЯ-ПИКЕРЫ
-// ============================================================
 
 const CUSTOM_THEME_FIELDS = [
     { group: 'Основное', basic: true, fields: [
@@ -684,21 +665,6 @@ async function cleanupPhotoIfUnused(key) {
     catch (e) { console.warn('[custom-theme] orphan cleanup failed', e); }
 }
 
-// ============================================================
-//  ВЗЯТЬ ЗА ОСНОВУ ГОТОВУЮ ТЕМУ
-// ------------------------------------------------------------
-//  1. Временно применяем выбранную тему к <html>.
-//  2. Считываем вычисленные CSS-переменные через getComputedStyle.
-//  3. Возвращаем исходное состояние (включая inline-переменные
-//     активной кастомной темы, если они были).
-//  4. Сохраняем прочитанные значения как кастомную тему.
-//  5. Переключаем активную тему на 'custom'.
-//
-//  Если сейчас активна custom-тема, перед чтением снимаем её
-//  inline-переменные — иначе они перебьют базовую тему (inline
-//  style всегда выигрывает у [data-theme] селекторов).
-// ============================================================
-
 function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
     if (!baseThemeId || baseThemeId === 'custom') return;
 
@@ -706,10 +672,7 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
     const prevDataTheme = root.getAttribute('data-theme');
     const prevBsTheme   = root.getAttribute('data-bs-theme');
 
-    // Переменные, которые хранит кастомная тема
     const trackedVars = Object.keys(defaultCustomTheme().colors);
-    // Служебные переменные, которые тоже хотим унаследовать
-    // (шрифт заголовков для особых тем, цвета тултипов, границы плашек)
     const extraVars = [
         '--font-display',
         '--chart-tooltip-bg',
@@ -721,8 +684,6 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
     ];
     const allVars = trackedVars.concat(extraVars);
 
-    // Если сейчас активна custom-тема — в inline-стилях лежат её переменные.
-    // Снимаем их, чтобы базовая тема прочиталась корректно.
     const savedInline = {};
     allVars.forEach(v => {
         const val = root.style.getPropertyValue(v);
@@ -732,12 +693,9 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
         }
     });
 
-    // Применяем базовую тему
     root.setAttribute('data-theme', baseThemeId);
     root.setAttribute('data-bs-theme', baseThemeId === 'dark' ? 'dark' : 'light');
 
-    // Читаем вычисленные значения. getComputedStyle форсирует reflow,
-    // поэтому все новые значения уже актуальны.
     const computed = getComputedStyle(root);
     const newColors = {};
     allVars.forEach(v => {
@@ -745,22 +703,20 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
         if (val) newColors[v] = val;
     });
 
-    // Возвращаем атрибуты и inline-переменные на место
     root.setAttribute('data-theme', prevDataTheme);
     root.setAttribute('data-bs-theme', prevBsTheme);
     for (const k in savedInline) {
         root.style.setProperty(k, savedInline[k]);
     }
 
-    // Сохраняем как новую кастомную тему — цвета базовой заменяют цвета свои
     const data = loadCustomTheme();
     data.colors = Object.assign({}, data.colors, newColors);
     saveCustomTheme(data);
 
-    // Переключаем активную тему на 'custom', если ещё не там
     if (typeof theme !== 'undefined' && theme !== 'custom') {
         theme = 'custom';
         localStorage.setItem('theme', 'custom');
+        localStorage.removeItem('activeCustomPresetName');
         const select = document.getElementById('settingsTheme');
         if (select) select.value = 'custom';
         if (typeof applyTheme === 'function') applyTheme();
@@ -768,7 +724,8 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
         applyCustomTheme();
     }
 
-    renderCustomThemePanel();
+    if (typeof renderCustomThemePanel === 'function') renderCustomThemePanel();
+    if (typeof updateCurrentThemeLabel === 'function') updateCurrentThemeLabel();
 
     if (typeof showUpdateNotification === 'function') {
         showUpdateNotification(`🎨 Основа: ${baseThemeLabel || baseThemeId}`);
@@ -792,8 +749,6 @@ function applyBaseThemeFromSelect() {
     }
 
     applyBaseThemeAsCustom(val, label);
-
-    // Сбрасываем селект, чтобы его можно было использовать снова
     select.value = '';
 }
 
@@ -1040,6 +995,8 @@ function renderCustomThemePresets() {
             </div>`;
     });
     container.innerHTML = html;
+
+    if (typeof renderQuickPresets === 'function') renderQuickPresets();
 }
 
 function saveCurrentAsPreset() {
@@ -1069,13 +1026,18 @@ function saveCurrentAsPreset() {
     }
 
     nameInput.value = '';
+    localStorage.setItem('activeCustomPresetName', name);
     renderCustomThemePresets();
+    if (typeof updateCurrentThemeLabel === 'function') updateCurrentThemeLabel();
 }
 
 function loadPreset(index) {
     const presets = loadCustomThemePresets();
     const preset = presets[index];
     if (!preset) return;
+
+    // Запоминаем имя активного пресета
+    localStorage.setItem('activeCustomPresetName', preset.name);
 
     const data = JSON.parse(JSON.stringify(preset.data || {}));
     saveCustomTheme(data);
@@ -1091,6 +1053,7 @@ function loadPreset(index) {
     }
 
     renderCustomThemePanel();
+    if (typeof updateCurrentThemeLabel === 'function') updateCurrentThemeLabel();
 }
 
 function deletePreset(index) {
@@ -1100,6 +1063,12 @@ function deletePreset(index) {
     if (!confirm(`Удалить сохранённую тему «${preset.name}»?`)) return;
 
     const photoId = preset.data && preset.data.photoId;
+    
+    // Если удаляем активный пресет, сбрасываем его имя
+    if (localStorage.getItem('activeCustomPresetName') === preset.name) {
+        localStorage.removeItem('activeCustomPresetName');
+    }
+
     presets.splice(index, 1);
     saveCustomThemePresets(presets);
 
@@ -1107,6 +1076,7 @@ function deletePreset(index) {
         cleanupPhotoIfUnused(photoId.slice(4)).catch(() => {});
     }
     renderCustomThemePresets();
+    if (typeof updateCurrentThemeLabel === 'function') updateCurrentThemeLabel();
 }
 
 // ============================================================

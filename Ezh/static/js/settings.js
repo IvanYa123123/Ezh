@@ -3,6 +3,12 @@
 const SETTINGS_SECTIONS_KEY = 'settingsSections_v1';
 const SETTINGS_SECTIONS_NAMES = ['display', 'widgets', 'status', 'notif'];
 
+const THEME_NAMES = {
+    light: 'Светлая', dark: 'Тёмная', forest: 'Лесная', sunset: 'Закат', ocean: 'Океан',
+    hedgehog: 'Ежики', southpark: 'Южный парк', anime: 'Аниме',
+    oled: 'OLED Deep', 'oled-warm': 'OLED Warm', custom: 'Своя тема'
+};
+
 function initSettings() {
     if (typeof migrateLegacyStorageIfNeeded === 'function') {
         migrateLegacyStorageIfNeeded()
@@ -22,6 +28,88 @@ function initSettings() {
     if (typeof initWidgetDragAndDrop === 'function') initWidgetDragAndDrop();
 }
 
+function updateCurrentThemeLabel() {
+    const el = document.getElementById('currentThemeNameDisplay');
+    if (el) {
+        let displayName = THEME_NAMES[theme] || theme;
+        if (theme === 'custom') {
+            const activePresetName = localStorage.getItem('activeCustomPresetName');
+            if (activePresetName) {
+                displayName = activePresetName;
+            }
+        }
+        el.textContent = displayName;
+    }
+
+    // Подсвечиваем активную кнопку темы
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        const tid = btn.dataset.themeId;
+        if (tid === theme) {
+            if (theme === 'custom') {
+                const activeName = localStorage.getItem('activeCustomPresetName');
+                if (activeName) {
+                    btn.classList.toggle('active', btn.dataset.presetName === activeName);
+                } else {
+                    btn.classList.toggle('active', btn.dataset.presetName === undefined);
+                }
+            } else {
+                btn.classList.add('active');
+            }
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// Глобальная функция для переключения темы из карточек
+function setThemeFromSettings(id) {
+    theme = id;
+    localStorage.setItem('theme', id);
+    
+    // Если нажали "Активировать свою" (базовую), сбрасываем активный пресет
+    if (id === 'custom') {
+        const activeBtn = document.querySelector('.theme-btn.active');
+        if (activeBtn && activeBtn.dataset.presetName === undefined) {
+             localStorage.removeItem('activeCustomPresetName');
+        }
+    }
+
+    applyTheme();
+    updateCurrentThemeLabel();
+    
+    if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
+    
+    renderCalendar();
+    updateScheduleStatus();
+    if (typeof refreshChartsTheme === 'function') refreshChartsTheme();
+}
+
+// Генерация кнопок пресетов в блоке "Своя тема"
+function renderQuickPresets() {
+    const grid = document.getElementById('customThemesGrid');
+    if (!grid) return;
+
+    const presets = typeof loadCustomThemePresets === 'function' ? loadCustomThemePresets() : [];
+    
+    // Оставляем базовую кнопку "Активировать свою"
+    grid.innerHTML = `<button type="button" class="theme-btn" data-theme-id="custom" onclick="setThemeFromSettings('custom')">🎨 Активировать свою</button>`;
+    
+    // Добавляем кнопки пресетов
+    presets.forEach((p, i) => {
+        grid.innerHTML += `<button type="button" class="theme-btn" data-theme-id="custom" data-preset-index="${i}" data-preset-name="${escapeHtml(p.name)}" onclick="loadPresetFromSettings(${i})">🖌️ ${escapeHtml(p.name)}</button>`;
+    });
+}
+
+// Обертка для загрузки пресета
+function loadPresetFromSettings(index) {
+    const presets = loadCustomThemePresets();
+    if (presets[index]) {
+        localStorage.setItem('activeCustomPresetName', presets[index].name);
+    }
+    if (typeof loadPreset === 'function') loadPreset(index);
+    updateCurrentThemeLabel();
+}
+
 function openSettingsModal() {
     document.getElementById('settingsToggleTeacher').checked  = showTeacher;
     document.getElementById('settingsToggleLocation').checked = showLocation;
@@ -32,6 +120,7 @@ function openSettingsModal() {
     document.getElementById('settingsToggleWidgetMiniCal').checked = showWidgetMiniCal;
     document.getElementById('settingsToggleWidgetGlobal').checked  = showWidgetGlobal;
     document.getElementById('settingsToggleWidgetLabs').checked    = showWidgetLabs;
+    document.getElementById('settingsToggleWidgetSuggestions').checked = showWidgetSuggestions;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
     document.getElementById('settingsToggleWidgetNotes').checked   = showWidgetNotes;
 
@@ -50,20 +139,33 @@ function openSettingsModal() {
     document.getElementById('settingsNotifEnabled').checked = notificationsEnabled;
     document.getElementById('settingsNotifAdvance').value   = notificationAdvance;
     document.getElementById('settingsNotifUnit').value      = notificationUnit;
-    document.getElementById('settingsTheme').value          = theme;
 
     updateNotificationsHint();
     restoreSettingsSections();
 
     if (typeof renderCustomThemePanel === 'function') renderCustomThemePanel();
     if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
+    
+    renderQuickPresets();
+    updateCurrentThemeLabel();
 
     let modalEl = document.getElementById('settingsModal');
     let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
 
+    // Сбрасываем вкладку на первую (Основное) при каждом открытии
+    const firstTab = document.getElementById('tab-general-tab');
+    if (firstTab && typeof bootstrap !== 'undefined') {
+        const tab = new bootstrap.Tab(firstTab);
+        tab.show();
+    }
+
     if (theme === 'custom') {
         modalEl.addEventListener('shown.bs.modal', () => {
-            scrollToCustomThemePanel();
+            const appearanceTab = document.getElementById('tab-appearance-tab');
+            if (appearanceTab) {
+                const tab = new bootstrap.Tab(appearanceTab);
+                tab.show();
+            }
         }, { once: true });
     }
 
@@ -121,12 +223,14 @@ function saveSettingsFromUI() {
     showWidgetMiniCal = document.getElementById('settingsToggleWidgetMiniCal').checked;
     showWidgetGlobal  = document.getElementById('settingsToggleWidgetGlobal').checked;
     showWidgetLabs    = document.getElementById('settingsToggleWidgetLabs').checked;
+    showWidgetSuggestions = document.getElementById('settingsToggleWidgetSuggestions').checked;
     showWidgetPacing  = document.getElementById('settingsToggleWidgetPacing').checked;
     showWidgetNotes   = document.getElementById('settingsToggleWidgetNotes').checked;
 
     localStorage.setItem('showWidgetMiniCal', showWidgetMiniCal);
     localStorage.setItem('showWidgetGlobal',  showWidgetGlobal);
     localStorage.setItem('showWidgetLabs',    showWidgetLabs);
+    localStorage.setItem('showWidgetSuggestions', showWidgetSuggestions);
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
     localStorage.setItem('showWidgetNotes',   showWidgetNotes);
 
@@ -178,14 +282,6 @@ function saveSettingsFromUI() {
     localStorage.setItem('notificationsEnabled', notificationsEnabled ? 'true' : 'false');
     localStorage.setItem('notificationAdvance', String(notificationAdvance));
     localStorage.setItem('notificationUnit', notificationUnit);
-
-    const prevTheme = theme;
-    theme = document.getElementById('settingsTheme').value;
-    localStorage.setItem('theme', theme);
-    applyTheme();
-
-    if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
-    if (prevTheme !== 'custom' && theme === 'custom') scrollToCustomThemePanel();
 
     renderCalendar();
     updateScheduleStatus();
@@ -259,7 +355,14 @@ function applyTheme() {
     if (theme === 'custom') {
         if (typeof applyCustomTheme === 'function') applyCustomTheme();
     }
-    if (prevTheme !== theme && typeof refreshChartsTheme === 'function') refreshChartsTheme();
+    
+    // ДОБАВЛЕНО: Ждем завершения CSS-перехода (0.25s), чтобы getComputedStyle
+    // вернул уже конечный цвет, а не промежуточный.
+    if (prevTheme !== theme && typeof refreshChartsTheme === 'function') {
+        setTimeout(() => {
+            refreshChartsTheme();
+        }, 300);
+    }
 }
 
 async function downloadICS() {
@@ -323,16 +426,19 @@ async function downloadICS() {
     }
 }
 
+// Управляет видимостью Pro-виджетов и плашкой "Войдите в Pro"
 function applyWidgetVisibility() {
     const wm = document.getElementById('widgetMiniCalCard');
     const wg = document.getElementById('widgetGlobalCard');
     const wl = document.getElementById('widgetLabsCard');
+    const ws = document.getElementById('widgetSuggestionsCard');
     const wp = document.getElementById('widgetPacingCard');
     const wn = document.getElementById('widgetNotesCard');
     
     if (wm) wm.style.display = showWidgetMiniCal ? '' : 'none';
     if (wg) wg.style.display = showWidgetGlobal  ? '' : 'none';
     if (wl) wl.style.display = (!window.isProActive && showWidgetLabs) ? '' : 'none';
+    if (ws) ws.style.display = showWidgetSuggestions ? '' : 'none';
     if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
     if (wn) wn.style.display = showWidgetNotes   ? '' : 'none';
 
@@ -341,7 +447,23 @@ function applyWidgetVisibility() {
     const wma = document.getElementById('widgetMoodleAvgGradeCard');
     const wms = document.getElementById('widgetMoodleSubjectGradesCard');
 
-    if (wlp) wlp.style.display = (window.isProActive && showWidgetLabsPro) ? '' : 'none';
-    if (wma) wma.style.display = (window.isProActive && showWidgetMoodleAvg) ? '' : 'none';
-    if (wms) wms.style.display = (window.isProActive && showWidgetMoodleSubj) ? '' : 'none';
+    // Pro-виджеты рендерим только если Pro активен И данные уже загружены
+    const proReady = window.isProActive && window.hasLoadedMoodleStats;
+
+    if (wlp) wlp.style.display = (proReady && showWidgetLabsPro) ? '' : 'none';
+    if (wma) wma.style.display = (proReady && showWidgetMoodleAvg) ? '' : 'none';
+    if (wms) wms.style.display = (proReady && showWidgetMoodleSubj) ? '' : 'none';
+
+    // Управляем видимостью плашки в настройках
+    const proLockMsg = document.getElementById('proWidgetsLockedMsg');
+    const proGrid = document.getElementById('proWidgetsGrid');
+    if (proLockMsg && proGrid) {
+        if (window.isProActive) {
+            proLockMsg.style.display = 'none';
+            proGrid.style.display = ''; 
+        } else {
+            proLockMsg.style.display = 'flex';
+            proGrid.style.display = 'none';
+        }
+    }
 }

@@ -1,17 +1,6 @@
-// Поштучный список лаб/ПЗ по предмету: открыть модалку, отметить,
-// переименовать, добавить, удалить последнюю.
-//
-// Использует cachedLabs (сводка) и cachedSchedule (для дат пар),
-// поэтому должен грузиться после widgets.js и calendar.js.
-// API-обёртки (api*LabItem) — из api.js.
-
 let _labItemsCurrentSubject = null;
 let _labItemsCurrentGroup = null;
 let _labItemsCache = {};
-
-// ============================================================
-//  ДАТЫ ПАР ПО ПРЕДМЕТУ
-// ============================================================
 
 function _datesForSubject(subject) {
     const dates = [];
@@ -23,8 +12,6 @@ function _datesForSubject(subject) {
     return dates;
 }
 
-// Примерная дата сдачи k-й лабы: k-я по счёту пара из списка.
-// Если пар больше, чем лаб — берём ближайшую подходящую.
 function _computeDueDate(dates, k, total) {
     if (!dates.length || total <= 0) return null;
     const M = dates.length;
@@ -33,10 +20,6 @@ function _computeDueDate(dates, k, total) {
     if (idx >= M) idx = M - 1;
     return dates[idx];
 }
-
-// ============================================================
-//  ОТКРЫТИЕ МОДАЛКИ
-// ============================================================
 
 async function openLabItemsModal(subjectKey) {
     const group = (document.getElementById('groupSelect').value || '').trim();
@@ -66,7 +49,6 @@ async function _reloadLabItems() {
     const subjectKey = _labItemsCurrentSubject;
     const group = _labItemsCurrentGroup;
 
-    // Досоздаём недостающие записи: sync только в плюс, лишние не удаляет.
     const totalCount = (cachedLabs[subjectKey] && cachedLabs[subjectKey].total) || 0;
     if (totalCount > 0) {
         try {
@@ -91,10 +73,6 @@ async function _reloadLabItems() {
     _labItemsCache[subjectKey] = enriched;
     renderLabItemsList();
 }
-
-// ============================================================
-//  РЕНДЕР СПИСКА
-// ============================================================
 
 function renderLabItemsList() {
     const container = document.getElementById('labItemsContent');
@@ -159,10 +137,6 @@ function renderLabItemsList() {
     container.innerHTML = html;
 }
 
-// ============================================================
-//  ОБРАБОТЧИКИ
-// ============================================================
-
 async function onLabItemToggle(id, isCompleted) {
     try {
         await apiUpdateLabItem(id, { completed: isCompleted ? 1 : 0 });
@@ -179,6 +153,9 @@ async function onLabItemToggle(id, isCompleted) {
     renderLabItemsList();
     await updateLabsCache();
     renderCharts();
+    
+    // ДИНАМИЧЕСКОЕ ОБНОВЛЕНИЕ ВИДЖЕТА
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }
 
 async function onLabItemRename(id, el) {
@@ -215,6 +192,8 @@ async function onAddLabItem() {
     await updateLabsCache();
     await _reloadLabItems();
     renderCharts();
+    
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }
 
 async function onRemoveLastLabItem() {
@@ -235,4 +214,6 @@ async function onRemoveLastLabItem() {
     await updateLabsCache();
     await _reloadLabItems();
     renderCharts();
+    
+    if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }

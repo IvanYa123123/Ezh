@@ -35,44 +35,6 @@
     <link href="/static/css/teachers.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/animations.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
-    <style>
-        /* Стили для крестика закрытия виджета */
-        .widget-close-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.1em;
-            line-height: 1;
-            padding: 0 4px;
-            margin-left: 4px;
-            cursor: pointer;
-            transition: color 0.15s, transform 0.15s;
-        }
-        .widget-close-btn:hover {
-            color: var(--status-red);
-            transform: scale(1.1);
-        }
-        
-        /* Стили для Pro графиков в горизонтальном режиме */
-        #widgetMoodleSubjectGradesCard.is-horizontal .widget-canvas-wrap {
-            flex: 1 1 65% !important;
-            height: 220px !important;
-            min-width: 0 !important;
-        }
-        #widgetMoodleSubjectGradesCard.is-horizontal .widget-details-wrap {
-            flex: 0 0 35% !important;
-            max-height: 220px !important;
-        }
-        #widgetMoodleSubjectGradesCard .widget-canvas-wrap {
-            display: flex;
-            flex-direction: column;
-        }
-        #widgetMoodleSubjectGradesCard .widget-canvas-wrap canvas {
-            flex: 1 1 auto;
-            min-height: 0;
-        }
-    </style>
 </head>
 <body>
 
@@ -89,7 +51,44 @@
 </div>
 
 <div id="globalLoader" style="display: none;">
-    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <svg class="hh-preloader" viewBox="0 0 100 100" width="100" height="100" xmlns="http://www.w3.org/2000/svg" aria-label="Загрузка...">
+      <ellipse class="hh-shadow" cx="50" cy="80" rx="26" ry="4.5" fill="var(--hh-dark, #1f2937)" />
+      <path class="hh-dust-1" d="M 44,83 L 58,83" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" />
+      <path class="hh-dust-2" d="M 38,87 L 48,87" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="1.6" />
+      <circle class="hh-puff" cx="20" cy="76" r="2.5" fill="var(--hh-stroke, #2a1505)" opacity="0" />
+      <circle class="hh-puff-2" cx="30" cy="80" r="1.5" fill="var(--hh-stroke, #2a1505)" opacity="0" />
+      <g class="hh-state-ball">
+        <g class="hh-ball-spinner">
+          <path d="M 69.3,52.8 L 75.9,56.2 L 69.3,63.2 L 73.4,69.4 L 64.1,72.1 L 64.5,79.6 L 55.2,77.3 L 51.8,83.9 L 44.8,77.3 L 38.6,81.4 L 35.9,72.1 L 28.4,72.5 L 30.7,63.2 L 24.1,59.8 L 30.7,52.8 L 26.6,46.6 L 35.9,43.9 L 35.5,36.4 L 44.8,38.7 L 48.2,32.1 L 55.2,38.7 L 61.4,34.6 L 64.1,43.9 L 71.6,43.5 Z" fill="var(--hh-quills, #6b3f1a)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.4" />
+          <path d="M 43,43 Q 50,39 57,44 M 61,51 Q 65,58 60,65 M 55,71 Q 48,75 41,70 M 36,63 Q 33,55 38,48" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" />
+          <circle cx="50" cy="58" r="9" fill="var(--hh-body-shade, #dcb87c)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" />
+          <path d="M 45.5,55 C 48.5,51.5 54.5,53.5 53.5,59 C 52.5,62.5 47,62.5 46,59" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" />
+        </g>
+      </g>
+      <g class="hh-state-run">
+        <g class="hh-runner-bounce">
+          <g class="hh-leg-2" style="transform-origin: 39px 68px;"><ellipse cx="39" cy="73.5" rx="3.2" ry="5" fill="var(--hh-body-shade, #dcb87c)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" /></g>
+          <g class="hh-leg-4" style="transform-origin: 59px 68px;"><ellipse cx="59" cy="73.5" rx="3.2" ry="5" fill="var(--hh-body-shade, #dcb87c)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2" /></g>
+          <path d="M 59,39 C 51,32 41,32 34,35 L 38,39 C 30,38 22,42 17,47 L 24,50 C 18,52 14,56 12,61 L 21,62 C 17,65 16,68 15,71 C 22,72 28,70 34,68 Z" fill="var(--hh-quills, #6b3f1a)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.4" />
+          <path d="M 25,66 C 31,73 54,73 66,68 C 73,65 80,60 84,55 C 80,49 70,43 58,39 C 44,39 30,52 25,66 Z" fill="var(--hh-body, #f5d9a8)" />
+          <path d="M 26,65 C 34,69 55,69 67,63 C 73,60 78,57 82,54 C 78,60 72,65 65,68 C 53,73 32,72 26,65 Z" fill="var(--hh-body-shade, #dcb87c)" />
+          <path d="M 24,67 C 31,73 54,73 66,68 C 73,65 80,60 84,55 C 80,49 70,43 58,39" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.4" />
+          <path d="M 59,39 L 52,45 L 55,49 L 45,53 L 49,58 L 38,61 L 42,66 L 24,67 C 24,52 40,38 59,39 Z" fill="var(--hh-quills, #6b3f1a)" />
+          <path d="M 59,39 L 52,45 L 55,49 L 45,53 L 49,58 L 38,61 L 42,66 L 24,67 M 44,43 C 37,44 31,47 27,51 M 39,52 C 33,53 28,56 24,60" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.2" />
+          <g class="hh-ear">
+            <ellipse cx="52" cy="46" rx="5" ry="6" transform="rotate(-15 52 46)" fill="var(--hh-body, #f5d9a8)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.2" />
+            <ellipse cx="52" cy="46.5" rx="2.5" ry="3.2" transform="rotate(-15 52 46.5)" fill="var(--hh-body-shade, #dcb87c)" />
+          </g>
+          <circle cx="67.5" cy="52" r="3.5" fill="var(--hh-dark, #1f2937)" />
+          <circle cx="68.7" cy="50.8" r="1.3" fill="var(--hh-body, #f5d9a8)" />
+          <ellipse cx="66" cy="58" rx="3.2" ry="1.7" fill="var(--hh-body-shade, #dcb87c)" />
+          <path d="M 70.5,58.5 Q 73.5,61 76,58" fill="none" stroke="var(--hh-stroke, #2a1505)" stroke-width="1.8" />
+          <ellipse cx="84.5" cy="54.5" rx="3.4" ry="2.6" transform="rotate(-10 84.5 54.5)" fill="var(--hh-dark, #1f2937)" stroke="var(--hh-stroke, #2a1505)" stroke-width="1.5" />
+          <g class="hh-leg-1" style="transform-origin: 33px 68px;"><ellipse cx="33" cy="74" rx="3.4" ry="5.2" fill="var(--hh-body, #f5d9a8)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.2" /></g>
+          <g class="hh-leg-3" style="transform-origin: 53px 68px;"><ellipse cx="53" cy="74" rx="3.4" ry="5.2" fill="var(--hh-body, #f5d9a8)" stroke="var(--hh-stroke, #2a1505)" stroke-width="2.2" /></g>
+        </g>
+      </g>
+    </svg>
     <div id="loaderText" class="mt-3 fw-bold text-secondary fs-5">Загрузка...</div>
 </div>
 
@@ -100,7 +99,7 @@
                 <h5 class="mb-0 fw-bold d-flex align-items-center brand-title" style="color: var(--accent); letter-spacing: -0.5px;">
                     <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
                     <span>дневник</span>
-                    <span id="app-mode-badge" class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.45em; padding: 4px 8px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
+                    <span id="app-mode-badge" class="app-mode-badge-stylish basic-mode ms-2" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
                 </h5>
             </div>
             <div class="col-md-2">
@@ -119,11 +118,6 @@
             <div class="col-md-5 d-flex align-items-center justify-content-end gap-2">
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSearchModal()" title="Поиск по заметкам и событиям (Ctrl+K)">&#128269;</button>
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
-                        onclick="manualRefresh()" id="refreshBtn"
-                        title="Принудительно обновить расписание с сервера СевГУ">
-                    <span id="refreshIcon">&#128260;</span>
-                </button>
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
@@ -203,7 +197,6 @@
         <div class="col-xl-3 col-lg-4 sidebar-column">
             <div id="rightWidgetsZone" class="sticky-top d-flex flex-column gap-3" style="top: 15px;">
 
-                <!-- БАЗОВЫЕ ВИДЖЕТЫ -->
                 <div class="widget-card" id="widgetMiniCalCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
@@ -237,7 +230,6 @@
                     </div>
                 </div>
 
-                <!-- БАЗОВЫЙ ВИДЖЕТ ЛАБОРАТОРНЫЕ -->
                 <div class="widget-card" id="widgetLabsCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
@@ -251,6 +243,33 @@
                             <canvas id="labStatsChart"></canvas>
                         </div>
                         <div class="widget-details-wrap" id="labStatsDetails"></div>
+                    </div>
+                </div>
+
+                <!-- ВИДЖЕТ: ПРЕДЛОЖЕНИЯ -->
+                <div class="widget-card" id="widgetSuggestionsCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">Предложения</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetSuggestionsCard', 'settingsToggleWidgetSuggestions')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check form-switch" style="font-size: 0.78em;">
+                            <input class="form-check-input" type="checkbox" id="suggestOnlyOwnGroups" onchange="renderSuggestions(true)">
+                            <label class="form-check-label text-muted" for="suggestOnlyOwnGroups">Сдача только на своих парах</label>
+                        </div>
+                    </div>
+                    
+                    <div class="suggestions-nav-row" id="suggestionsNavRow" style="display: none;">
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="suggestionsPrev()">‹</button>
+                        <span class="suggestions-counter" id="suggestionsCounter">1 / 1</span>
+                        <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="suggestionsNext()">›</button>
+                    </div>
+
+                    <div id="suggestionsContent" class="suggestions-list">
+                        <div class="text-muted small text-center py-2">Анализ...</div>
                     </div>
                 </div>
 
@@ -282,7 +301,7 @@
                 <div class="widget-card pro-widget" id="widgetLabsProCard" data-draggable-widget style="display: none;">
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
-                        <h6 class="widget-title clickable" onclick="showLabs()">🧪 Лабораторные (Pro)</h6>
+                        <h6 class="widget-title clickable" onclick="showLabs()">Лабораторные</h6>
                         <div class="widget-header-actions">
                             <button class="widget-close-btn" onclick="hideWidget('widgetLabsProCard', 'settingsToggleWidgetLabsPro')" title="Скрыть">✕</button>
                         </div>
@@ -298,14 +317,14 @@
                 <div class="widget-card pro-widget" id="widgetMoodleAvgGradeCard" data-draggable-widget style="display: none;">
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
-                        <h6 class="widget-title">🏆 Средний балл (Pro)</h6>
+                        <h6 class="widget-title">Средний балл</h6>
                         <div class="widget-header-actions">
                             <button class="widget-close-btn" onclick="hideWidget('widgetMoodleAvgGradeCard', 'settingsToggleWidgetMoodleAvg')" title="Скрыть">✕</button>
                         </div>
                     </div>
                     <div class="widget-body-row">
                         <div class="widget-canvas-wrap" style="height: 160px;">
-                            <div class="display-4 fw-bold text-primary" id="proAvgGradeText">—</div>
+                            <div class="display-4 fw-bold" id="proAvgGradeText" style="color: var(--accent);">—</div>
                             <div class="text-muted small">из 100</div>
                         </div>
                         <div class="widget-details-wrap" id="proAvgGradeDetails"></div>
@@ -315,7 +334,7 @@
                 <div class="widget-card pro-widget" id="widgetMoodleSubjectGradesCard" data-draggable-widget style="display: none;">
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
-                        <h6 class="widget-title">📊 Баллы по предмету (Pro)</h6>
+                        <h6 class="widget-title">Баллы по предмету</h6>
                         <div class="widget-header-actions">
                             <button class="widget-close-btn" onclick="hideWidget('widgetMoodleSubjectGradesCard', 'settingsToggleWidgetMoodleSubj')" title="Скрыть">✕</button>
                         </div>
@@ -571,10 +590,12 @@
   </div>
 </div>
 
+<!-- НАСТРОЙКИ -->
 <div class="modal fade" id="settingsModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 560px;">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 680px;">
     <div class="modal-content border-0 shadow settings-modal">
-      <div class="modal-header py-3">
+      
+      <div class="modal-header py-3 border-bottom-0">
         <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
           <span style="font-size: 1.2em;">⚙️</span>
           <span>Настройки</span>
@@ -583,289 +604,355 @@
       </div>
 
       <div class="modal-body p-0">
+        
+        <ul class="nav nav-pills nav-fill settings-tabs px-3 mb-2" id="settingsTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-general-tab" data-bs-toggle="pill" data-bs-target="#tab-general" type="button" role="tab"><span class="d-none d-sm-inline">📋</span> Основное</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-widgets-tab" data-bs-toggle="pill" data-bs-target="#tab-widgets" type="button" role="tab"><span class="d-none d-sm-inline">🧩</span> Виджеты</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-appearance-tab" data-bs-toggle="pill" data-bs-target="#tab-appearance" type="button" role="tab"><span class="d-none d-sm-inline">🎨</span> Оформление</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-system-tab" data-bs-toggle="pill" data-bs-target="#tab-system" type="button" role="tab"><span class="d-none d-sm-inline">⚙️</span> Данные</button>
+          </li>
+        </ul>
 
-        <div class="settings-group">
-          <div class="settings-group-title">🌐 Еж Про (Moodle)</div>
-          <button class="btn btn-outline-primary w-100 fw-bold" onclick="openMoodleModal()">
-             Войти в Moodle / Настройки
-          </button>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">📋 Отображение пар</div>
-
-          <label class="settings-row" for="settingsToggleTeacher">
-            <span class="settings-row-label">ФИО преподавателей</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleTeacher" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleLocation">
-            <span class="settings-row-label">Номера аудиторий</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleLocation" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleFriends">
-            <span class="settings-row-label">Подробные пары друзей</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
-          </label>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">🧩 Виджеты</div>
-
-          <label class="settings-row" for="settingsToggleSeparateFriendsTeachers">
-            <span class="settings-row-label">Раздельные преподаватели и друзья</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleSeparateFriendsTeachers" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleFriendsSection">
-            <span class="settings-row-label">Друзья</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleFriendsSection" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleTeachersSection">
-            <span class="settings-row-label">Преподаватели</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleTeachersSection" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleWidgetMiniCal">
-            <span class="settings-row-label">Мини-календарь</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMiniCal" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleWidgetGlobal">
-            <span class="settings-row-label">Остаток пар</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetGlobal" onchange="saveSettingsFromUI()">
-          </label>
+        <div class="tab-content settings-tab-content px-3 pb-3" id="settingsTabsContent">
           
-          <label class="settings-row" id="label-settingsToggleWidgetLabs" for="settingsToggleWidgetLabs">
-            <span class="settings-row-label">Лабораторные (База)</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
-          </label>
-
-          <!-- Pro виджеты -->
-          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetLabsPro" style="display: none;">
-            <span class="settings-row-label text-primary fw-bold">🧪 Лабораторные (Pro)</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabsPro" onchange="saveSettingsFromUI()">
-          </label>
-          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetMoodleAvg" style="display: none;">
-            <span class="settings-row-label text-primary fw-bold">🏆 Средний балл (Pro)</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleAvg" onchange="saveSettingsFromUI()">
-          </label>
-          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetMoodleSubj" style="display: none;">
-            <span class="settings-row-label text-primary fw-bold">📊 Баллы по предмету (Pro)</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleSubj" onchange="saveSettingsFromUI()">
-          </label>
-
-          <label class="settings-row" for="settingsToggleWidgetPacing">
-            <span class="settings-row-label">Темп сдачи лаб</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
-          </label>
-          <label class="settings-row" for="settingsToggleWidgetNotes">
-            <span class="settings-row-label">Заметки</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes" onchange="saveSettingsFromUI()">
-          </label>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">⏱ Статус-строка</div>
-
-          <label class="settings-row" for="settingsToggleStatus">
-            <span class="settings-row-label">Показывать статус под шапкой</span>
-            <input class="form-check-input" type="checkbox" id="settingsToggleStatus" onchange="saveSettingsFromUI()">
-          </label>
-
-          <div class="settings-row-inline">
-            <span class="settings-row-label">Формат</span>
-            <select class="form-select form-select-sm" id="settingsStatusFormat" onchange="saveSettingsFromUI()" style="max-width: 180px;">
-              <option value="interval">интервал</option>
-              <option value="both">интервал + время</option>
-              <option value="time">время</option>
-            </select>
-          </div>
-
-          <div class="settings-row-inline">
-            <span class="settings-row-label">Точность</span>
-            <select class="form-select form-select-sm" id="settingsStatusPrecision" onchange="saveSettingsFromUI()" style="max-width: 180px;">
-              <option value="min">до минуты</option>
-              <option value="sec">до секунды</option>
-              <option value="cs">до сотых</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">🔔 Уведомления</div>
-
-          <label class="settings-row" for="settingsNotifEnabled">
-            <span class="settings-row-label">Включить уведомления</span>
-            <input class="form-check-input" type="checkbox" id="settingsNotifEnabled" onchange="handleNotificationsToggle(this)">
-          </label>
-
-          <div class="settings-row-inline">
-            <span class="settings-row-label">Напомнить за</span>
-            <div class="d-flex align-items-center gap-2">
-              <input type="number" id="settingsNotifAdvance" class="form-control form-control-sm"
-                     style="width: 68px;" min="1" max="60" onchange="saveSettingsFromUI()">
-              <select id="settingsNotifUnit" class="form-select form-select-sm"
-                      style="width: auto;" onchange="saveSettingsFromUI()">
-                <option value="min">минут</option>
-                <option value="hour">часов</option>
-                <option value="day">дней</option>
-                <option value="week">недель</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="settingsNotifHint" class="settings-hint-box" style="display: none;"></div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">📤 Экспорт</div>
-          <button class="btn btn-outline-primary w-100" onclick="downloadICS()">
-            📅 Скачать расписание (.ics)
-          </button>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">🎨 Тема оформления</div>
-
-          <div class="settings-row-inline">
-            <span class="settings-row-label">Цветовая схема</span>
-            <select class="form-select form-select-sm" id="settingsTheme" onchange="saveSettingsFromUI()" style="max-width: 220px;">
-              <optgroup label="Базовые">
-                <option value="light">☀️ Светлая</option>
-                <option value="dark">🌙 Тёмная</option>
-                <option value="forest">🌿 Лесная</option>
-                <option value="sunset">🌅 Закат</option>
-                <option value="ocean">🌊 Океан</option>
-              </optgroup>
-              <optgroup label="Особые">
-                <option value="hedgehog">🦔 Ежики</option>
-                <option value="southpark">🎿 Южный парк</option>
-                <option value="anime">🌸 Аниме</option>
-              </optgroup>
-              <optgroup label="OLED (чёрный фон)">
-                <option value="oled">🌑 OLED Deep</option>
-                <option value="oled-warm">🔥 OLED Warm</option>
-              </optgroup>
-              <optgroup label="Своя">
-                <option value="custom">🎨 Своя тема</option>
-              </optgroup>
-            </select>
-          </div>
-
-          <div id="customThemePanel" class="mt-3" style="display: none;">
-            <div class="custom-theme-warning">
-              ⚠️ <strong>Будьте осторожны</strong> при создании своей темы: некоторая часть функционала может стать невидимой.
+          <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
+            <div class="settings-group pt-0">
+              <div class="settings-group-title">📋 Отображение пар</div>
+              <label class="settings-row" for="settingsToggleTeacher">
+                <span class="settings-row-label">ФИО преподавателей</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleTeacher" onchange="saveSettingsFromUI()">
+              </label>
+              <label class="settings-row" for="settingsToggleLocation">
+                <span class="settings-row-label">Номера аудиторий</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleLocation" onchange="saveSettingsFromUI()">
+              </label>
+              <label class="settings-row" for="settingsToggleFriends">
+                <span class="settings-row-label">Подробные пары друзей</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
+              </label>
             </div>
 
-            <div class="settings-subsection">Взять за основу готовую</div>
-            <div class="input-group input-group-sm mb-2">
-              <select id="customThemeBaseSelect" class="form-select form-select-sm">
-                <option value="">— выбрать тему —</option>
-                <optgroup label="Базовые">
-                  <option value="light">☀️ Светлая</option>
-                  <option value="dark">🌙 Тёмная</option>
-                  <option value="forest">🌿 Лесная</option>
-                  <option value="sunset">🌅 Закат</option>
-                  <option value="ocean">🌊 Океан</option>
-                </optgroup>
-                <optgroup label="Особые">
-                  <option value="hedgehog">🦔 Ежики</option>
-                  <option value="southpark">🎿 Южный парк</option>
-                  <option value="anime">🌸 Аниме</option>
-                </optgroup>
-                <optgroup label="OLED (чёрный фон)">
-                  <option value="oled">🌑 OLED Deep</option>
-                  <option value="oled-warm">🔥 OLED Warm</option>
-                </optgroup>
-              </select>
-              <button class="btn btn-outline-primary" type="button" onclick="applyBaseThemeFromSelect()">Применить</button>
-            </div>
-
-            <div class="settings-subsection">Мои сохранённые темы</div>
-            <div class="input-group input-group-sm mb-2">
-              <input type="text" id="customThemePresetName" class="form-control"
-                     placeholder="Название темы" maxlength="40"
-                     onkeydown="if(event.key==='Enter'){event.preventDefault();saveCurrentAsPreset();}">
-              <button class="btn btn-outline-primary" type="button" onclick="saveCurrentAsPreset()">💾 Сохранить</button>
-            </div>
-            <div id="customThemePresets" class="custom-presets-list mb-2"></div>
-
-            <div class="collapsible-section">
-              <button type="button" class="collapsible-header" onclick="toggleCustomSection('colors')">
-                <span>🎨 Цвета</span>
-                <span class="collapsible-arrow" id="arrow-colors">▸</span>
-              </button>
-              <div id="custom-section-colors" class="collapsible-body" style="display: none;">
-                <div id="customThemePickers" class="custom-pickers-grid"></div>
-                <button type="button" id="customThemeAdvancedToggle"
-                        class="btn btn-sm btn-outline-secondary w-100 mt-2"
-                        onclick="toggleCustomThemeAdvanced()">▼ Показать все цвета</button>
+            <div class="settings-group">
+              <div class="settings-group-title">⏱ Статус-строка</div>
+              <label class="settings-row" for="settingsToggleStatus">
+                <span class="settings-row-label">Показывать статус под шапкой</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleStatus" onchange="saveSettingsFromUI()">
+              </label>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Формат</span>
+                <select class="form-select form-select-sm" id="settingsStatusFormat" onchange="saveSettingsFromUI()" style="max-width: 180px;">
+                  <option value="interval">интервал</option>
+                  <option value="both">интервал + время</option>
+                  <option value="time">время</option>
+                </select>
+              </div>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Точность</span>
+                <select class="form-select form-select-sm" id="settingsStatusPrecision" onchange="saveSettingsFromUI()" style="max-width: 180px;">
+                  <option value="min">до минуты</option>
+                  <option value="sec">до секунды</option>
+                  <option value="cs">до сотых</option>
+                </select>
               </div>
             </div>
 
-            <div class="collapsible-section">
-              <button type="button" class="collapsible-header" onclick="toggleCustomSection('bg')">
-                <span>🖼 Фон</span>
-                <span class="collapsible-arrow" id="arrow-bg">▸</span>
-              </button>
-              <div id="custom-section-bg" class="collapsible-body" style="display: none;">
-                <div class="mb-2">
-                  <label class="small text-muted mb-1 d-block">Фото с компьютера (сжимается до 800px)</label>
-                  <div class="input-group input-group-sm">
-                    <input type="file" id="customThemePhotoFile" class="form-control form-control-sm"
-                           accept="image/*" onchange="onCustomPhotoUpload(this)">
-                    <button class="btn btn-outline-secondary" type="button" onclick="clearCustomPhoto()" title="Удалить фото">✕</button>
-                  </div>
-                  <div id="customThemePhotoMeta" class="small text-muted mt-1"></div>
+            <div class="settings-group mb-0">
+              <div class="settings-group-title">🔔 Уведомления</div>
+              <label class="settings-row" for="settingsNotifEnabled">
+                <span class="settings-row-label">Включить уведомления</span>
+                <input class="form-check-input" type="checkbox" id="settingsNotifEnabled" onchange="handleNotificationsToggle(this)">
+              </label>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Напомнить за</span>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="number" id="settingsNotifAdvance" class="form-control form-control-sm" style="width: 68px;" min="1" max="60" onchange="saveSettingsFromUI()">
+                  <select id="settingsNotifUnit" class="form-select form-select-sm" style="width: auto;" onchange="saveSettingsFromUI()">
+                    <option value="min">минут</option>
+                    <option value="hour">часов</option>
+                    <option value="day">дней</option>
+                    <option value="week">недель</option>
+                  </select>
                 </div>
+              </div>
+              <div id="settingsNotifHint" class="settings-hint-box" style="display: none;"></div>
+            </div>
+          </div>
 
-                <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
-                        onclick="applyThemeFromPhoto()">
-                  🎨 Взять цвета с фото
+          <div class="tab-pane fade" id="tab-widgets" role="tabpanel">
+            <div class="settings-group pt-0">
+              <div class="settings-group-title">Показ разделов</div>
+              <label class="settings-row" for="settingsToggleSeparateFriendsTeachers">
+                <span class="settings-row-label">Раздельные преподаватели и друзья</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleSeparateFriendsTeachers" onchange="saveSettingsFromUI()">
+              </label>
+              <label class="settings-row" for="settingsToggleFriendsSection">
+                <span class="settings-row-label">Друзья</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleFriendsSection" onchange="saveSettingsFromUI()">
+              </label>
+              <label class="settings-row" for="settingsToggleTeachersSection">
+                <span class="settings-row-label">Преподаватели</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleTeachersSection" onchange="saveSettingsFromUI()">
+              </label>
+            </div>
+
+            <div class="settings-group mb-0">
+              <div class="settings-group-title">Активные виджеты</div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetMiniCal">
+                    <span class="settings-row-label">Мини-календарь</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMiniCal" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetGlobal">
+                    <span class="settings-row-label">Остаток пар</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetGlobal" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6" id="label-settingsToggleWidgetLabs">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetLabs">
+                    <span class="settings-row-label">Лабораторные</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetSuggestions">
+                    <span class="settings-row-label">Предложения</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetSuggestions" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetPacing">
+                    <span class="settings-row-label">Темп лаб</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes">
+                    <span class="settings-row-label">Заметки</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-group mb-0">
+              <div class="settings-group-title text-primary">Pro-виджеты (Moodle)</div>
+              
+              <div id="proWidgetsLockedMsg" class="alert alert-secondary py-2 small mb-2 d-flex align-items-center justify-content-between" style="display: none;">
+                <span>🔒 Войдите в Про-режим, чтобы получить доступ к расширенным виджетам.</span>
+                <button type="button" class="btn btn-sm btn-primary ms-2 text-nowrap" onclick="openMoodleModal()">Войти</button>
+              </div>
+
+              <div class="row g-2" id="proWidgetsGrid">
+                <div class="col-6 pro-widget-toggle" style="display: none;">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetLabsPro">
+                    <span class="settings-row-label text-primary fw-bold">Лабораторные</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabsPro" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6 pro-widget-toggle" style="display: none;">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetMoodleAvg">
+                    <span class="settings-row-label text-primary fw-bold">Средний балл</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleAvg" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6 pro-widget-toggle" style="display: none;">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetMoodleSubj">
+                    <span class="settings-row-label text-primary fw-bold">Баллы по предмету</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleSubj" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="tab-appearance" role="tabpanel">
+            
+            <div class="mb-3 p-3 bg-surface-alt rounded border d-flex justify-content-between align-items-center">
+              <span class="small fw-bold text-secondary">Текущая тема:</span>
+              <span class="badge bg-primary fs-6" id="currentThemeNameDisplay" style="font-size: 0.85em !important; padding: 6px 12px; border-radius: 8px;">Светлая</span>
+            </div>
+
+            <div class="theme-category">
+              <div class="theme-category-title">Базовые</div>
+              <div class="theme-grid">
+                <button type="button" class="theme-btn" data-theme-id="light" onclick="setThemeFromSettings('light')">☀️ Светлая</button>
+                <button type="button" class="theme-btn" data-theme-id="dark" onclick="setThemeFromSettings('dark')">🌙 Тёмная</button>
+                <button type="button" class="theme-btn" data-theme-id="forest" onclick="setThemeFromSettings('forest')">🌿 Лесная</button>
+                <button type="button" class="theme-btn" data-theme-id="sunset" onclick="setThemeFromSettings('sunset')">🌅 Закат</button>
+                <button type="button" class="theme-btn" data-theme-id="ocean" onclick="setThemeFromSettings('ocean')">🌊 Океан</button>
+              </div>
+            </div>
+
+            <div class="theme-category">
+              <div class="theme-category-title">Особые</div>
+              <div class="theme-grid">
+                <button type="button" class="theme-btn" data-theme-id="hedgehog" onclick="setThemeFromSettings('hedgehog')">🦔 Ежики</button>
+                <button type="button" class="theme-btn" data-theme-id="southpark" onclick="setThemeFromSettings('southpark')">🎿 Южный парк</button>
+                <button type="button" class="theme-btn" data-theme-id="anime" onclick="setThemeFromSettings('anime')">🌸 Аниме</button>
+              </div>
+            </div>
+
+            <div class="theme-category">
+              <div class="theme-category-title">OLED (чёрный фон)</div>
+              <div class="theme-grid">
+                <button type="button" class="theme-btn" data-theme-id="oled" onclick="setThemeFromSettings('oled')">🌑 OLED Deep</button>
+                <button type="button" class="theme-btn" data-theme-id="oled-warm" onclick="setThemeFromSettings('oled-warm')">🔥 OLED Warm</button>
+              </div>
+            </div>
+
+            <div class="theme-category mb-2">
+              <div class="theme-category-title">Своя тема</div>
+              <div class="theme-grid mb-2" id="customThemesGrid">
+                <button type="button" class="theme-btn" data-theme-id="custom" onclick="setThemeFromSettings('custom')">🎨 Активировать свою</button>
+              </div>
+            </div>
+
+            <div id="customThemePanel" class="mt-3" style="display: none;">
+              <div class="custom-theme-warning">
+                ⚠️ <strong>Будьте осторожны</strong> при создании своей темы: некоторая часть функционала может стать невидимой.
+              </div>
+
+              <div class="settings-subsection">Взять за основу готовую</div>
+              <div class="input-group input-group-sm mb-2">
+                <select id="customThemeBaseSelect" class="form-select form-select-sm">
+                  <option value="">— выбрать тему —</option>
+                  <optgroup label="Базовые">
+                    <option value="light">☀️ Светлая</option>
+                    <option value="dark">🌙 Тёмная</option>
+                    <option value="forest">🌿 Лесная</option>
+                    <option value="sunset">🌅 Закат</option>
+                    <option value="ocean">🌊 Океан</option>
+                  </optgroup>
+                  <optgroup label="Особые">
+                    <option value="hedgehog">🦔 Ежики</option>
+                    <option value="southpark">🎿 Южный парк</option>
+                    <option value="anime">🌸 Аниме</option>
+                  </optgroup>
+                  <optgroup label="OLED (чёрный фон)">
+                    <option value="oled">🌑 OLED Deep</option>
+                    <option value="oled-warm">🔥 OLED Warm</option>
+                  </optgroup>
+                </select>
+                <button class="btn btn-outline-primary" type="button" onclick="applyBaseThemeFromSelect()">Применить</button>
+              </div>
+
+              <div class="settings-subsection">Сохранить текущую как пресет</div>
+              <div class="input-group input-group-sm mb-2">
+                <input type="text" id="customThemePresetName" class="form-control"
+                       placeholder="Название темы" maxlength="40"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();saveCurrentAsPreset();}">
+                <button class="btn btn-outline-primary" type="button" onclick="saveCurrentAsPreset()">💾 Сохранить</button>
+              </div>
+              <div id="customThemePresets" class="custom-presets-list mb-2"></div>
+
+              <div class="collapsible-section">
+                <button type="button" class="collapsible-header" onclick="toggleCustomSection('colors')">
+                  <span>🎨 Цвета</span>
+                  <span class="collapsible-arrow" id="arrow-colors">▸</span>
                 </button>
-
-                <div class="mb-0">
-                  <label class="small text-muted mb-1 d-block">
-                    Видимость фото: <span id="customThemePhotoOpacityVal">15</span>%
-                  </label>
-                  <input type="range" id="customThemePhotoOpacity" min="0" max="100" value="15"
-                         class="form-range" oninput="onCustomOpacityChange(this, 'photo')">
+                <div id="custom-section-colors" class="collapsible-body" style="display: none;">
+                  <div id="customThemePickers" class="custom-pickers-grid"></div>
+                  <button type="button" id="customThemeAdvancedToggle"
+                          class="btn btn-sm btn-outline-secondary w-100 mt-2"
+                          onclick="toggleCustomThemeAdvanced()">▼ Показать все цвета</button>
                 </div>
               </div>
-            </div>
 
-            <div class="collapsible-section">
-              <button type="button" class="collapsible-header" onclick="toggleCustomSection('stickers')">
-                <span>✨ Стикеры</span>
-                <span class="collapsible-arrow" id="arrow-stickers">▸</span>
-              </button>
-              <div id="custom-section-stickers" class="collapsible-body" style="display: none;">
-                <div class="mb-2">
-                  <label class="small text-muted mb-1 d-block">Эмодзи через пробел, до 4 штук</label>
-                  <input type="text" id="customThemeStickers" class="form-control form-control-sm"
-                         placeholder="🦔 🌸 ⭐" oninput="onCustomStickersChange(this)">
-                </div>
-                <div class="mb-0">
-                  <label class="small text-muted mb-1 d-block">
-                    Прозрачность: <span id="customThemeStickersOpacityVal">15</span>%
-                  </label>
-                  <input type="range" id="customThemeStickersOpacity" min="0" max="100" value="15"
-                         class="form-range" oninput="onCustomOpacityChange(this, 'stickers')">
+              <div class="collapsible-section">
+                <button type="button" class="collapsible-header" onclick="toggleCustomSection('bg')">
+                  <span>🖼 Фон</span>
+                  <span class="collapsible-arrow" id="arrow-bg">▸</span>
+                </button>
+                <div id="custom-section-bg" class="collapsible-body" style="display: none;">
+                  <div class="mb-2">
+                    <label class="small text-muted mb-1 d-block">Фото с компьютера (сжимается до 800px)</label>
+                    <div class="input-group input-group-sm">
+                      <input type="file" id="customThemePhotoFile" class="form-control form-control-sm"
+                             accept="image/*" onchange="onCustomPhotoUpload(this)">
+                      <button class="btn btn-outline-secondary" type="button" onclick="clearCustomPhoto()" title="Удалить фото">✕</button>
+                    </div>
+                    <div id="customThemePhotoMeta" class="small text-muted mt-1"></div>
+                  </div>
+
+                  <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
+                          onclick="applyThemeFromPhoto()">
+                    🎨 Взять цвета с фото
+                  </button>
+
+                  <div class="mb-0">
+                    <label class="small text-muted mb-1 d-block">
+                      Видимость фото: <span id="customThemePhotoOpacityVal">15</span>%
+                    </label>
+                    <input type="range" id="customThemePhotoOpacity" min="0" max="100" value="15"
+                           class="form-range" oninput="onCustomOpacityChange(this, 'photo')">
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="d-flex gap-2 mt-3">
-              <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="resetCustomTheme()">
-                ↺ Сбросить к светлым
-              </button>
+              <div class="collapsible-section">
+                <button type="button" class="collapsible-header" onclick="toggleCustomSection('stickers')">
+                  <span>✨ Стикеры</span>
+                  <span class="collapsible-arrow" id="arrow-stickers">▸</span>
+                </button>
+                <div id="custom-section-stickers" class="collapsible-body" style="display: none;">
+                  <div class="mb-2">
+                    <label class="small text-muted mb-1 d-block">Эмодзи через пробел, до 4 штук</label>
+                    <input type="text" id="customThemeStickers" class="form-control form-control-sm"
+                           placeholder="🦔 🌸 ⭐" oninput="onCustomStickersChange(this)">
+                  </div>
+                  <div class="mb-0">
+                    <label class="small text-muted mb-1 d-block">
+                      Прозрачность: <span id="customThemeStickersOpacityVal">15</span>%
+                    </label>
+                    <input type="range" id="customThemeStickersOpacity" min="0" max="100" value="15"
+                           class="form-range" oninput="onCustomOpacityChange(this, 'stickers')">
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="resetCustomTheme()">
+                  ↺ Сбросить к светлым
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
+          <div class="tab-pane fade" id="tab-system" role="tabpanel">
+            
+            <div class="settings-group pt-0">
+              <div class="settings-group-title">📤 Экспорт</div>
+              <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="downloadICS()">
+                📅 Скачать расписание (.ics)
+              </button>
+            </div>
+
+            <div class="settings-group">
+              <div class="settings-group-title">🌐 Еж Про (Moodle)</div>
+              <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="openMoodleModal()">
+                 Войти в Moodle / Настройки
+              </button>
+            </div>
+
+            <div class="settings-group mb-0">
+              <div class="settings-group-title">🔄 Синхронизация</div>
+              <button class="btn btn-outline-primary w-100 fw-bold" onclick="manualRefresh()" id="refreshBtn">
+                 <span id="refreshIcon">🔄</span> Обновить пары с сервера СевГУ
+              </button>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -880,7 +967,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <!-- Форма входа -->
         <div id="moodleLoginForm">
           <div class="text-center mb-4">
             <h5 class="fw-bold">Вход в личный кабинет СевГУ</h5>
@@ -898,7 +984,6 @@
           <button type="button" id="moodleLoginBtn" class="btn btn-primary w-100 fw-bold" onclick="doMoodleLogin()">Войти</button>
         </div>
 
-        <!-- Статистика -->
         <div id="moodleStatsArea" style="display:none;">
           <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <div>
@@ -971,6 +1056,7 @@
 <script src="/static/js/lab-items.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets-stats.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets-labs.js?v={{ app_version }}"></script>
+<script src="/static/js/widgets-suggestions.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets.js?v={{ app_version }}"></script>
 
 <script src="/static/js/search.js?v={{ app_version }}"></script>
