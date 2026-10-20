@@ -28,11 +28,17 @@ function openSettingsModal() {
     document.getElementById('settingsToggleFriends').checked  = showFriends;
     document.getElementById('settingsToggleStatus').checked   = showStatus;
 
+    // Базовые виджеты
     document.getElementById('settingsToggleWidgetMiniCal').checked = showWidgetMiniCal;
     document.getElementById('settingsToggleWidgetGlobal').checked  = showWidgetGlobal;
     document.getElementById('settingsToggleWidgetLabs').checked    = showWidgetLabs;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
     document.getElementById('settingsToggleWidgetNotes').checked   = showWidgetNotes;
+
+    // Pro виджеты
+    document.getElementById('settingsToggleWidgetLabsPro').checked = showWidgetLabsPro;
+    document.getElementById('settingsToggleWidgetMoodleAvg').checked = showWidgetMoodleAvg;
+    document.getElementById('settingsToggleWidgetMoodleSubj').checked = showWidgetMoodleSubj;
 
     document.getElementById('settingsToggleSeparateFriendsTeachers').checked = separateFriendsTeachers;
     document.getElementById('settingsToggleFriendsSection').checked  = showFriendsSection;
@@ -111,6 +117,7 @@ function saveSettingsFromUI() {
     localStorage.setItem('showFriends',  showFriends);
     localStorage.setItem('showStatus',   showStatus);
 
+    // Базовые виджеты
     showWidgetMiniCal = document.getElementById('settingsToggleWidgetMiniCal').checked;
     showWidgetGlobal  = document.getElementById('settingsToggleWidgetGlobal').checked;
     showWidgetLabs    = document.getElementById('settingsToggleWidgetLabs').checked;
@@ -123,6 +130,15 @@ function saveSettingsFromUI() {
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
     localStorage.setItem('showWidgetNotes',   showWidgetNotes);
 
+    // Pro виджеты
+    showWidgetLabsPro    = document.getElementById('settingsToggleWidgetLabsPro').checked;
+    showWidgetMoodleAvg  = document.getElementById('settingsToggleWidgetMoodleAvg').checked;
+    showWidgetMoodleSubj = document.getElementById('settingsToggleWidgetMoodleSubj').checked;
+
+    localStorage.setItem('showWidgetLabsPro', showWidgetLabsPro);
+    localStorage.setItem('showWidgetMoodleAvg', showWidgetMoodleAvg);
+    localStorage.setItem('showWidgetMoodleSubj', showWidgetMoodleSubj);
+
     separateFriendsTeachers = document.getElementById('settingsToggleSeparateFriendsTeachers').checked;
     showFriendsSection  = document.getElementById('settingsToggleFriendsSection').checked;
     showTeachersSection = document.getElementById('settingsToggleTeachersSection').checked;
@@ -134,8 +150,6 @@ function saveSettingsFromUI() {
     applyWidgetVisibility();
     if (typeof applyFriendsTeachersVisibility === 'function') applyFriendsTeachersVisibility();
 
-    // Если переключились на объединённый режим — подтягиваем скрытую
-    // секцию в ту же зону, где лежит видимая, чтобы избежать «прыжка».
     if (typeof _syncFriendsTeachersZone === 'function') {
         try { _syncFriendsTeachersZone(); } catch (e) {}
     }
@@ -315,9 +329,19 @@ function applyWidgetVisibility() {
     const wl = document.getElementById('widgetLabsCard');
     const wp = document.getElementById('widgetPacingCard');
     const wn = document.getElementById('widgetNotesCard');
+    
     if (wm) wm.style.display = showWidgetMiniCal ? '' : 'none';
     if (wg) wg.style.display = showWidgetGlobal  ? '' : 'none';
-    if (wl) wl.style.display = showWidgetLabs    ? '' : 'none';
+    if (wl) wl.style.display = (!window.isProActive && showWidgetLabs) ? '' : 'none';
     if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
     if (wn) wn.style.display = showWidgetNotes   ? '' : 'none';
+
+    // Pro widgets
+    const wlp = document.getElementById('widgetLabsProCard');
+    const wma = document.getElementById('widgetMoodleAvgGradeCard');
+    const wms = document.getElementById('widgetMoodleSubjectGradesCard');
+
+    if (wlp) wlp.style.display = (window.isProActive && showWidgetLabsPro) ? '' : 'none';
+    if (wma) wma.style.display = (window.isProActive && showWidgetMoodleAvg) ? '' : 'none';
+    if (wms) wms.style.display = (window.isProActive && showWidgetMoodleSubj) ? '' : 'none';
 }

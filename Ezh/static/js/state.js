@@ -1,10 +1,8 @@
 // Глобальное состояние приложения.
 //
-// v3.14.1:
-//   • В объединённом режиме друзья и преподаватели всегда живут в одной
-//     зоне. При переключении вкладки скрытая секция подтягивается к
-//     видимой — иначе она остаётся в старой зоне и «прыгает» при
-//     смене таба.
+// v3.15.0:
+//   • Добавлена поддержка Pro-виджетов (Moodle).
+//   • Добавлена функция hideWidget для скрытия виджетов крестиком.
 
 let currentBaseDate = new Date();
 currentBaseDate.setDate(currentBaseDate.getDate() - (currentBaseDate.getDay() === 0 ? 6 : currentBaseDate.getDay() - 1));
@@ -14,6 +12,7 @@ let cachedLabs = {};
 let cachedSubjectSettings = {};
 let globalChart = null;
 let globalLabChart = null;
+let globalLabChartPro = null; // Новый график для Pro-лабораторных
 let currentSubjectsList = [];
 
 let validGroups = new Set();
@@ -72,17 +71,41 @@ function saveVisibleFriends() {
     localStorage.setItem('visibleFriends', JSON.stringify([...visibleFriends]));
 }
 
+// Базовые виджеты
 let showWidgetMiniCal = localStorage.getItem('showWidgetMiniCal') !== 'false';
 let showWidgetGlobal  = localStorage.getItem('showWidgetGlobal')  !== 'false';
 let showWidgetLabs    = localStorage.getItem('showWidgetLabs')    !== 'false';
 let showWidgetPacing  = localStorage.getItem('showWidgetPacing')  !== 'false';
 let showWidgetNotes   = localStorage.getItem('showWidgetNotes')   !== 'false';
 
+// Pro виджеты (появляются только при активном Pro)
+let showWidgetLabsPro    = localStorage.getItem('showWidgetLabsPro')    !== 'false';
+let showWidgetMoodleAvg  = localStorage.getItem('showWidgetMoodleAvg')  !== 'false';
+let showWidgetMoodleSubj = localStorage.getItem('showWidgetMoodleSubj') !== 'false';
+
 let showFriendsSection  = localStorage.getItem('showFriendsSection')  !== 'false';
 let showTeachersSection = localStorage.getItem('showTeachersSection') !== 'false';
 
 let separateFriendsTeachers = localStorage.getItem('separateFriendsTeachers') === 'true';
 let friendsTeachersTab = localStorage.getItem('friendsTeachersTab') || 'friends';
+
+// ============================================================
+//  ВИДИМОСТЬ ВИДЖЕТОВ И ПРО-РЕЖИМ
+// ============================================================
+
+// Функция для скрытия виджета по крестику
+function hideWidget(widgetId, toggleId) {
+    const widget = document.getElementById(widgetId);
+    if (widget) widget.style.display = 'none';
+    
+    const checkbox = document.getElementById(toggleId);
+    if (checkbox) {
+        checkbox.checked = false;
+        if (typeof saveSettingsFromUI === 'function') {
+            saveSettingsFromUI();
+        }
+    }
+}
 
 // ============================================================
 //  ОБЪЕДИНЁННЫЙ ВИДЖЕТ ДРУЗЬЯ/ПРЕПОДАВАТЕЛИ
@@ -855,6 +878,9 @@ function _updateHorizontalLayout() {
         if (typeof globalLabChart !== 'undefined' && globalLabChart) {
             try { globalLabChart.resize(); } catch (e) {}
         }
+        if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
+            try { globalLabChartPro.resize(); } catch (e) {}
+        }
 
         if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
     });
@@ -1052,8 +1078,8 @@ function _refreshAfterMove(card) {
         if (card.id === 'widgetGlobalCard' && typeof _renderGlobalStatsDetails === 'function') {
             try { _renderGlobalStatsDetails(); } catch (e) { console.error(e); }
         }
-        if (card.id === 'widgetLabsCard' && typeof _renderLabStatsDetails === 'function') {
-            try { _renderLabStatsDetails(); } catch (e) { console.error(e); }
+        if (card.id === 'widgetLabsProCard' && typeof renderProLabDetails === 'function') {
+            try { renderProLabDetails(); } catch (e) { console.error(e); }
         }
         if (typeof renderCharts === 'function') {
             try { renderCharts(); } catch (e) { console.error(e); }
@@ -1064,6 +1090,9 @@ function _refreshAfterMove(card) {
         }
         if (typeof globalLabChart !== 'undefined' && globalLabChart) {
             try { globalLabChart.resize(); } catch (e) {}
+        }
+        if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
+            try { globalLabChartPro.resize(); } catch (e) {}
         }
     }, 80);
 }

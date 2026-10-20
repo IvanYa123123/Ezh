@@ -35,6 +35,44 @@
     <link href="/static/css/teachers.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/animations.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* Стили для крестика закрытия виджета */
+        .widget-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1em;
+            line-height: 1;
+            padding: 0 4px;
+            margin-left: 4px;
+            cursor: pointer;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .widget-close-btn:hover {
+            color: var(--status-red);
+            transform: scale(1.1);
+        }
+        
+        /* Стили для Pro графиков в горизонтальном режиме */
+        #widgetMoodleSubjectGradesCard.is-horizontal .widget-canvas-wrap {
+            flex: 1 1 65% !important;
+            height: 220px !important;
+            min-width: 0 !important;
+        }
+        #widgetMoodleSubjectGradesCard.is-horizontal .widget-details-wrap {
+            flex: 0 0 35% !important;
+            max-height: 220px !important;
+        }
+        #widgetMoodleSubjectGradesCard .widget-canvas-wrap {
+            display: flex;
+            flex-direction: column;
+        }
+        #widgetMoodleSubjectGradesCard .widget-canvas-wrap canvas {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -58,15 +96,16 @@
 <div class="container-fluid p-3">
     <div class="controls-header bg-white p-2 rounded shadow-sm border mb-3">
         <div class="row align-items-center">
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <h5 class="mb-0 fw-bold d-flex align-items-center brand-title" style="color: var(--accent); letter-spacing: -0.5px;">
                     <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
                     <span>дневник</span>
+                    <span id="app-mode-badge" class="badge bg-secondary ms-2 rounded-pill" style="font-size: 0.45em; padding: 4px 8px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
                 </h5>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="input-group input-group-sm">
-                    <input type="text" id="groupSelect" class="form-control" placeholder="Начните вводить группу..." autocomplete="off">
+                    <input type="text" id="groupSelect" class="form-control" placeholder="Группа..." autocomplete="off">
                     <button class="btn btn-primary" onclick="fetchSemesterData()">Найти</button>
                 </div>
             </div>
@@ -85,11 +124,6 @@
                         title="Принудительно обновить расписание с сервера СевГУ">
                     <span id="refreshIcon">&#128260;</span>
                 </button>
-                
-                <!-- Кнопка Еж Про -->
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
-                        onclick="openMoodleModal()" title="Еж Про (Moodle)">🌐</button>
-
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
@@ -122,42 +156,24 @@
                 </div>
 
                 <div id="mainColumnSections">
-
                     <div id="friendsSection" data-draggable-section>
                         <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
-
-                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
-                                    id="switchTabToTeachersBtn"
-                                    onclick="switchFriendsTeachersTab('teachers')"
-                                    title="Переключиться на преподавателей"
-                                    style="display: none;">🎓</button>
-
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToTeachersBtn" onclick="switchFriendsTeachersTab('teachers')" title="Переключиться на преподавателей" style="display: none;">🎓</button>
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
                             <div class="vr mx-1"></div>
-
                             <div class="dropdown d-flex align-items-center">
-                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                    Кого показывать?
-                                </button>
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">Кого показывать?</button>
                                 <div id="friendsLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="friendTogglesDropdown" style="min-width: 250px;"></ul>
                             </div>
-
                             <div class="ms-auto d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
-                                        onclick="rotateFriendsRight()" title="Прокрутить: последний → в начало">⇅</button>
+                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" onclick="rotateFriendsRight()" title="Прокрутить: последний → в начало">⇅</button>
                             </div>
                         </div>
-
                         <div class="friends-list-wrapper">
-                            <div class="friends-nav-btn friends-nav-prev" id="friendsNavPrev">
-                                <button class="nav-arrow" onclick="navigatePrev()">&#10094;</button>
-                            </div>
-                            <div class="friends-nav-btn friends-nav-next" id="friendsNavNext">
-                                <button class="nav-arrow" onclick="navigateNext()">&#10095;</button>
-                            </div>
-
+                            <div class="friends-nav-btn friends-nav-prev" id="friendsNavPrev"><button class="nav-arrow" onclick="navigatePrev()">&#10094;</button></div>
+                            <div class="friends-nav-btn friends-nav-next" id="friendsNavNext"><button class="nav-arrow" onclick="navigateNext()">&#10095;</button></div>
                             <div id="friendsCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
                         </div>
                     </div>
@@ -165,34 +181,21 @@
                     <div id="teachersSection" data-draggable-section>
                         <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
-
-                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
-                                    id="switchTabToFriendsBtn"
-                                    onclick="switchFriendsTeachersTab('friends')"
-                                    title="Переключиться на друзей"
-                                    style="display: none;">👥</button>
-
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToFriendsBtn" onclick="switchFriendsTeachersTab('friends')" title="Переключиться на друзей" style="display: none;">👥</button>
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
                             <div class="vr mx-1"></div>
-
                             <div class="dropdown d-flex align-items-center">
-                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                                    Кого показывать?
-                                </button>
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">Кого показывать?</button>
                                 <div id="teachersLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="teacherTogglesDropdown" style="min-width: 250px;"></ul>
                             </div>
-
                             <div class="ms-auto d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn"
-                                        onclick="rotateTeachersRight()" title="Прокрутить: последний → в начало">⇅</button>
+                                <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" onclick="rotateTeachersRight()" title="Прокрутить: последний → в начало">⇅</button>
                             </div>
                         </div>
-
                         <div id="teachersCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
                     </div>
                 </div>
-
                 <div id="underCalendarWidgetsZone"></div>
             </div>
         </div>
@@ -200,6 +203,7 @@
         <div class="col-xl-3 col-lg-4 sidebar-column">
             <div id="rightWidgetsZone" class="sticky-top d-flex flex-column gap-3" style="top: 15px;">
 
+                <!-- БАЗОВЫЕ ВИДЖЕТЫ -->
                 <div class="widget-card" id="widgetMiniCalCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
@@ -208,6 +212,7 @@
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalPrevMonth()" title="Предыдущий месяц">‹</button>
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalToday()" title="К текущему месяцу">●</button>
                             <button class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="miniCalNextMonth()" title="Следующий месяц">›</button>
+                            <button class="widget-close-btn" onclick="hideWidget('widgetMiniCalCard', 'settingsToggleWidgetMiniCal')" title="Скрыть">✕</button>
                         </div>
                     </div>
                     <div class="mini-cal-body-row">
@@ -220,6 +225,9 @@
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
                         <h6 class="widget-title clickable" onclick="showStats()">Остаток пар</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetGlobalCard', 'settingsToggleWidgetGlobal')" title="Скрыть">✕</button>
+                        </div>
                     </div>
                     <div class="widget-body-row">
                         <div class="widget-canvas-wrap" id="globalStatsBody" onclick="showStats()" title="Подробнее">
@@ -229,10 +237,14 @@
                     </div>
                 </div>
 
+                <!-- БАЗОВЫЙ ВИДЖЕТ ЛАБОРАТОРНЫЕ -->
                 <div class="widget-card" id="widgetLabsCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
                         <h6 class="widget-title clickable" onclick="showLabs()">Лабораторные</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetLabsCard', 'settingsToggleWidgetLabs')" title="Скрыть">✕</button>
+                        </div>
                     </div>
                     <div class="widget-body-row">
                         <div class="widget-canvas-wrap" id="labStatsBody" onclick="showLabs()" title="Подробнее">
@@ -246,6 +258,9 @@
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
                         <h6 class="widget-title">Темп сдачи лаб</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetPacingCard', 'settingsToggleWidgetPacing')" title="Скрыть">✕</button>
+                        </div>
                     </div>
                     <div id="labPacingBody" style="max-height: 340px; overflow-y: auto;">
                         <div id="labPacingContent"></div>
@@ -256,16 +271,70 @@
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
                         <h6 class="widget-title">📝 Заметки</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard', 'settingsToggleWidgetNotes')" title="Скрыть">✕</button>
+                        </div>
                     </div>
-                    <textarea id="notesWidgetText" class="form-control form-control-sm"
-                              placeholder="Что-нибудь важное..."
-                              oninput="onNotesWidgetInput(this)"></textarea>
+                    <textarea id="notesWidgetText" class="form-control form-control-sm" placeholder="Что-нибудь важное..." oninput="onNotesWidgetInput(this)"></textarea>
                 </div>
+
+                <!-- ПРО ВИДЖЕТЫ -->
+                <div class="widget-card pro-widget" id="widgetLabsProCard" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title clickable" onclick="showLabs()">🧪 Лабораторные (Pro)</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetLabsProCard', 'settingsToggleWidgetLabsPro')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="widget-body-row">
+                        <div class="widget-canvas-wrap" id="labStatsBodyPro" onclick="showLabs()" title="Подробнее">
+                            <canvas id="labStatsChartPro"></canvas>
+                        </div>
+                        <div class="widget-details-wrap" id="labStatsDetailsPro"></div>
+                    </div>
+                </div>
+
+                <div class="widget-card pro-widget" id="widgetMoodleAvgGradeCard" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">🏆 Средний балл (Pro)</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetMoodleAvgGradeCard', 'settingsToggleWidgetMoodleAvg')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="widget-body-row">
+                        <div class="widget-canvas-wrap" style="height: 160px;">
+                            <div class="display-4 fw-bold text-primary" id="proAvgGradeText">—</div>
+                            <div class="text-muted small">из 100</div>
+                        </div>
+                        <div class="widget-details-wrap" id="proAvgGradeDetails"></div>
+                    </div>
+                </div>
+
+                <div class="widget-card pro-widget" id="widgetMoodleSubjectGradesCard" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📊 Баллы по предмету (Pro)</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetMoodleSubjectGradesCard', 'settingsToggleWidgetMoodleSubj')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="widget-body-row">
+                        <div class="widget-canvas-wrap" style="height: 200px; padding: 8px;">
+                            <select id="proSubjectSelect" class="form-select form-select-sm mb-2" onchange="renderProSubjectChart()"></select>
+                            <canvas id="proSubjectChart"></canvas>
+                        </div>
+                        <div class="widget-details-wrap" id="proSubjectGradeDetails"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
+<!-- Модалки -->
 <div class="modal fade" id="addFriendModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content border-0 shadow">
@@ -516,6 +585,13 @@
       <div class="modal-body p-0">
 
         <div class="settings-group">
+          <div class="settings-group-title">🌐 Еж Про (Moodle)</div>
+          <button class="btn btn-outline-primary w-100 fw-bold" onclick="openMoodleModal()">
+             Войти в Moodle / Настройки
+          </button>
+        </div>
+
+        <div class="settings-group">
           <div class="settings-group-title">📋 Отображение пар</div>
 
           <label class="settings-row" for="settingsToggleTeacher">
@@ -561,17 +637,30 @@
             <span class="settings-row-label">Остаток пар</span>
             <input class="form-check-input" type="checkbox" id="settingsToggleWidgetGlobal" onchange="saveSettingsFromUI()">
           </label>
-
-          <label class="settings-row" for="settingsToggleWidgetLabs">
-            <span class="settings-row-label">Лабораторные</span>
+          
+          <label class="settings-row" id="label-settingsToggleWidgetLabs" for="settingsToggleWidgetLabs">
+            <span class="settings-row-label">Лабораторные (База)</span>
             <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
+          </label>
+
+          <!-- Pro виджеты -->
+          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetLabsPro" style="display: none;">
+            <span class="settings-row-label text-primary fw-bold">🧪 Лабораторные (Pro)</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabsPro" onchange="saveSettingsFromUI()">
+          </label>
+          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetMoodleAvg" style="display: none;">
+            <span class="settings-row-label text-primary fw-bold">🏆 Средний балл (Pro)</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleAvg" onchange="saveSettingsFromUI()">
+          </label>
+          <label class="settings-row pro-widget-toggle" for="settingsToggleWidgetMoodleSubj" style="display: none;">
+            <span class="settings-row-label text-primary fw-bold">📊 Баллы по предмету (Pro)</span>
+            <input class="form-check-input" type="checkbox" id="settingsToggleWidgetMoodleSubj" onchange="saveSettingsFromUI()">
           </label>
 
           <label class="settings-row" for="settingsToggleWidgetPacing">
             <span class="settings-row-label">Темп сдачи лаб</span>
             <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
           </label>
-
           <label class="settings-row" for="settingsToggleWidgetNotes">
             <span class="settings-row-label">Заметки</span>
             <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes" onchange="saveSettingsFromUI()">
@@ -799,7 +888,7 @@
           </div>
           <div class="mb-3">
             <label class="form-label small">Логин</label>
-            <input type="text" id="moodleUser" class="form-control" placeholder="u24-00-000000">
+            <input type="text" id="moodleUser" class="form-control" placeholder="Логин">
           </div>
           <div class="mb-3">
             <label class="form-label small">Пароль</label>
@@ -811,15 +900,49 @@
 
         <!-- Статистика -->
         <div id="moodleStatsArea" style="display:none;">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0 fw-bold">Статистика по заданиям</h6>
-            <button class="btn btn-sm btn-outline-secondary" onclick="loadMoodleStats(true)">🔄 Обновить</button>
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h6 class="mb-0 fw-bold">Статистика по заданиям</h6>
+                <div class="small text-muted" id="moodleDataAge" style="font-size: 0.8em;">нет данных</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-info fw-bold" onclick="openMoodleSetupModal()">⚙️ Настроить семестры</button>
+                <button class="btn btn-sm btn-outline-secondary" id="moodleUpdateBtn" onclick="loadMoodleStats(true)">🔄 Обновить</button>
+            </div>
           </div>
           <div id="moodleStatsContent"></div>
           <div class="text-end mt-3 border-top pt-3">
             <button class="btn btn-sm btn-outline-danger" onclick="doMoodleLogout()">Выйти из аккаунта</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка Настройки Семестров (Еж Про) -->
+<div class="modal fade" id="moodleSetupModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title fw-bold">⚙️ Настройка семестров</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small text-center mb-3">Перетаскивайте курсы между колонками, чтобы указать, какие из них относятся к текущему семестру.</p>
+        <div class="row">
+            <div class="col-6">
+                <h6 class="text-center fw-bold text-muted mb-2">Прошлые семестры / Архив</h6>
+                <ul id="pastSemesterList" class="list-group" style="min-height: 200px; max-height: 400px; overflow-y: auto;" ondragover="allowDrop(event)" ondrop="handleSemesterDrop(event, 'past')"></ul>
+            </div>
+            <div class="col-6">
+                <h6 class="text-center fw-bold text-success mb-2">Текущий семестр</h6>
+                <ul id="currentSemesterList" class="list-group" style="min-height: 200px; max-height: 400px; overflow-y: auto; background: var(--accent-soft); border: 2px dashed var(--accent-border);" ondragover="allowDrop(event)" ondrop="handleSemesterDrop(event, 'current')"></ul>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer py-1 border-0">
+        <button type="button" class="btn btn-primary btn-sm" onclick="saveMoodleSetup()">Сохранить настройки</button>
       </div>
     </div>
   </div>
@@ -835,7 +958,6 @@
 <script src="/static/js/weeks.js?v={{ app_version }}"></script>
 <script src="/static/js/mini-calendar.js?v={{ app_version }}"></script>
 
-<!-- Календарь: карточки → день → оркестратор -->
 <script src="/static/js/calendar-cards.js?v={{ app_version }}"></script>
 <script src="/static/js/calendar-day.js?v={{ app_version }}"></script>
 <script src="/static/js/calendar.js?v={{ app_version }}"></script>
@@ -846,7 +968,6 @@
 <script src="/static/js/custom-schedule.js?v={{ app_version }}"></script>
 <script src="/static/js/friends.js?v={{ app_version }}"></script>
 
-<!-- Виджеты: поштучные лабы → сводки → графики -->
 <script src="/static/js/lab-items.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets-stats.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets-labs.js?v={{ app_version }}"></script>
@@ -861,7 +982,7 @@
 <script src="/static/js/hotkeys.js?v={{ app_version }}"></script>
 <script src="/static/js/teachers.js?v={{ app_version }}"></script>
 
-<!-- Еж Про (Moodle) -->
+<!-- Еж Про -->
 <script src="/static/js/moodle-pro.js?v={{ app_version }}"></script>
 </body>
 </html>
