@@ -34,6 +34,7 @@
     <link href="/static/css/hedgehog.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/teachers.css?v={{ app_version }}" rel="stylesheet">
     <link href="/static/css/animations.css?v={{ app_version }}" rel="stylesheet">
+    <link href="/static/css/sleep-mode.css?v={{ app_version }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -663,7 +664,7 @@
               </div>
             </div>
 
-            <div class="settings-group mb-0">
+            <div class="settings-group">
               <div class="settings-group-title">🔔 Уведомления</div>
               <label class="settings-row" for="settingsNotifEnabled">
                 <span class="settings-row-label">Включить уведомления</span>
@@ -682,6 +683,17 @@
                 </div>
               </div>
               <div id="settingsNotifHint" class="settings-hint-box" style="display: none;"></div>
+            </div>
+
+            <!-- ============================================================
+                 СПЯЩИЙ РЕЖИМ
+                 ============================================================ -->
+            <div class="settings-group mb-0">
+              <div class="settings-group-title">🦔 Спящий режим</div>
+              <label class="settings-row" for="settingsToggleSleepMode">
+                <span class="settings-row-label">Спящий режим</span>
+                <input class="form-check-input" type="checkbox" id="settingsToggleSleepMode" onchange="saveSettingsFromUI()">
+              </label>
             </div>
           </div>
 
@@ -1067,6 +1079,9 @@
 <script src="/static/js/notifications.js?v={{ app_version }}"></script>
 <script src="/static/js/hotkeys.js?v={{ app_version }}"></script>
 <script src="/static/js/teachers.js?v={{ app_version }}"></script>
+
+<!-- Спящий режим -->
+<script src="/static/js/sleep-mode.js?v={{ app_version }}"></script>
 
 <!-- Еж Про -->
 <script src="/static/js/moodle-pro.js?v={{ app_version }}"></script>

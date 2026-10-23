@@ -115,6 +115,7 @@ function openSettingsModal() {
     document.getElementById('settingsToggleLocation').checked = showLocation;
     document.getElementById('settingsToggleFriends').checked  = showFriends;
     document.getElementById('settingsToggleStatus').checked   = showStatus;
+    document.getElementById('settingsToggleSleepMode').checked = showSleepMode;
 
     // Базовые виджеты
     document.getElementById('settingsToggleWidgetMiniCal').checked = showWidgetMiniCal;
@@ -218,6 +219,25 @@ function saveSettingsFromUI() {
     localStorage.setItem('showLocation', showLocation);
     localStorage.setItem('showFriends',  showFriends);
     localStorage.setItem('showStatus',   showStatus);
+
+    // ============================================================
+    //  СПЯЩИЙ РЕЖИМ
+    // ------------------------------------------------------------
+    //  Хранится в localStorage как 'showSleepMode' ('true'/'false').
+    //  Включён по умолчанию — если ключа нет, режим работает.
+    // ============================================================
+    showSleepMode = document.getElementById('settingsToggleSleepMode').checked;
+    localStorage.setItem('showSleepMode', showSleepMode ? 'true' : 'false');
+
+    if (showSleepMode) {
+        if (typeof window.startSleepMode === 'function') {
+            try { window.startSleepMode(); } catch (e) { console.error('[sleep] start failed', e); }
+        }
+    } else {
+        if (typeof window.stopSleepMode === 'function') {
+            try { window.stopSleepMode(); } catch (e) { console.error('[sleep] stop failed', e); }
+        }
+    }
 
     // Базовые виджеты
     showWidgetMiniCal = document.getElementById('settingsToggleWidgetMiniCal').checked;

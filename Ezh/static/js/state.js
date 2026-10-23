@@ -63,6 +63,15 @@ let taskDatesSet = new Set();
 
 let loaderInterval = null;
 
+// ============================================================
+//  СПЯЩИЙ РЕЖИМ
+// ------------------------------------------------------------
+//  Включён по умолчанию. Ежики выходят через 20 с бездействия.
+//  Сохранённое значение 'false' выключает режим полностью.
+// ============================================================
+
+let showSleepMode = localStorage.getItem('showSleepMode') !== 'false';
+
 function saveVisibleFriends() {
     localStorage.setItem('visibleFriends', JSON.stringify([...visibleFriends]));
 }
@@ -1026,8 +1035,7 @@ function _refreshAfterMove(card) {
         if (card.id === 'widgetLabsProCard' && typeof renderProLabDetails === 'function') {
             try { renderProLabDetails(); } catch (e) { console.error(e); }
         }
-        
-        // ДОБАВЛЕНО: Перерисовка виджета предложений при смене режима
+
         if (card.id === 'widgetSuggestionsCard' && typeof renderSuggestionsHtml === 'function' && _suggestionsCache) {
             try { renderSuggestionsHtml(_suggestionsCache); } catch (e) { console.error(e); }
         }
