@@ -282,9 +282,24 @@ function toggleColor(id, currentStatus) {
 
 function allowDrop(e) { e.preventDefault(); }
 
+// Читает задачу из dataTransfer. Возвращает null для «чужого» перетаскивания.
+// Раньше здесь стоял безусловный JSON.parse: если на колонку дня попадал
+// друг (friends.js кладёт в dataTransfer строку "friend:ID"), парсер бросал
+// SyntaxError и вся страница получала uncaught-ошибку.
+function _readDraggedTask(e) {
+    let raw = '';
+    try { raw = e.dataTransfer.getData('text/plain') || ''; } catch (err) { return null; }
+    if (!raw || raw.indexOf('friend:') === 0 || raw.indexOf('teacher:') === 0) return null;
+    let data;
+    try { data = JSON.parse(raw); } catch (err) { return null; }
+    if (!data || typeof data !== 'object' || !data.id || !data.date) return null;
+    return data;
+}
+
 function drop(e, newDate) {
     e.preventDefault();
-    let taskData = JSON.parse(e.dataTransfer.getData("text/plain"));
+    const taskData = _readDraggedTask(e);
+    if (!taskData) return;
     if (taskData.date === newDate) return;
     let oldDate = taskData.date;
 

@@ -269,3 +269,75 @@ window.addEventListener('scroll', () => {
         }, 150);
     }
 }, { passive: true });
+
+
+// ============================================================
+//  RIPPLE ПО КНОПКАМ
+// ------------------------------------------------------------
+//  Один делегированный обработчик на весь документ: новые кнопки,
+//  появившиеся после перерисовки календаря, работают сами.
+// ============================================================
+
+let _rippleInited = false;
+
+function initRipple() {
+    if (_rippleInited) return;
+    _rippleInited = true;
+
+    const SELECTOR = '.btn, .nav-arrow, .widget-icon-btn, .theme-btn, .fv-arrow, .fv-switch-btn, .day-expand-btn, .widget-close-btn';
+
+    document.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const el = e.target && e.target.closest ? e.target.closest(SELECTOR) : null;
+        if (!el || el.disabled) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const rect = el.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        if (!size) return;
+
+        const span = document.createElement('span');
+        span.className = 'btn-ripple';
+        span.style.width = size + 'px';
+        span.style.height = size + 'px';
+        span.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        span.style.top = (e.clientY - rect.top - size / 2) + 'px';
+
+        el.appendChild(span);
+        setTimeout(() => { if (span.parentElement) span.parentElement.removeChild(span); }, 620);
+    }, { passive: true });
+}
+
+
+// ============================================================
+//  ПРАЗДНИК (например, последняя лаба по предмету сдана)
+// ============================================================
+
+function celebrate(count = 14) {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const layer = document.createElement('div');
+    layer.className = 'celebrate-layer';
+    document.body.appendChild(layer);
+
+    const emojis = ['🎉', '✨', '🦔', '⭐', '📚', '🎊'];
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+
+    for (let i = 0; i < count; i++) {
+        const s = document.createElement('span');
+        s.className = 'celebrate-spark';
+        s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        s.style.left = cx + 'px';
+        s.style.top = cy + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 90 + Math.random() * 220;
+        s.style.setProperty('--dx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        s.style.setProperty('--dy', (Math.sin(angle) * dist - 60).toFixed(0) + 'px');
+        s.style.setProperty('--rot', (Math.random() * 360 - 180).toFixed(0) + 'deg');
+        s.style.animationDelay = (Math.random() * 120).toFixed(0) + 'ms';
+        layer.appendChild(s);
+    }
+
+    setTimeout(() => layer.remove(), 1600);
+}

@@ -793,16 +793,16 @@ body.widget-dragging .mini-cal-events {
 }
 
 /* ============================================================
-   13. ВИДЖЕТ «ЗАМЕТКИ»
+   13. ВИДЖЕТ «ЗАМЕТКИ» (1, 2, 3)
    ============================================================ */
 
-#notesWidgetText {
+[id^="notesWidgetText"] {
     resize: vertical;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
-    min-height: 90px;
+    min-height: 220px;
     max-height: 800px;
     font-size: 0.85em;
     line-height: 1.35;
@@ -1711,5 +1711,60 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 }
 .widget-card.is-horizontal .suggestions-list::-webkit-scrollbar-thumb {
     background: var(--border-color);
+    border-radius: 3px;
+}
+/* ============================================================
+   29. ГРУППА В ШАПКЕ + ИНЛАЙН-ПОИСК
+   ============================================================ */
+
+.group-display {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--bg-surface-alt);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
+    line-height: 1.4;
+}
+.group-display-empty {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-style: italic;
+}
+
+#globalSearchResults .search-section-title {
+    font-size: 0.72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    padding: 6px 14px 2px;
+    margin: 0;
+}
+
+#globalSearchResults .autocomplete-item {
+    padding: 6px 14px;
+    font-size: 0.85em;
+    white-space: normal;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+#globalSearchResults .autocomplete-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+}
+#globalSearchResults .autocomplete-item mark {
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    padding: 0 2px;
     border-radius: 3px;
 }

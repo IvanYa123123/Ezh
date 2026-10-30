@@ -168,6 +168,7 @@ _GZIP_TYPES = ('application/json', 'text/html', 'text/plain', 'text/css',
 @app.after_request
 def _gzip_response(response):
     if (response.status_code < 200 or response.status_code >= 300
+            or request.method == 'HEAD'
             or response.direct_passthrough
             or response.headers.get('Content-Encoding')):
         return response
@@ -229,24 +230,31 @@ def _security_headers(response):
 
 # ============================================================
 #  ИНИЦИАЛИЗАЦИЯ БД + ФОНОВАЯ МИГРАЦИЯ
+# ------------------------------------------------------------
+#  Единственная точка инициализации — ensure_db_initialized()
+#  в blueprints/db.py. Здесь только вызов + фоновый поток миграции.
+#  Раньше в app.py был свой _db_init_lock/_db_ready — это давало
+#  две параллельные инициализации (одна в app.py, одна в db.py),
+#  и правки приходилось вносить в двух местах. Убрано.
 # ============================================================
 
-from blueprints.db import init_db, close_db, _migrate_ps_lz_swap
-
-_db_init_lock = threading.Lock()
-_db_ready = False
-_migration_started = False
+from blueprints.db import ensure_db_initialized, close_db, _migrate_ps_lz_swap
 
 # Закрываем SQLite-соединение в конце каждого запроса. Без этого
 # соединения жили до сборки мусора — латентная утечка fd и WAL-локов.
 app.teardown_appcontext(close_db)
 
 
+_migration_started = False
+_migration_lock = threading.Lock()
+
+
 def _start_background_migration():
     global _migration_started
-    if _migration_started:
-        return
-    _migration_started = True
+    with _migration_lock:
+        if _migration_started:
+            return
+        _migration_started = True
 
     def _run():
         try:
@@ -260,13 +268,7 @@ def _start_background_migration():
 
 @app.before_request
 def _ensure_db_initialized():
-    global _db_ready
-    if _db_ready:
-        return
-    with _db_init_lock:
-        if not _db_ready:
-            init_db()
-            _db_ready = True
+    ensure_db_initialized()
     _start_background_migration()
 
 

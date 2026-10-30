@@ -1,4 +1,15 @@
 // Навигация по календарю: заметки, события, стрелки.
+//
+// v3.7.0:
+//   • navigateNoteFromHere / navigateEventFromHere — обёртки для кнопок
+//     в шапке и горячих клавиш. Раньше функции навигации по заметкам
+//     и событиям существовали, но к ним не было ни одной кнопки.
+//   • Если искать нечего — показываем понятный тост вместо тишины.
+
+function _navAnchorDate() {
+    if (typeof expandedDayDateStr !== 'undefined' && expandedDayDateStr) return expandedDayDateStr;
+    return getLocalDateStr(currentBaseDate);
+}
 
 function computeNextNoteDate(currentDateStr) {
     let sorted = [...taskDatesSet].sort();
@@ -32,11 +43,18 @@ function findPrevEventDate(fromDateStr) {
     return null;
 }
 
+function _notifyNothingFound(kind, direction) {
+    if (typeof showUpdateNotification !== 'function') return;
+    const where = direction > 0 ? 'дальше' : 'раньше';
+    showUpdateNotification(`Больше ${kind} ${where} нет`);
+}
+
 function navigateNote(fromDateStr, direction) {
     let target = direction > 0
         ? computeNextNoteDate(fromDateStr)
         : computePrevNoteDate(fromDateStr);
     if (target) jumpToDate(target);
+    else _notifyNothingFound('заметок', direction);
 }
 
 function navigateEvent(fromDateStr, direction) {
@@ -44,7 +62,12 @@ function navigateEvent(fromDateStr, direction) {
         ? findNextEventDate(fromDateStr)
         : findPrevEventDate(fromDateStr);
     if (target) jumpToDate(target);
+    else _notifyNothingFound('событий', direction);
 }
+
+// Кнопки в шапке: отсчёт от текущего дня/развёрнутого дня.
+function navigateNoteFromHere(direction) { navigateNote(_navAnchorDate(), direction); }
+function navigateEventFromHere(direction) { navigateEvent(_navAnchorDate(), direction); }
 
 // ============================================================
 //  СТРЕЛКИ ← →

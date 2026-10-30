@@ -52,7 +52,7 @@ function _renderEventCard(ev) {
              style="border-left: 3px solid var(--event-color);">
             <div class="schedule-item-top">
                 <span class="schedule-item-time">
-                    <strong class="text-primary">${ev.time_range}</strong>
+                    <strong class="text-primary">${escapeHtml(ev.time_range || '')}</strong>
                     <span class="schedule-item-edit"
                           onclick="openCustomScheduleModal('${ev.date}', ${ev.custom_id})"
                           title="Редактировать">✏️</span>
@@ -137,7 +137,7 @@ function _renderPairCard(item) {
         <div class="schedule-item shadow-sm" style="${customStyle}">
             <div class="schedule-item-top">
                 <span class="schedule-item-time">
-                    <strong class="text-primary">${item.time_range}</strong>
+                    <strong class="text-primary">${escapeHtml(item.time_range || '')}</strong>
                     ${editIconHtml}
                 </span>
                 <span class="add-task-btn" onclick="createTaskFromSchedule('${item.date}', '${safeTaskSubject}')">+ Заметка</span>

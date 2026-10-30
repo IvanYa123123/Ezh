@@ -155,7 +155,8 @@ function renderSuggestionsHtml(suggestions) {
         return;
     }
 
-    const isHorizontal = document.getElementById('widgetSuggestionsCard').classList.contains('is-horizontal');
+    const suggestionsCard = document.getElementById('widgetSuggestionsCard');
+    const isHorizontal = !!(suggestionsCard && suggestionsCard.classList.contains('is-horizontal'));
 
     if (isHorizontal) {
         if (navRow) navRow.style.display = 'none';

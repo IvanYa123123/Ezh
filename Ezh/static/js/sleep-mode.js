@@ -2,6 +2,30 @@
 // Через 30 секунд бездействия ёжики выползают со всех сторон экрана.
 // Блуждают по всему документу, периодически прыгают по календарю,
 // грызут виджеты, катаются по диаграммам, висят на виджетах или шалят.
+//
+// v3.18.0 — накопленные правки:
+//   • doStealCursor: курсор привязан к РТУ ежа с учётом flip. При
+//     развороте ёжика курсор перескакивает на другую сторону
+//     вместе с ртом.
+//   • doHangOnWidget: держимся за рот (73, 60 в viewBox), а не за
+//     нос (84.5, 54.5). transform-origin в CSS тоже поправлен.
+//   • doSlideDiagram: радиус качения 0.25 от меньшей стороны
+//     canvas (было 0.35) — ёжик ближе к центру графика.
+//   • doGnawWidget: не отбираем виджеты у других ёжиков.
+//   • doRunOnChart: rotation сохраняется после ухода ежа и
+//     восстанавливается только через stopSleepMode (при
+//     активности пользователя).
+//   • 100 стихов для doMischiefNotes — в hedgehog-poems.js,
+//     fallback на 3 коротких, если файла нет.
+//   • Курсор — классическая стрелка, а не треугольник.
+//   • Заметок три (notesWidgetText1/2/3). doMischiefNotes ищет
+//     первое свободное.
+//   • doMischiefGroup пишет в #groupDisplay (в шапке), а не в
+//     input. Восстановление — через restoreGlobalState.
+//   • onVisibilityChange: при скрытии вкладки освобождаем
+//     heldWidget и чистим busyWidgets/busyElements, чтобы при
+//     возврате ежи не отбирали виджеты у самих себя.
+//   • Предметы на спине сдвинуты ближе к иголкам (35, 38).
 
 (function () {
     'use strict';
@@ -54,7 +78,7 @@
                   <ellipse cx="66" cy="58" rx="3.2" ry="1.7" fill="${p.blush}" opacity=".65"/>
                   <path d="M 70.5,58.5 Q 73.5,61 76,58" fill="none" stroke="${p.stroke}" stroke-width="1.8"/>
                   <ellipse cx="84.5" cy="54.5" rx="3.4" ry="2.6" transform="rotate(-10 84.5 54.5)" fill="${p.dark}" stroke="${p.stroke}" stroke-width="1.5"/>
-                  ${prop ? `<g transform="translate(42,26)"><g class="prop">${prop}</g></g>` : ''}
+                  ${prop ? `<g transform="translate(35,38)"><g class="prop">${prop}</g></g>` : ''}
                 </g>
             </g>
         </svg>`;
@@ -69,6 +93,16 @@
         { palette: 'mono',    prop: 'leaf2',     size: 78,  speed: 1.2 }
     ];
 
+    // Координаты рта в SVG-viewBox 100×82 (улыбка под носом).
+    // Нос (для справки) — (84.5, 54.5).
+    const MOUTH_X_RATIO = 73 / 100;
+    const MOUTH_Y_RATIO = 60 / 82;
+
+    // Классическая стрелка-курсор с чёрным контуром.
+    const CURSOR_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.4));">
+        <path d="M5.5 3.5L19 14L12.5 15.5L9 22L5.5 3.5Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>`;
+
     let stage = null;
     let sparksContainer = null;
     let hhs = [];
@@ -76,10 +110,14 @@
     let idleTimer = null;
     let collisionTimer = null;
     let fakeCursorEl = null;
-    
+
     const busyWidgets = new Map();
     const busyElements = new Set();
-    
+
+    // Повёрнутые диаграммы: chartInst → исходный rotation.
+    // Восстанавливаются только в stopSleepMode (активность пользователя).
+    const rotatedCharts = new Map();
+
     let realMouseX = window.innerWidth / 2;
     let realMouseY = window.innerHeight / 2;
     document.addEventListener('mousemove', e => {
@@ -141,7 +179,7 @@
 
         const body = document.createElement('div');
         body.className = 'hh-body';
-        
+
         body.innerHTML = `
             <div class="hh-normal-wrap">${hedgehogNormalSVG(PALETTES[cfg.palette], PROPS[cfg.prop])}</div>
         `;
@@ -176,6 +214,17 @@
         h.el.classList.toggle('resting', !!resting);
     }
 
+    // Координаты рта ёжика в пикселях документа с учётом flip.
+    function _mouthPos(h) {
+        const flipped = h.inner.classList.contains('flip');
+        const mx = flipped ? (1 - MOUTH_X_RATIO) : MOUTH_X_RATIO;
+        const my = MOUTH_Y_RATIO;
+        return {
+            x: h.x + mx * h.cfg.size,
+            y: h.y + my * h.cfg.size * 0.82
+        };
+    }
+
     // ============================================================
     //  КОЛЛИЗИИ
     // ============================================================
@@ -188,21 +237,21 @@
                 for (let j = i + 1; j < hhs.length; j++) {
                     const h1 = hhs[i], h2 = hhs[j];
                     if (h1.cancelled || h2.cancelled) continue;
-                    
+
                     const dx = h2.x - h1.x;
                     const dy = h2.y - h1.y;
                     const dist = Math.hypot(dx, dy);
-                    const minDist = (h1.cfg.size + h2.cfg.size) * 0.1; 
-                    
+                    const minDist = (h1.cfg.size + h2.cfg.size) * 0.1;
+
                     if (dist > 0.1 && dist < minDist) {
                         const push = (minDist - dist) / 2;
                         const angle = Math.atan2(dy, dx);
-                        
+
                         h1.x -= Math.cos(angle) * push;
                         h1.y -= Math.sin(angle) * push;
                         h2.x += Math.cos(angle) * push;
                         h2.y += Math.sin(angle) * push;
-                        
+
                         h1.el.style.transform = `translate3d(${h1.x}px, ${h1.y}px, 0)`;
                         h2.el.style.transform = `translate3d(${h2.x}px, ${h2.y}px, 0)`;
                     }
@@ -214,7 +263,7 @@
     function getSafeTarget(h, tx, ty) {
         let safeX = tx;
         let safeY = ty;
-        const minDist = h.cfg.size * 0.3; 
+        const minDist = h.cfg.size * 0.3;
 
         for (const other of hhs) {
             if (other === h || other.cancelled) continue;
@@ -229,7 +278,7 @@
         const margin = 30;
         safeX = Math.max(margin, Math.min(document.body.scrollWidth - h.cfg.size - margin, safeX));
         safeY = Math.max(margin, Math.min(document.body.scrollHeight - h.cfg.size - margin, safeY));
-        
+
         return { x: safeX, y: safeY };
     }
 
@@ -240,7 +289,9 @@
     const GNAWABLE_WIDGETS = [
         'widgetGlobalCard',
         'widgetLabsCard',
-        'widgetNotesCard',
+        'widgetNotesCard1',
+        'widgetNotesCard2',
+        'widgetNotesCard3',
         'widgetPacingCard'
     ];
 
@@ -261,6 +312,8 @@
         const canvases = Array.from(document.querySelectorAll('.widget-canvas-wrap canvas'));
         for (const c of canvases) {
             if (c.offsetParent === null || busyWidgets.has(c.id)) continue;
+            const parentCard = c.closest('.widget-card');
+            if (parentCard && busyWidgets.has(parentCard.id)) continue;
             const r = c.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) return c;
         }
@@ -302,7 +355,7 @@
     }
 
     // ============================================================
-    //  ИСКРЫ И СТИКЕРЫ
+    //  ИСКРЫ
     // ============================================================
 
     function spawnSparkNear(w) {
@@ -317,17 +370,6 @@
         s.style.setProperty('--dy', (-20 - Math.random() * 15) + 'px');
         sparksContainer.appendChild(s);
         setTimeout(() => { if (s.parentElement) s.parentElement.removeChild(s); }, 700);
-    }
-
-    function showAngrySticker(h) {
-        if (!sparksContainer) return;
-        const s = document.createElement('div');
-        s.className = 'angry-sticker';
-        s.textContent = '💢';
-        s.style.left = (h.x + h.cfg.size / 2 - 14) + 'px';
-        s.style.top = (h.y - 20) + 'px';
-        sparksContainer.appendChild(s);
-        setTimeout(() => { if (s.parentElement) s.parentElement.removeChild(s); }, 1500);
     }
 
     // ============================================================
@@ -364,15 +406,24 @@
 
     function restoreGlobalState() {
         if (originalValues.groupSelect !== null) {
-            const input = document.getElementById('groupSelect');
-            if (input) input.value = originalValues.groupSelect;
+            const displayEl = document.getElementById('groupDisplay');
+            if (displayEl) {
+                displayEl.textContent = originalValues.groupSelect;
+                if (!originalValues.groupSelect || originalValues.groupSelect === 'Группа не выбрана') {
+                    displayEl.classList.add('group-display-empty');
+                } else {
+                    displayEl.classList.remove('group-display-empty');
+                }
+            }
             originalValues.groupSelect = null;
         }
         if (originalValues.notesWidgetText !== null) {
-            const ta = document.getElementById('notesWidgetText');
-            if (ta) {
-                ta.value = originalValues.notesWidgetText;
-                if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ta);
+            for (let i = 1; i <= 3; i++) {
+                const ta = document.getElementById(`notesWidgetText${i}`);
+                if (ta && ta.value !== originalValues.notesWidgetText[i - 1]) {
+                    ta.value = originalValues.notesWidgetText[i - 1];
+                    if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ta);
+                }
             }
             originalValues.notesWidgetText = null;
         }
@@ -394,6 +445,16 @@
         }
     }
 
+    function restoreRotatedCharts() {
+        rotatedCharts.forEach((originalRotation, chart) => {
+            try {
+                chart.options.rotation = originalRotation;
+                chart.update('none');
+            } catch (e) { /* график мог быть уничтожен — игнорируем */ }
+        });
+        rotatedCharts.clear();
+    }
+
     // ============================================================
     //  ДЕЙСТВИЯ
     // ============================================================
@@ -411,7 +472,7 @@
         } else if (edge === 'top') {
             tx = margin + Math.random() * (window.innerWidth - margin * 2);
             ty = window.scrollY + margin + Math.random() * 100;
-        } else { 
+        } else {
             tx = margin + Math.random() * (window.innerWidth - margin * 2);
             ty = window.scrollY + window.innerHeight - h.cfg.size - margin - Math.random() * 100;
         }
@@ -470,45 +531,10 @@
     }
 
     async function doGnawWidget(h) {
-        const widget = findGnawableWidget(true); 
+        const widget = findGnawableWidget(false);
         if (!widget) return;
 
-        const isBusy = busyWidgets.has(widget.id);
-
-        if (isBusy) {
-            const otherHedgehog = busyWidgets.get(widget.id);
-            const r = widget.getBoundingClientRect();
-            const targetX = r.left + window.scrollX - h.cfg.size + 15;
-            const targetY = r.top + window.scrollY + r.height / 2 - h.cfg.size / 2 + 10;
-
-            const dist = Math.hypot(targetX - h.x, targetY - h.y);
-            await moveTo(h, targetX, targetY, calcDuration(dist));
-            if (h.cancelled) return;
-
-            faceDir(h, 1);
-            setResting(h, true);
-            
-            if (otherHedgehog && !otherHedgehog.cancelled) {
-                otherHedgehog.cancelled = true;
-                showAngrySticker(otherHedgehog);
-            }
-
-            grabWidget(widget);
-            h.heldWidget = widget;
-            h.el.classList.add('gnawing');
-
-            await gnawWidget(widget, 2000, h);
-            if (h.cancelled) return;
-
-            h.el.classList.remove('gnawing');
-            releaseWidget(h.heldWidget);
-            h.heldWidget = null;
-            setResting(h, true);
-            return;
-        }
-
         busyWidgets.set(widget.id, h);
-        h.heldWidget = null;
 
         try {
             const r = widget.getBoundingClientRect();
@@ -545,32 +571,39 @@
         const widget = findGnawableWidget();
         if (!widget) return;
 
+        if (busyWidgets.has(widget.id)) return;
         busyWidgets.set(widget.id, h);
+
         try {
             const r = widget.getBoundingClientRect();
             const isLeft = Math.random() < 0.5;
-            let targetX, targetY;
-            const noseX_ratio = 84.5 / 100;
-            const noseY_ratio = 54.5 / 82;
 
+            let targetX, targetY;
             if (isLeft) {
-                targetX = r.left + window.scrollX - h.cfg.size * noseX_ratio;
-                targetY = r.bottom + window.scrollY - (h.cfg.size * 0.82) * noseY_ratio;
+                // Ёжик слева, рот смотрит вправо (не flipped):
+                // mouth.x = h.x + 0.73 * size должно совпасть с r.left
+                targetX = r.left + window.scrollX - h.cfg.size * MOUTH_X_RATIO;
+                targetY = r.bottom + window.scrollY - (h.cfg.size * 0.82) * MOUTH_Y_RATIO;
             } else {
-                targetX = r.right + window.scrollX - h.cfg.size * (1 - noseX_ratio);
-                targetY = r.bottom + window.scrollY - (h.cfg.size * 0.82) * noseY_ratio;
+                // Ёжик справа, рот смотрит влево (flipped):
+                // mouth.x = h.x + 0.27 * size должно совпасть с r.right
+                targetX = r.right + window.scrollX - h.cfg.size * (1 - MOUTH_X_RATIO);
+                targetY = r.bottom + window.scrollY - (h.cfg.size * 0.82) * MOUTH_Y_RATIO;
             }
-            
+
             const dist = Math.hypot(targetX - h.x, targetY - h.y);
             await moveTo(h, targetX, targetY, calcDuration(dist));
             if (h.cancelled) return;
-            
+
+            // moveTo мог развернуть ежа «по направлению движения» —
+            // принудительно ставим правильное направление для висения.
             faceDir(h, isLeft ? 1 : -1);
+
             h.el.classList.add('hanging');
             setResting(h, true);
 
-            await sleep(4000 + Math.random() * 2000); 
-            
+            await sleep(4000 + Math.random() * 2000);
+
             h.el.classList.remove('hanging');
             await sleep(500);
         } finally {
@@ -584,10 +617,17 @@
         const canvas = findCanvas();
         if (!canvas) return;
 
+        const parentCard = canvas.closest('.widget-card');
+        if (!parentCard) return;
+        if (busyWidgets.has(parentCard.id)) return;
+
         busyWidgets.set(canvas.id, h);
+        busyWidgets.set(parentCard.id, h);
+
         try {
             const r = canvas.getBoundingClientRect();
-            const R = Math.min(r.width, r.height) * 0.35;
+            // Радиус качения: 0.25 от меньшей стороны (было 0.35).
+            const R = Math.min(r.width, r.height) * 0.25;
             const cx = r.left + window.scrollX + r.width / 2;
             const cy = r.top + window.scrollY + r.height / 2;
 
@@ -604,9 +644,9 @@
             setResting(h, true);
             faceDir(h, isLeft ? -1 : 1);
 
-            h.el.classList.add('rolling'); 
+            h.el.classList.add('rolling');
             setResting(h, false);
-            
+
             await rafTween(1500, p => {
                 const angle = startAngle + (endAngle - startAngle) * p;
                 const hx = cx + R * Math.cos(angle) - h.cfg.size / 2;
@@ -614,32 +654,45 @@
                 setPos(h, hx, hy);
             }, h);
             if (h.cancelled) return;
-            
+
             setResting(h, true);
             h.el.classList.remove('rolling');
-            
+
             const dropX = cx + R * Math.cos(endAngle) - h.cfg.size / 2;
             const dropY = cy + R + 50;
             await hopTo(h, dropX, dropY, 500, 30);
-
         } finally {
             h.el.classList.remove('rolling');
             setResting(h, true);
             busyWidgets.delete(canvas.id);
+            busyWidgets.delete(parentCard.id);
         }
     }
 
-    // ХОМЯК В КОЛЕСЕ (СВЕРХУ, ВРАЩЕНИЕ ВНУТРИ ДИАГРАММЫ)
     async function doRunOnChart(h) {
         const canvas = findCanvas();
         if (!canvas) return;
 
-        busyWidgets.set(canvas.id, h);
-        
+        const parentCard = canvas.closest('.widget-card');
+        if (!parentCard) return;
+        if (busyWidgets.has(parentCard.id)) return;
+
         let chartInst = null;
+        // id canvas в разметке: labStatsChartPro, а не labStatsProChart —
+        // из-за опечатки Pro-график никогда не участвовал в покатушках.
         if (canvas.id === 'globalStatsChart') chartInst = globalChart;
         else if (canvas.id === 'labStatsChart') chartInst = globalLabChart;
-        else if (canvas.id === 'labStatsProChart') chartInst = globalLabChartPro;
+        else if (canvas.id === 'labStatsChartPro') chartInst = globalLabChartPro;
+
+        if (!chartInst) return;
+
+        busyWidgets.set(canvas.id, h);
+        busyWidgets.set(parentCard.id, h);
+
+        // Запоминаем исходный rotation только при первом заезде.
+        if (!rotatedCharts.has(chartInst)) {
+            rotatedCharts.set(chartInst, chartInst.options.rotation || -Math.PI / 2);
+        }
 
         try {
             const r = canvas.getBoundingClientRect();
@@ -647,7 +700,6 @@
             const cy = r.top + window.scrollY + r.height / 2;
             const R = Math.min(r.width, r.height) * 0.35;
 
-            // Ежик встает на САМУЮ ВЕРХНЮЮ точку диаграммы
             const targetX = cx - h.cfg.size / 2;
             const targetY = cy - R - (h.cfg.size * 0.82);
 
@@ -656,35 +708,24 @@
             if (h.cancelled) return;
 
             faceDir(h, 1);
-            setResting(h, false); // Анимация бега
+            setResting(h, false);
 
-            const startRotation = chartInst ? (chartInst.options.rotation || -Math.PI / 2) : 0;
-            const duration = 2000; // УСКОРЕНО (было 4000)
-            const loops = 4; // 4 полных оборота
+            const startRotation = chartInst.options.rotation || -Math.PI / 2;
+            const duration = 2000;
+            const loops = 4;
 
             await rafTween(duration, p => {
-                if (chartInst) {
-                    chartInst.options.rotation = startRotation - (Math.PI * 2 * loops) * p;
-                    chartInst.update('none');
-                }
+                chartInst.options.rotation = startRotation - (Math.PI * 2 * loops) * p;
+                chartInst.update('none');
             }, h);
 
-            if (!h.cancelled) {
-                if (chartInst) {
-                    chartInst.options.rotation = -Math.PI / 2; // Возвращаем на место
-                    chartInst.update('none');
-                }
-            }
-
             setResting(h, true);
-
         } finally {
-            if (chartInst) {
-                chartInst.options.rotation = -Math.PI / 2;
-                chartInst.update('none');
-            }
+            // rotation НЕ сбрасываем — пусть диаграмма остаётся повёрнутой,
+            // пока пользователь «спит». Восстановление — в stopSleepMode.
             setResting(h, true);
             busyWidgets.delete(canvas.id);
+            busyWidgets.delete(parentCard.id);
         }
     }
 
@@ -692,7 +733,7 @@
         if (!fakeCursorEl) {
             fakeCursorEl = document.createElement('div');
             fakeCursorEl.className = 'fake-cursor';
-            fakeCursorEl.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 3.5L19 14L12.5 15.5L9 22L5.5 3.5Z" fill="white" stroke="black" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+            fakeCursorEl.innerHTML = CURSOR_SVG;
             stage.appendChild(fakeCursorEl);
             document.body.classList.add('cursor-hidden');
         }
@@ -701,57 +742,56 @@
 
     async function doStealCursor(h) {
         const cursor = getOrCreateFakeCursor();
-        
+
         let targetX, targetY;
         if (cursor.style.transform) {
-            // Курсор уже валяется на экране - берем его координаты
             const match = cursor.style.transform.match(/translate\(([^p]+)px,\s*([^p]+)px\)/);
             if (match) {
                 targetX = parseFloat(match[1]) + window.scrollX - h.cfg.size / 2;
                 targetY = parseFloat(match[2]) + window.scrollY - h.cfg.size / 2;
             }
         }
-        
+
         if (targetX === undefined) {
-            // Курсор еще у пользователя
             targetX = realMouseX + window.scrollX - h.cfg.size / 2;
             targetY = realMouseY + window.scrollY - h.cfg.size / 2;
             cursor.style.transform = `translate(${realMouseX}px, ${realMouseY}px)`;
         }
-        
+
         const dist = Math.hypot(targetX - h.x, targetY - h.y);
         await moveTo(h, targetX, targetY, calcDuration(dist));
         if (h.cancelled) return;
-        
+
         setResting(h, true);
         faceDir(h, 1);
         await sleep(300);
 
-        // Привязываем курсор к морде
-        const noseX = h.x + (84.5 / 100) * h.cfg.size;
-        const noseY = h.y + (54.5 / 82) * (h.cfg.size * 0.82);
-        
-        // Сдвигаем курсор чуть влево и вверх, чтобы он был "в зубах"
-        cursor.style.transform = `translate(${noseX - 8}px, ${noseY - 4}px)`;
-        
-        // Убегаем с курсором
+        // Привязка к рту (в этот момент ёж смотрит вправо).
+        const m0 = _mouthPos(h);
+        cursor.style.transform = `translate(${m0.x - 8}px, ${m0.y - 4}px)`;
+
         const escapeX = Math.random() * (window.innerWidth - h.cfg.size);
         const escapeY = Math.random() * (window.innerHeight - h.cfg.size);
-        
+
         const x0 = h.x, y0 = h.y;
-        faceDir(h, escapeX < x0 ? -1 : 1);
-        setResting(h, false); // Бежим
-        
+        const isFlipped = escapeX < x0;
+        faceDir(h, isFlipped ? -1 : 1);
+        setResting(h, false);
+
+        // После разворота фиксируем x-долю рта — она не меняется во время бега.
+        const mx = isFlipped ? (1 - MOUTH_X_RATIO) : MOUTH_X_RATIO;
+        const my = MOUTH_Y_RATIO;
+
         await rafTween(calcDuration(Math.hypot(escapeX - x0, escapeY - y0)), p => {
             const curX = x0 + (escapeX - x0) * p;
             const curY = y0 + (escapeY - y0) * p;
             setPos(h, curX, curY);
-            
-            const curNoseX = curX + (84.5 / 100) * h.cfg.size;
-            const curNoseY = curY + (54.5 / 82) * (h.cfg.size * 0.82);
-            cursor.style.transform = `translate(${curNoseX - 8}px, ${curNoseY - 4}px)`;
+
+            const curMouthX = curX + mx * h.cfg.size;
+            const curMouthY = curY + my * h.cfg.size * 0.82;
+            cursor.style.transform = `translate(${curMouthX - 8}px, ${curMouthY - 4}px)`;
         }, h);
-        
+
         setResting(h, true);
         await sleep(500);
     }
@@ -771,7 +811,7 @@
         const dist = Math.hypot(targetX - h.x, targetY - h.y);
         await moveTo(h, targetX, targetY, calcDuration(dist));
         if (h.cancelled) return;
-        
+
         setResting(h, true);
         faceDir(h, 1);
 
@@ -779,15 +819,15 @@
         for (let i = 0; i < presses; i++) {
             if (h.cancelled) break;
             await hopTo(h, targetX, targetY, 300, 30);
-            
+
             if (typeof rotateFriendsRight === 'function') {
                 rotateFriendsRight();
             } else {
                 btn.click();
             }
-            await sleep(2000); 
+            await sleep(2000);
         }
-        
+
         restoreGlobalState();
     }
 
@@ -806,7 +846,7 @@
         const dist = Math.hypot(targetX - h.x, targetY - h.y);
         await moveTo(h, targetX, targetY, calcDuration(dist));
         if (h.cancelled) return;
-        
+
         setResting(h, true);
         faceDir(h, 1);
 
@@ -814,29 +854,33 @@
         for (let i = 0; i < presses; i++) {
             if (h.cancelled) break;
             await hopTo(h, targetX, targetY, 300, 30);
-            
+
             if (typeof rotateTeachersRight === 'function') {
                 rotateTeachersRight();
             } else {
                 btn.click();
             }
-            await sleep(2000); 
+            await sleep(2000);
         }
-        
+
         restoreGlobalState();
     }
 
     async function doMischiefGroup(h) {
-        if (busyElements.has('groupSelect')) return;
-        busyElements.add('groupSelect');
-        
-        const input = document.getElementById('groupSelect');
-        if (!input) { busyElements.delete('groupSelect'); return; }
+        if (busyElements.has('groupDisplay')) return;
+        busyElements.add('groupDisplay');
 
-        const oldText = input.value;
+        const displayEl = document.getElementById('groupDisplay');
+        if (!displayEl) { busyElements.delete('groupDisplay'); return; }
+
+        const oldText = displayEl.textContent;
+        const oldClass = displayEl.classList.contains('group-display-empty');
+        if (originalValues.groupSelect === null) {
+            originalValues.groupSelect = oldText;
+        }
 
         try {
-            const r = input.getBoundingClientRect();
+            const r = displayEl.getBoundingClientRect();
             const isLeft = Math.random() < 0.5;
             const targetX = isLeft ? r.left + window.scrollX - h.cfg.size + 10 : r.right + window.scrollX - 10;
             const targetY = r.top + window.scrollY + r.height / 2 - h.cfg.size / 2;
@@ -855,29 +899,45 @@
                 str = "ПИН/б-24-1-о"; // fallback
             }
 
-            input.value = '';
+            displayEl.textContent = '';
+            displayEl.classList.remove('group-display-empty');
             for (let i = 0; i < str.length; i++) {
                 if (h.cancelled) break;
-                input.value = str.slice(0, i + 1); 
+                displayEl.textContent = str.slice(0, i + 1);
                 await sleep(100 + Math.random() * 100);
             }
             await sleep(1500);
-            
+
         } finally {
-            input.value = oldText; 
-            busyElements.delete('groupSelect');
+            displayEl.textContent = oldText;
+            if (oldClass) {
+                displayEl.classList.add('group-display-empty');
+            } else {
+                displayEl.classList.remove('group-display-empty');
+            }
+            originalValues.groupSelect = null;
+            busyElements.delete('groupDisplay');
             setResting(h, true);
         }
     }
 
     async function doMischiefNotes(h) {
-        if (busyElements.has('notesWidgetText')) return;
-        busyElements.add('notesWidgetText');
+        const ta = Array.from(document.querySelectorAll('[id^="notesWidgetText"]')).find(el => {
+            const card = el.closest('.widget-card');
+            return card && card.style.display !== 'none' && !busyElements.has(el.id);
+        });
+        if (!ta) return;
 
-        const ta = document.getElementById('notesWidgetText');
-        if (!ta) { busyElements.delete('notesWidgetText'); return; }
+        busyElements.add(ta.id);
 
-        const oldText = ta.value; 
+        const oldText = ta.value;
+        if (originalValues.notesWidgetText === null) {
+            originalValues.notesWidgetText = [];
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById(`notesWidgetText${i}`);
+                originalValues.notesWidgetText.push(el ? el.value : '');
+            }
+        }
 
         try {
             const r = ta.getBoundingClientRect();
@@ -890,14 +950,13 @@
             setResting(h, true);
             faceDir(h, -1);
 
-            const poems = [
-                "Ёжик по лесу бежал,\nГриб на спинке он держал.\nВдруг споткнулся, кувырком,\nПокатился колобком!",
-                "Под сосной сидит ежик,\nОн на солнышке лежит.\nНожки греет, уши греет,\nПотихонечку сопит.",
-                "Я колючий серый ёж,\nНа клубок я похож.\nЯблоко несу домой,\nДеткам, милым и родным.",
-                "Ёжик, ёжик, ты куда?\nУ меня в лесу беда:\nЗайцы съели весь овёс,\nНе осталось и волос!",
-                "Фыр-фыр-фыр, — пыхтит ежонок,\nОн совсем ещё спросонок.\nМама-еж ему сказала:\n— Ты поспи ещё сначала.",
-                "На колючей на спине\nЁж несёт грибок к норе.\nОн трудяга, он герой,\nВозвращается домой."
-            ];
+            const poems = (typeof HEDGEHOG_POEMS !== 'undefined' && Array.isArray(HEDGEHOG_POEMS) && HEDGEHOG_POEMS.length > 0)
+                ? HEDGEHOG_POEMS
+                : [
+                    "Ёжик по лесу бежал,\nГриб на спинке он держал.\nВдруг споткнулся, кувырком,\nПокатился колобком!",
+                    "Под сосной сидит ежик,\nОн на солнышке лежит.\nНожки греет, уши греет,\nПотихонечку сопит.",
+                    "Я колючий серый ёж,\nНа клубок я похож.\nЯблоко несу домой,\nДеткам, милым и родным."
+                ];
             const poem = poems[Math.floor(Math.random() * poems.length)];
 
             ta.value = '';
@@ -910,9 +969,9 @@
             await sleep(2000);
 
         } finally {
-            ta.value = oldText; 
+            ta.value = oldText;
             if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ta);
-            busyElements.delete('notesWidgetText');
+            busyElements.delete(ta.id);
             setResting(h, true);
         }
     }
@@ -929,9 +988,9 @@
             const scratchChance = Math.random() < 0.6;
 
             if (scratchChance) {
-                await sleep(1000); 
+                await sleep(1000);
                 h.el.classList.add('scratching');
-                await sleep(1500); 
+                await sleep(1500);
                 h.el.classList.remove('scratching');
                 await sleep(sitTime - 2500);
             } else {
@@ -958,27 +1017,27 @@
         const points = [];
         let curX = h.x;
         let curY = h.y;
-        
+
         for (let i = 0; i < 3; i++) {
             const angle = Math.random() * Math.PI * 2;
             const dist = 80 + Math.random() * 200;
             let nextX = curX + Math.cos(angle) * dist;
             let nextY = curY + Math.sin(angle) * dist;
-            
+
             const margin = 30;
             nextX = Math.max(margin, Math.min(document.body.scrollWidth - h.cfg.size - margin, nextX));
             nextY = Math.max(margin, Math.min(document.body.scrollHeight - h.cfg.size - margin, nextY));
-            
+
             points.push({x: nextX, y: nextY});
             curX = nextX;
             curY = nextY;
         }
-        
+
         for (const pt of points) {
             if (h.cancelled) return;
             const dist = Math.hypot(pt.x - h.x, pt.y - h.y);
             await moveTo(h, pt.x, pt.y, calcDuration(dist));
-            
+
             if (Math.random() < 0.3) {
                 setResting(h, true);
                 await sleep(300 + Math.random() * 700);
@@ -1040,6 +1099,7 @@
         running = true;
         busyWidgets.clear();
         busyElements.clear();
+        rotatedCharts.clear();
         originalValues.groupSelect = null;
         originalValues.notesWidgetText = null;
         originalValues.friendState = null;
@@ -1067,7 +1127,7 @@
                 } else if (edge === 'top') {
                     startX = Math.random() * window.innerWidth;
                     startY = window.scrollY - cfg.size;
-                } else { 
+                } else {
                     startX = Math.random() * window.innerWidth;
                     startY = window.scrollY + window.innerHeight;
                 }
@@ -1094,9 +1154,9 @@
         running = false;
         busyWidgets.clear();
         busyElements.clear();
-        
+
         if (collisionTimer) { clearInterval(collisionTimer); collisionTimer = null; }
-        
+
         document.body.classList.remove('cursor-hidden');
         if (fakeCursorEl && fakeCursorEl.parentElement) fakeCursorEl.remove();
         fakeCursorEl = null;
@@ -1112,6 +1172,10 @@
             h.el.style.opacity = '0';
         });
 
+        // Повёрнутые диаграммы возвращаем только здесь — то есть
+        // когда пользователь реально проявил активность.
+        restoreRotatedCharts();
+
         setTimeout(() => {
             hhs.forEach(h => {
                 if (h.el.parentElement) h.el.parentElement.removeChild(h.el);
@@ -1123,13 +1187,39 @@
         setTimeout(() => { if (!running) destroyStage(); }, 500);
     }
 
+    // ============================================================
+    //  ВИДИМОСТЬ ВКЛАДКИ
+    // ------------------------------------------------------------
+    //  Когда вкладка скрывается, браузер замораживает анимации
+    //  и setTimeout-ы. Функции doXxx держат записи в busyWidgets /
+    //  busyElements и отпускают их в finally. Но если вкладка
+    //  скрылась посреди await, finally не выполнится до возврата,
+    //  и при возврате новый liveLoop увидит «занято» и пойдёт
+    //  отбирать у самого себя. Отсюда «залипшие» виджеты и паузы.
+    //  Здесь освобождаем всё вручную.
+    // ============================================================
+
     function onVisibilityChange() {
         if (document.hidden) {
-            hhs.forEach(h => h.cancelled = true);
+            hhs.forEach(h => {
+                h.cancelled = true;
+                if (h.heldWidget) {
+                    releaseWidget(h.heldWidget);
+                    h.heldWidget = null;
+                }
+            });
+
+            busyWidgets.clear();
+            busyElements.clear();
+
+            // rotation диаграмм НЕ трогаем: пользователь ещё не
+            // шевелился, просто вкладку переключил.
+
             restoreGlobalState();
             document.body.classList.remove('cursor-hidden');
             if (fakeCursorEl && fakeCursorEl.parentElement) fakeCursorEl.remove();
             fakeCursorEl = null;
+
         } else if (running) {
             hhs.forEach((h, i) => {
                 if (h.cancelled) {

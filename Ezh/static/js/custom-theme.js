@@ -591,6 +591,10 @@ async function applyCustomTheme() {
         document.documentElement.style.setProperty(key, data.colors[key]);
     }
 
+    // Цвета изменились — сбрасываем кэш getThemeColor (utils.js),
+    // иначе графики останутся в старой палитре.
+    if (typeof resetThemeColorCache === 'function') resetThemeColorCache();
+
     let resolvedPhotoUrl = '';
     if (data.photoId) {
         if (data.photoId.startsWith('url:')) {
@@ -641,6 +645,7 @@ function clearCustomThemeInline() {
     for (const key in data.colors) {
         document.documentElement.style.removeProperty(key);
     }
+    if (typeof resetThemeColorCache === 'function') resetThemeColorCache();
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';
     document.body.style.backgroundRepeat = '';
@@ -717,8 +722,8 @@ function applyBaseThemeAsCustom(baseThemeId, baseThemeLabel) {
         theme = 'custom';
         localStorage.setItem('theme', 'custom');
         localStorage.removeItem('activeCustomPresetName');
-        const select = document.getElementById('settingsTheme');
-        if (select) select.value = 'custom';
+        // Выбор темы давно живёт на кнопках .theme-btn, а не в <select>
+        // #settingsTheme — остаток старой вёрстки убран.
         if (typeof applyTheme === 'function') applyTheme();
     } else {
         applyCustomTheme();
@@ -1039,14 +1044,19 @@ function loadPreset(index) {
     // Запоминаем имя активного пресета
     localStorage.setItem('activeCustomPresetName', preset.name);
 
-    const data = JSON.parse(JSON.stringify(preset.data || {}));
+    // Пресет мог сохраниться без data (старый формат / битый файл) —
+    // тогда берём дефолтную палитру, а не пустой объект: пустой
+    // setProperty-цикл оставлял тему «никакой».
+    const saved = (preset.data && typeof preset.data === 'object')
+        ? JSON.parse(JSON.stringify(preset.data))
+        : {};
+    const data = Object.assign(defaultCustomTheme(), saved);
+    data.colors = Object.assign({}, defaultCustomTheme().colors, saved.colors || {});
     saveCustomTheme(data);
 
     if (typeof theme !== 'undefined' && theme !== 'custom') {
         theme = 'custom';
         localStorage.setItem('theme', 'custom');
-        const select = document.getElementById('settingsTheme');
-        if (select) select.value = 'custom';
         if (typeof applyTheme === 'function') applyTheme();
     } else {
         applyCustomTheme();

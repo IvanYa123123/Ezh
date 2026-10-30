@@ -175,7 +175,7 @@ function renderTeacherDropdown() {
 async function ensureAllTeachersLoaded() {
     if (teachersAllList) return teachersAllList;
     try {
-        const resp = await fetch('/api/teachers');
+        const resp = await apiFetch('/api/teachers');
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         teachersAllList = await resp.json();
     } catch (e) {
@@ -190,7 +190,7 @@ async function fetchTrackedTeachers() {
 
     let list = [];
     try {
-        const resp = await fetch('/api/tracked_teachers');
+        const resp = await apiFetch('/api/tracked_teachers');
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         list = await resp.json();
     } catch (e) {
@@ -225,7 +225,7 @@ async function loadTeacherSchedule(slug, force) {
     if (teacherSchedulesCache[slug] && !force) return teacherSchedulesCache[slug];
     try {
         const url = '/api/teacher_schedule?slug=' + encodeURIComponent(slug) + (force ? '&force=1' : '');
-        const resp = await fetch(url);
+        const resp = await apiFetch(url);
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         teacherSchedulesCache[slug] = Array.isArray(data) ? data : [];
@@ -344,7 +344,7 @@ function renderTeacherSuggestions(query) {
 async function addTrackedTeacher(slug, name) {
     let newId = null;
     try {
-        const resp = await fetch('/api/tracked_teachers', {
+        const resp = await apiFetch('/api/tracked_teachers', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name, slug})
@@ -395,7 +395,7 @@ async function deleteTrackedTeacher(id) {
     if (!confirm(`Убрать преподавателя «${teacher.name}» из списка?`)) return;
 
     try {
-        const resp = await fetch('/api/tracked_teachers/' + id, {method: 'DELETE'});
+        const resp = await apiFetch('/api/tracked_teachers/' + id, {method: 'DELETE'});
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
     } catch (e) {
         console.error('[teachers] delete failed', e);

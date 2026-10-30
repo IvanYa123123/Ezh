@@ -13,7 +13,43 @@
 let _notificationCheckInterval = null;
 
 // key → timestamp (когда уведомили). Нужно, чтобы не дублировать.
-let _notifiedMap = new Map();
+//
+// v3.7.0: набор «уже уведомили» переживает перезагрузку страницы.
+// Раньше Map жил только в памяти: после F5 браузер повторно
+// показывал «Пара через 15 минут» по всем парам, до которых
+// оставалось меньше интервала оповещения.
+const _NOTIFIED_STORAGE_KEY = 'notifiedMap_v1';
+const _NOTIFIED_MAX_ENTRIES = 300;
+
+function _loadNotifiedMap() {
+    const map = new Map();
+    try {
+        const raw = localStorage.getItem(_NOTIFIED_STORAGE_KEY);
+        if (!raw) return map;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return map;
+        for (const key of Object.keys(parsed)) {
+            const ts = Number(parsed[key]);
+            if (key && isFinite(ts)) map.set(key, ts);
+        }
+    } catch (e) { /* повреждённое хранилище — начинаем с пустого */ }
+    return map;
+}
+
+function _persistNotifiedMap() {
+    try {
+        // Держим только самые свежие записи, чтобы не раздувать localStorage.
+        if (_notifiedMap.size > _NOTIFIED_MAX_ENTRIES) {
+            const entries = [..._notifiedMap.entries()].sort((a, b) => b[1] - a[1]);
+            _notifiedMap = new Map(entries.slice(0, _NOTIFIED_MAX_ENTRIES));
+        }
+        const obj = {};
+        for (const [k, ts] of _notifiedMap) obj[k] = ts;
+        localStorage.setItem(_NOTIFIED_STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) { /* приватный режим / нет места — не критично */ }
+}
+
+let _notifiedMap = _loadNotifiedMap();
 
 // Как часто опрашивать (в миллисекундах). Минута даёт точность «до минуты»
 // и почти не нагружает систему.
@@ -104,6 +140,9 @@ function refreshNotifications() {
             });
         }
     }
+
+    // Сохраняем «уже уведомили» до следующей перезагрузки страницы.
+    _persistNotifiedMap();
 }
 
 // Дата (YYYY-MM-DD) + время начала («HH:MM») → timestamp (ms).

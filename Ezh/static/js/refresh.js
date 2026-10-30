@@ -43,16 +43,12 @@ async function manualRefresh() {
 
         if (Array.isArray(fresh) && fresh.length > 0) {
             cachedSchedule = applyTimeFix(fresh);
-
-            // Синхронизация прошла успешно — обновляем таймер свежести
-            // в localStorage и сразу перерисовываем индикатор.
             if (typeof saveSyncTime === 'function') {
                 saveSyncTime(group, subgroup);
             }
         } else {
             // Пустой ответ может значить: сработала защита от затирания
             // (сервер вернул старый кэш), либо у группы реально нет пар.
-            // Берём из локального кэша.
             setLoaderText('📦 Загружаем из локального кэша...');
             const fallback = await apiLoadSchedule(group, subgroup);
             cachedSchedule = applyTimeFix(fallback);
@@ -91,28 +87,21 @@ async function manualRefresh() {
 
     } catch (e) {
         console.error('[refresh] ERROR:', e);
-        let msg = '❌ Не удалось обновить расписание';
 
-        // HTTP-статус прилетает в поле .status (см. api.js не пробрасывает
-        // статус — ловим по тексту сообщения "HTTP 429 for ...").
-        const statusFromMsg = (() => {
-            const m = /HTTP (\d+)/.exec(e && e.message ? e.message : '');
-            return m ? parseInt(m[1], 10) : null;
-        })();
-        const status = (e && e.status) || statusFromMsg;
-
-        if (status === 429) {
-            msg = '⏳ Слишком часто. Расписание можно обновлять не чаще 10 раз в минуту — подождите немного и попробуйте снова';
-        } else if (status === 500) {
-            msg = '❌ Сервер не справился с запросом (ошибка 500). Попробуйте позже';
-        } else if (status === 502 || status === 503 || status === 504) {
-            msg = '🌐 Сервер СевГУ недоступен. Попробуйте позже';
-        } else if (status) {
-            msg = `❌ Ошибка HTTP ${status}`;
-        } else if (e && e.message) {
-            msg = `❌ ${e.message}`;
-        }
-        showUpdateNotification(msg);
+        // Общий маппинг ошибок — в api.js (apiErrorText).
+        // Специфика СевГУ уходит через overrides, чтобы не держать
+        // здесь ещё один inline-парсер /HTTP (\d+)/ по err.message.
+        const msg = apiErrorText(e, {
+            subject: 'расписание',
+            fallback: 'Не удалось обновить расписание',
+            overrides: {
+                429: '⏳ Слишком часто. Расписание можно обновлять не чаще 10 раз в минуту — подождите немного и попробуйте снова',
+                502: '🌐 Сервер СевГУ недоступен. Попробуйте позже',
+                503: '🌐 Сервер СевГУ недоступен. Попробуйте позже',
+                504: '🌐 Сервер СевГУ недоступен. Попробуйте позже',
+            }
+        });
+        showUpdateNotification(`❌ ${msg}`);
 
     } finally {
         hideGlobalLoader();

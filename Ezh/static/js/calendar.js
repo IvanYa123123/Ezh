@@ -81,14 +81,19 @@ function _renderDayColumn(dateStr, displayDate, isToday, eventItems, pairItems, 
 
     let scheduleHtml = "";
     if (pairItems.length > 0) {
-        const startTime = fixTime(pairItems[0].time_range.split(' - ')[0]);
-        const endTime   = fixTime(pairItems[pairItems.length - 1].time_range.split(' - ')[1]);
+        // Время берём через _safePairTime (status.js): у кастомных пар
+        // time_range может быть пустым — раньше это давало «🕒 Пары:  - ».
+        const startTime = _safePairTime(pairItems[0], 'start');
+        const endTime   = _safePairTime(pairItems[pairItems.length - 1], 'end');
+        const timeLabel = (startTime || endTime)
+            ? `: ${startTime}${startTime && endTime ? ' - ' : ''}${endTime}`
+            : '';
         const expandedClass = isExpanded ? ' expanded' : '';
         const arrowIcon = isExpanded ? '▲' : '▼';
 
         scheduleHtml += `
             <div class="schedule-summary shadow-sm" onclick="toggleSchedule('${dateStr}')">
-                🕒 Пары: ${startTime} - ${endTime} <span id="arrow-${dateStr}">${arrowIcon}</span>
+                🕒 Пары${timeLabel} <span id="arrow-${dateStr}">${arrowIcon}</span>
             </div>
             <div id="schedule-details-${dateStr}"${expandedClass}>
                 <div class="schedule-details-inner">

@@ -5,6 +5,16 @@
 //     уходит один HTTP-запрос, а не три.
 //   • saveFriendsOrder работает при недоступном localStorage.
 //   • fetchFriends защищён счётчиком поколений.
+// v3.16.6:
+//   • fetchAllFriendsSchedules и syncFriendsSchedules тоже проверяют
+//     поколение. Раньше при быстром переключении группы старые
+//     загрузки могли перетереть friendsSchedules новыми данными
+//     (или записать в id, которых в новом списке уже нет).
+// v3.17.1:
+//   • Общие пары можно подписывать двумя способами: «в 15:40»
+//     или «4 пара» (см. sharedPairFormat в state.js и настройку
+//     «Как писать общие пары» в settings.js). Логика — в хелперах
+//     _labelCommonPair и _labelWhen.
 
 const campusNames = { 'galosha': 'Галоша', 'gogol': 'Гоголя', 'univer': 'Университетская' };
 
@@ -298,6 +308,34 @@ function hideAllFriends(e) {
 }
 
 // ============================================================
+//  ФОРМАТ ОБЩИХ ПАР
+// ------------------------------------------------------------
+//  Настройка «Как писать общие пары» (settings.js) хранит
+//  строку sharedPairFormat:
+//    'time'     → «Общая пара в 15:40»
+//    'pair_num' → «Общая 4 пара»
+//  Хелперы ниже — единая точка форматирования, чтобы при
+//  следующей смене формата не искать по всему файлу.
+// ============================================================
+
+function _labelCommonPair(item) {
+    const timeStr = fixTime(item.time_range.split(' - ')[0]);
+    const useNum = (typeof sharedPairFormat !== 'undefined')
+        && sharedPairFormat === 'pair_num'
+        && item.n;
+    if (useNum) return `🤝 Общая ${item.n} пара`;
+    return `🤝 Общая пара в ${timeStr}`;
+}
+
+function _labelWhen(timeStr, pairNum) {
+    const useNum = (typeof sharedPairFormat !== 'undefined')
+        && sharedPairFormat === 'pair_num'
+        && pairNum;
+    if (useNum) return `на ${pairNum} паре`;
+    return `в ${timeStr}`;
+}
+
+// ============================================================
 //  ЗАГРУЗКА РАСПИСАНИЙ ДРУЗЕЙ
 // ------------------------------------------------------------
 //  Дедупликация: если несколько друзей в одной группе и
@@ -305,14 +343,37 @@ function hideAllFriends(e) {
 //  раздаётся всем. Раньше было N запросов на N друзей, и
 //  при 5 друзьях rate-limit /api/schedule_all срабатывал
 //  уже после пятой перезагрузки страницы.
+//
+//  Generation guard: если во время загрузки пользователь
+//  нажмёт «Найти» (fetchFriends увеличит _friendsGeneration),
+//  устаревшие загрузки не должны писать в friendsSchedules
+//  по id, которых в новом списке уже нет.
 // ============================================================
 
 function _friendScheduleKey(friend) {
     return `${friend.group}__${friend.subgroup || '0'}`;
 }
 
+// Друзья загружаются пачкой: раньше каждый ответ вызывал
+// renderFriendsCalendar(), то есть при 10 друзьях календарь
+// перерисовывался 10 раз подряд. Теперь — один раз на кадр.
+let _friendsRenderQueued = false;
+
+function _queueFriendsRender() {
+    if (_friendsRenderQueued) return;
+    _friendsRenderQueued = true;
+    const run = () => {
+        _friendsRenderQueued = false;
+        if (typeof renderFriendsCalendar === 'function') renderFriendsCalendar();
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else setTimeout(run, 16);
+}
+
 async function fetchAllFriendsSchedules() {
+    const gen = _friendsGeneration;
     const pending = new Map();  // key → Promise<schedule>
+    let loadedAny = false;
 
     const tasks = friendsList.map(async (friend) => {
         if (friendsSchedules[friend.id]) return;
@@ -330,11 +391,15 @@ async function fetchAllFriendsSchedules() {
         }
 
         const data = await p;
+
+        if (gen !== _friendsGeneration) return;
+
         friendsSchedules[friend.id] = data;
-        if (visibleFriends.has(friend.id)) renderFriendsCalendar();
+        if (visibleFriends.has(friend.id)) loadedAny = true;
     });
 
     await Promise.all(tasks);
+    if (loadedAny && gen === _friendsGeneration) _queueFriendsRender();
 }
 
 async function syncFriendsSchedules(force = false) {
@@ -344,9 +409,12 @@ async function syncFriendsSchedules(force = false) {
     }
     window._lastFriendsSync = Date.now();
 
+    const gen = _friendsGeneration;
     const pending = new Map();  // key → Promise<schedule|null>
 
     for (let friend of friendsList) {
+        if (gen !== _friendsGeneration) return;
+
         const key = _friendScheduleKey(friend);
 
         let p = pending.get(key);
@@ -363,6 +431,8 @@ async function syncFriendsSchedules(force = false) {
         let newData;
         try { newData = await p; }
         catch (e) { continue; }
+
+        if (gen !== _friendsGeneration) return;
 
         if (!Array.isArray(newData) || newData.length === 0) continue;
 
@@ -754,6 +824,8 @@ function renderFriendsCalendar(dir = null) {
                 let fEnd = fixTime(daySchedule[daySchedule.length - 1].time_range.split(' - ')[1]);
                 let fCampStart = getCampus(daySchedule[0]);
                 let fCampEnd = getCampus(daySchedule[daySchedule.length - 1]);
+                let fFirstNum = daySchedule[0].n;
+                let fLastNum  = daySchedule[daySchedule.length - 1].n;
 
                 html += `<div class="fw-bold text-primary mb-2 text-center border-bottom pb-1" style="font-size: 0.8em;">🕒 ${fStart} - ${fEnd}</div>`;
 
@@ -768,7 +840,7 @@ function renderFriendsCalendar(dir = null) {
                             myItem.lesson === fItem.lesson &&
                             (myItem.location || '').trim().toLowerCase() === (fItem.location || '').trim().toLowerCase()
                         );
-                        if (match) html += `<div class="shared-class shared-common fw-bold">🤝 Общая пара в ${fixTime(fItem.time_range.split(' - ')[0])}</div>`;
+                        if (match) html += `<div class="shared-class shared-common fw-bold">${_labelCommonPair(fItem)}</div>`;
                     });
 
                     let myStart = myDaySchedule.length > 0 ? fixTime(myDaySchedule[0].time_range.split(' - ')[0]) : null;
@@ -779,25 +851,25 @@ function renderFriendsCalendar(dir = null) {
                     if (myStart && fStart === myStart) {
                         if (fCampStart !== 'unknown' && myCampStart !== 'unknown') {
                             if (fCampStart !== myCampStart) {
-                                html += `<div class="shared-class shared-warning fw-bold">🚨 Начинаем одновременно в ${fStart}, но в разных корпусах</div>`;
+                                html += `<div class="shared-class shared-warning fw-bold">🚨 Начинаем одновременно ${_labelWhen(fStart, fFirstNum)}, но в разных корпусах</div>`;
                             } else {
                                 let campRu = campusNames[fCampStart] || fCampStart;
-                                html += `<div class="shared-class shared-same-campus fw-bold">🏃 Начинаем одновременно в корпусе «${campRu}» в ${fStart}</div>`;
+                                html += `<div class="shared-class shared-same-campus fw-bold">🏃 Начинаем одновременно в корпусе «${campRu}» ${_labelWhen(fStart, fFirstNum)}</div>`;
                             }
                         } else {
-                            html += `<div class="shared-class shared-info fw-bold">🕒 Начинаем в одно время: ${fStart}</div>`;
+                            html += `<div class="shared-class shared-info fw-bold">🕒 Начинаем в одно время: ${_labelWhen(fStart, fFirstNum)}</div>`;
                         }
                     }
                     if (myEnd && fEnd === myEnd) {
                         if (fCampEnd !== 'unknown' && myCampEnd !== 'unknown') {
                             if (fCampEnd !== myCampEnd) {
-                                html += `<div class="shared-class shared-warning fw-bold">🚨 Заканчиваем одновременно в ${fEnd}, но в разных корпусах</div>`;
+                                html += `<div class="shared-class shared-warning fw-bold">🚨 Заканчиваем одновременно ${_labelWhen(fEnd, fLastNum)}, но в разных корпусах</div>`;
                             } else {
                                 let campRu = campusNames[fCampEnd] || fCampEnd;
-                                html += `<div class="shared-class shared-same-campus fw-bold">🏡 Заканчиваем одновременно в корпусе «${campRu}» в ${fEnd}</div>`;
+                                html += `<div class="shared-class shared-same-campus fw-bold">🏡 Заканчиваем одновременно в корпусе «${campRu}» ${_labelWhen(fEnd, fLastNum)}</div>`;
                             }
                         } else {
-                            html += `<div class="shared-class shared-info fw-bold">🕒 Заканчиваем в одно время: ${fEnd}</div>`;
+                            html += `<div class="shared-class shared-info fw-bold">🕒 Заканчиваем в одно время: ${_labelWhen(fEnd, fLastNum)}</div>`;
                         }
                     }
                 }

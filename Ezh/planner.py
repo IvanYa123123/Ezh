@@ -176,25 +176,29 @@ class SevSUPlanner:
                     diff_weeks = week - template_week
 
                     for item in template_to_use:
+                        # Пары без даты бесполезны: в календаре они не
+                        # привязываются к дню, зато остаются в кэше и
+                        # «съедают» место в статистике.
+                        if not item.get("date"):
+                            continue
                         extrapolated_item = item.copy()
-                        if "date" in extrapolated_item:
-                            try:
-                                date_str = extrapolated_item["date"].split("T")[0]
-                                orig_date = datetime.strptime(date_str, "%Y-%m-%d")
-                                new_date = orig_date + timedelta(days=diff_weeks * 7)
+                        try:
+                            date_str = extrapolated_item["date"].split("T")[0]
+                            orig_date = datetime.strptime(date_str, "%Y-%m-%d")
+                            new_date = orig_date + timedelta(days=diff_weeks * 7)
 
-                                orig_season = self.get_semester_season(orig_date)
-                                new_season = self.get_semester_season(new_date)
+                            orig_season = self.get_semester_season(orig_date)
+                            new_season = self.get_semester_season(new_date)
 
-                                if orig_season == 0 or orig_season != new_season:
-                                    continue
+                            if orig_season == 0 or orig_season != new_season:
+                                continue
 
-                                if not self.is_valid_study_day(new_date):
-                                    continue
+                            if not self.is_valid_study_day(new_date):
+                                continue
 
-                                extrapolated_item["date"] = new_date.strftime("%Y-%m-%d")
-                            except ValueError:
-                                pass
+                            extrapolated_item["date"] = new_date.strftime("%Y-%m-%d")
+                        except ValueError:
+                            continue
 
                         full_schedule.append(extrapolated_item)
 

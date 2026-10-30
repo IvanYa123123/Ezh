@@ -95,7 +95,7 @@
 
 <div class="container-fluid p-3">
     <div class="controls-header bg-white p-2 rounded shadow-sm border mb-3">
-        <div class="row align-items-center">
+        <div class="row align-items-center g-2">
             <div class="col-md-3">
                 <h5 class="mb-0 fw-bold d-flex align-items-center brand-title" style="color: var(--accent); letter-spacing: -0.5px;">
                     <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
@@ -103,28 +103,45 @@
                     <span id="app-mode-badge" class="app-mode-badge-stylish basic-mode ms-2" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
                 </h5>
             </div>
-            <div class="col-md-2">
+
+            <!-- Поле поиска (вместо кнопки) -->
+            <div class="col-md-3">
                 <div class="input-group input-group-sm">
-                    <input type="text" id="groupSelect" class="form-control" placeholder="Группа..." autocomplete="off">
-                    <button class="btn btn-primary" onclick="fetchSemesterData()">Найти</button>
+                    <span class="input-group-text border-end-0" style="font-size: 0.9em;">🔍</span>
+                    <input type="text" id="globalSearchInput" class="form-control border-start-0" placeholder="Поиск по заметкам и событиям..." autocomplete="off">
                 </div>
             </div>
+
+            <!-- Группа и подгруппа: только текст, редактируется в настройках -->
             <div class="col-md-2">
-                <select id="subgroupSelect" class="form-select form-select-sm" onchange="fetchSemesterData()">
+                <span id="groupDisplay" class="group-display group-display-empty" title="Изменить можно в настройках">Группа не выбрана</span>
+                <input type="hidden" id="groupSelect" value="">
+                <select id="subgroupSelect" style="display:none;">
                     <option value="0">Все подгруппы</option>
                     <option value="1">1 подгруппа</option>
                     <option value="2">2 подгруппа</option>
                 </select>
             </div>
-            <div class="col-md-5 d-flex align-items-center justify-content-end gap-2">
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
-                        onclick="openSearchModal()" title="Поиск по заметкам и событиям (Ctrl+K)">&#128269;</button>
+
+            <div class="col-md-4 d-flex align-items-center justify-content-end gap-2">
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
+                <!-- Переход по заметкам и событиям (было в коде, но без кнопок) -->
+                <div class="btn-group btn-group-sm nav-mini-group" role="group" aria-label="Переход по заметкам и событиям">
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="navigateNoteFromHere(-1)" title="Предыдущая заметка (клавиша [)">📝‹</button>
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="navigateNoteFromHere(1)" title="Следующая заметка (клавиша ])">📝›</button>
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="navigateEventFromHere(-1)" title="Предыдущее событие (клавиша {)">🎯‹</button>
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="navigateEventFromHere(1)" title="Следующее событие (клавиша })">🎯›</button>
+                </div>
+
                 <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="goToToday()">Сегодня</button>
                 <div class="dropdown">
-                    <button class="btn btn-outline-primary btn-sm dropdown-toggle fw-bold shadow-sm" type="button" id="weekDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 200px;">
+                    <button class="btn btn-outline-primary btn-sm dropdown-toggle fw-bold shadow-sm" type="button" id="weekDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 220px;">
                         📅 Неделя
                     </button>
                     <ul class="dropdown-menu scrollable-weeks shadow-sm border" id="weekDropdownMenu" aria-labelledby="weekDropdownBtn"></ul>
@@ -234,7 +251,7 @@
                 <div class="widget-card" id="widgetLabsCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
-                        <h6 class="widget-title clickable" onclick="showLabs()">Лабораторные</h6>
+                        <h6 class="widget-title clickable" onclick="showLabs()">Статистика сдач</h6>
                         <div class="widget-header-actions">
                             <button class="widget-close-btn" onclick="hideWidget('widgetLabsCard', 'settingsToggleWidgetLabs')" title="Скрыть">✕</button>
                         </div>
@@ -247,7 +264,6 @@
                     </div>
                 </div>
 
-                <!-- ВИДЖЕТ: ПРЕДЛОЖЕНИЯ -->
                 <div class="widget-card" id="widgetSuggestionsCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
@@ -262,7 +278,7 @@
                             <label class="form-check-label text-muted" for="suggestOnlyOwnGroups">Сдача только на своих парах</label>
                         </div>
                     </div>
-                    
+
                     <div class="suggestions-nav-row" id="suggestionsNavRow" style="display: none;">
                         <button type="button" class="btn btn-sm btn-light py-0 px-2 fw-bold" onclick="suggestionsPrev()">‹</button>
                         <span class="suggestions-counter" id="suggestionsCounter">1 / 1</span>
@@ -287,22 +303,43 @@
                     </div>
                 </div>
 
-                <div class="widget-card" id="widgetNotesCard" data-draggable-widget>
+                <div class="widget-card" id="widgetNotesCard1" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
                         <h6 class="widget-title">📝 Заметки</h6>
                         <div class="widget-header-actions">
-                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard', 'settingsToggleWidgetNotes')" title="Скрыть">✕</button>
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard1', 'settingsToggleWidgetNotes1')" title="Скрыть">✕</button>
                         </div>
                     </div>
-                    <textarea id="notesWidgetText" class="form-control form-control-sm" placeholder="Что-нибудь важное..." oninput="onNotesWidgetInput(this)"></textarea>
+                    <textarea id="notesWidgetText1" class="form-control form-control-sm" rows="8" placeholder="Что-нибудь важное..." oninput="onNotesWidgetInput(this)"></textarea>
                 </div>
 
-                <!-- ПРО ВИДЖЕТЫ -->
+                <div class="widget-card" id="widgetNotesCard2" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 2</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard2', 'settingsToggleWidgetNotes2')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <textarea id="notesWidgetText2" class="form-control form-control-sm" rows="8" placeholder="Вторая заметка..." oninput="onNotesWidgetInput(this)"></textarea>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard3" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 3</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard3', 'settingsToggleWidgetNotes3')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <textarea id="notesWidgetText3" class="form-control form-control-sm" rows="8" placeholder="Третья заметка..." oninput="onNotesWidgetInput(this)"></textarea>
+                </div>
+
                 <div class="widget-card pro-widget" id="widgetLabsProCard" data-draggable-widget style="display: none;">
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
-                        <h6 class="widget-title clickable" onclick="showLabs()">Лабораторные</h6>
+                        <h6 class="widget-title clickable" onclick="showLabs()">Статистика сдач</h6>
                         <div class="widget-header-actions">
                             <button class="widget-close-btn" onclick="hideWidget('widgetLabsProCard', 'settingsToggleWidgetLabsPro')" title="Скрыть">✕</button>
                         </div>
@@ -352,6 +389,36 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- Модалка первого выбора группы -->
+<div class="modal fade" id="groupSetupModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 bg-light">
+        <h6 class="modal-title fw-bold">🏫 Выберите свою группу</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" id="groupSetupCloseBtn" style="display:none;"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">Это можно будет изменить в настройках.</p>
+        <div class="mb-3">
+          <label class="form-label small">Группа</label>
+          <input type="text" id="setupGroupInput" class="form-control form-control-sm" placeholder="Начните вводить..." autocomplete="off">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Подгруппа</label>
+          <select id="setupSubgroupInput" class="form-select form-select-sm">
+            <option value="0">Все подгруппы</option>
+            <option value="1">1 подгруппа</option>
+            <option value="2">2 подгруппа</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer py-1 border-0">
+        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="confirmGroupSetup()">Сохранить</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Модалки -->
@@ -595,7 +662,7 @@
 <div class="modal fade" id="settingsModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 680px;">
     <div class="modal-content border-0 shadow settings-modal">
-      
+
       <div class="modal-header py-3 border-bottom-0">
         <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
           <span style="font-size: 1.2em;">⚙️</span>
@@ -605,7 +672,7 @@
       </div>
 
       <div class="modal-body p-0">
-        
+
         <ul class="nav nav-pills nav-fill settings-tabs px-3 mb-2" id="settingsTabs" role="tablist">
           <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tab-general-tab" data-bs-toggle="pill" data-bs-target="#tab-general" type="button" role="tab"><span class="d-none d-sm-inline">📋</span> Основное</button>
@@ -622,9 +689,22 @@
         </ul>
 
         <div class="tab-content settings-tab-content px-3 pb-3" id="settingsTabsContent">
-          
+
           <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
+
+            <!-- Моя группа -->
             <div class="settings-group pt-0">
+              <div class="settings-group-title">🏫 Моя группа</div>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Текущая группа</span>
+                <div class="d-flex gap-2 align-items-center">
+                  <span id="settingsGroupValue" class="text-muted small fw-bold"></span>
+                  <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" onclick="openGroupSetupFromSettings()">Изменить</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-group">
               <div class="settings-group-title">📋 Отображение пар</div>
               <label class="settings-row" for="settingsToggleTeacher">
                 <span class="settings-row-label">ФИО преподавателей</span>
@@ -638,6 +718,13 @@
                 <span class="settings-row-label">Подробные пары друзей</span>
                 <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
               </label>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Как писать общие пары</span>
+                <select class="form-select form-select-sm" id="settingsSharedPairFormat" onchange="saveSettingsFromUI()" style="max-width: 220px;">
+                  <option value="time">Общая пара в 15:40</option>
+                  <option value="pair_num">Общая 4 пара</option>
+                </select>
+              </div>
             </div>
 
             <div class="settings-group">
@@ -685,9 +772,6 @@
               <div id="settingsNotifHint" class="settings-hint-box" style="display: none;"></div>
             </div>
 
-            <!-- ============================================================
-                 СПЯЩИЙ РЕЖИМ
-                 ============================================================ -->
             <div class="settings-group mb-0">
               <div class="settings-group-title">🦔 Спящий режим</div>
               <label class="settings-row" for="settingsToggleSleepMode">
@@ -731,7 +815,7 @@
                 </div>
                 <div class="col-6" id="label-settingsToggleWidgetLabs">
                   <label class="settings-row px-2 m-0" for="settingsToggleWidgetLabs">
-                    <span class="settings-row-label">Лабораторные</span>
+                    <span class="settings-row-label">Статистика сдач</span>
                     <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabs" onchange="saveSettingsFromUI()">
                   </label>
                 </div>
@@ -748,9 +832,21 @@
                   </label>
                 </div>
                 <div class="col-6">
-                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes">
-                    <span class="settings-row-label">Заметки</span>
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes" onchange="saveSettingsFromUI()">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes1">
+                    <span class="settings-row-label">Заметки 1</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes1" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes2">
+                    <span class="settings-row-label">Заметки 2</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes2" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes3">
+                    <span class="settings-row-label">Заметки 3</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes3" onchange="saveSettingsFromUI()">
                   </label>
                 </div>
               </div>
@@ -758,7 +854,7 @@
 
             <div class="settings-group mb-0">
               <div class="settings-group-title text-primary">Pro-виджеты (Moodle)</div>
-              
+
               <div id="proWidgetsLockedMsg" class="alert alert-secondary py-2 small mb-2 d-flex align-items-center justify-content-between" style="display: none;">
                 <span>🔒 Войдите в Про-режим, чтобы получить доступ к расширенным виджетам.</span>
                 <button type="button" class="btn btn-sm btn-primary ms-2 text-nowrap" onclick="openMoodleModal()">Войти</button>
@@ -767,7 +863,7 @@
               <div class="row g-2" id="proWidgetsGrid">
                 <div class="col-6 pro-widget-toggle" style="display: none;">
                   <label class="settings-row px-2 m-0" for="settingsToggleWidgetLabsPro">
-                    <span class="settings-row-label text-primary fw-bold">Лабораторные</span>
+                    <span class="settings-row-label text-primary fw-bold">Статистика сдач</span>
                     <input class="form-check-input" type="checkbox" id="settingsToggleWidgetLabsPro" onchange="saveSettingsFromUI()">
                   </label>
                 </div>
@@ -788,7 +884,7 @@
           </div>
 
           <div class="tab-pane fade" id="tab-appearance" role="tabpanel">
-            
+
             <div class="mb-3 p-3 bg-surface-alt rounded border d-flex justify-content-between align-items-center">
               <span class="small fw-bold text-secondary">Текущая тема:</span>
               <span class="badge bg-primary fs-6" id="currentThemeNameDisplay" style="font-size: 0.85em !important; padding: 6px 12px; border-radius: 8px;">Светлая</span>
@@ -941,12 +1037,33 @@
           </div>
 
           <div class="tab-pane fade" id="tab-system" role="tabpanel">
-            
+
             <div class="settings-group pt-0">
               <div class="settings-group-title">📤 Экспорт</div>
               <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="downloadICS()">
                 📅 Скачать расписание (.ics)
               </button>
+              <button class="btn btn-outline-primary w-100 fw-bold" onclick="downloadTasksICS()">
+                📝 Скачать заметки (.ics)
+              </button>
+            </div>
+
+            <div class="settings-group">
+              <div class="settings-group-title">💾 Резервная копия</div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill fw-bold" onclick="downloadBackup()">
+                  ⬇️ Скачать копию
+                </button>
+                <button class="btn btn-outline-secondary flex-fill fw-bold" onclick="pickBackupFile()">
+                  ⬆️ Восстановить
+                </button>
+              </div>
+              <input type="file" id="backupFileInput" accept="application/json,.json"
+                     class="d-none" onchange="onBackupFilePicked(this)">
+              <div class="settings-hint-box mt-2">
+                Копия включает заметки, друзей, лабы, настройки предметов, кастомное расписание
+                и преподавателей. При восстановлении эти данные заменяются целиком.
+              </div>
             </div>
 
             <div class="settings-group">
@@ -1080,10 +1197,8 @@
 <script src="/static/js/hotkeys.js?v={{ app_version }}"></script>
 <script src="/static/js/teachers.js?v={{ app_version }}"></script>
 
-<!-- Спящий режим -->
+<script src="/static/js/hedgehog-poems.js?v={{ app_version }}"></script>
 <script src="/static/js/sleep-mode.js?v={{ app_version }}"></script>
-
-<!-- Еж Про -->
 <script src="/static/js/moodle-pro.js?v={{ app_version }}"></script>
 </body>
 </html>

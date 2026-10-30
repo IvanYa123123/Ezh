@@ -1,4 +1,8 @@
 // Модальное окно настроек.
+//
+// v3.18.0:
+//   • Блок «Моя группа» с кнопкой «Изменить» (открывает #groupSetupModal).
+//   • updateSettingsGroupValue() обновляет текст в этом блоке.
 
 const SETTINGS_SECTIONS_KEY = 'settingsSections_v1';
 const SETTINGS_SECTIONS_NAMES = ['display', 'widgets', 'status', 'notif'];
@@ -41,7 +45,6 @@ function updateCurrentThemeLabel() {
         el.textContent = displayName;
     }
 
-    // Подсвечиваем активную кнопку темы
     document.querySelectorAll('.theme-btn').forEach(btn => {
         const tid = btn.dataset.themeId;
         if (tid === theme) {
@@ -61,12 +64,10 @@ function updateCurrentThemeLabel() {
     });
 }
 
-// Глобальная функция для переключения темы из карточек
 function setThemeFromSettings(id) {
     theme = id;
     localStorage.setItem('theme', id);
-    
-    // Если нажали "Активировать свою" (базовую), сбрасываем активный пресет
+
     if (id === 'custom') {
         const activeBtn = document.querySelector('.theme-btn.active');
         if (activeBtn && activeBtn.dataset.presetName === undefined) {
@@ -76,31 +77,27 @@ function setThemeFromSettings(id) {
 
     applyTheme();
     updateCurrentThemeLabel();
-    
+
     if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
-    
+
     renderCalendar();
     updateScheduleStatus();
     if (typeof refreshChartsTheme === 'function') refreshChartsTheme();
 }
 
-// Генерация кнопок пресетов в блоке "Своя тема"
 function renderQuickPresets() {
     const grid = document.getElementById('customThemesGrid');
     if (!grid) return;
 
     const presets = typeof loadCustomThemePresets === 'function' ? loadCustomThemePresets() : [];
-    
-    // Оставляем базовую кнопку "Активировать свою"
+
     grid.innerHTML = `<button type="button" class="theme-btn" data-theme-id="custom" onclick="setThemeFromSettings('custom')">🎨 Активировать свою</button>`;
-    
-    // Добавляем кнопки пресетов
+
     presets.forEach((p, i) => {
         grid.innerHTML += `<button type="button" class="theme-btn" data-theme-id="custom" data-preset-index="${i}" data-preset-name="${escapeHtml(p.name)}" onclick="loadPresetFromSettings(${i})">🖌️ ${escapeHtml(p.name)}</button>`;
     });
 }
 
-// Обертка для загрузки пресета
 function loadPresetFromSettings(index) {
     const presets = loadCustomThemePresets();
     if (presets[index]) {
@@ -110,6 +107,24 @@ function loadPresetFromSettings(index) {
     updateCurrentThemeLabel();
 }
 
+function updateSettingsGroupValue() {
+    const el = document.getElementById('settingsGroupValue');
+    if (!el) return;
+
+    const group = (document.getElementById('groupSelect').value || '').trim();
+    const sub = document.getElementById('subgroupSelect').value || '0';
+
+    if (!group) {
+        el.textContent = 'Не выбрана';
+        return;
+    }
+    let text = group;
+    if (sub === '1') text += ' · 1 подгр.';
+    else if (sub === '2') text += ' · 2 подгр.';
+    else text += ' · все';
+    el.textContent = text;
+}
+
 function openSettingsModal() {
     document.getElementById('settingsToggleTeacher').checked  = showTeacher;
     document.getElementById('settingsToggleLocation').checked = showLocation;
@@ -117,13 +132,28 @@ function openSettingsModal() {
     document.getElementById('settingsToggleStatus').checked   = showStatus;
     document.getElementById('settingsToggleSleepMode').checked = showSleepMode;
 
+    // Моя группа
+    updateSettingsGroupValue();
+
+    // Формат общих пар
+    const sharedPairSelect = document.getElementById('settingsSharedPairFormat');
+    if (sharedPairSelect) {
+        sharedPairSelect.value = (['time', 'pair_num'].includes(sharedPairFormat))
+            ? sharedPairFormat
+            : 'time';
+    }
+
     // Базовые виджеты
     document.getElementById('settingsToggleWidgetMiniCal').checked = showWidgetMiniCal;
     document.getElementById('settingsToggleWidgetGlobal').checked  = showWidgetGlobal;
     document.getElementById('settingsToggleWidgetLabs').checked    = showWidgetLabs;
     document.getElementById('settingsToggleWidgetSuggestions').checked = showWidgetSuggestions;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
-    document.getElementById('settingsToggleWidgetNotes').checked   = showWidgetNotes;
+
+    // Заметки 1/2/3
+    document.getElementById('settingsToggleWidgetNotes1').checked = showWidgetNotes1;
+    document.getElementById('settingsToggleWidgetNotes2').checked = showWidgetNotes2;
+    document.getElementById('settingsToggleWidgetNotes3').checked = showWidgetNotes3;
 
     // Pro виджеты
     document.getElementById('settingsToggleWidgetLabsPro').checked = showWidgetLabsPro;
@@ -146,14 +176,13 @@ function openSettingsModal() {
 
     if (typeof renderCustomThemePanel === 'function') renderCustomThemePanel();
     if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
-    
+
     renderQuickPresets();
     updateCurrentThemeLabel();
 
     let modalEl = document.getElementById('settingsModal');
     let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
 
-    // Сбрасываем вкладку на первую (Основное) при каждом открытии
     const firstTab = document.getElementById('tab-general-tab');
     if (firstTab && typeof bootstrap !== 'undefined') {
         const tab = new bootstrap.Tab(firstTab);
@@ -220,12 +249,14 @@ function saveSettingsFromUI() {
     localStorage.setItem('showFriends',  showFriends);
     localStorage.setItem('showStatus',   showStatus);
 
-    // ============================================================
-    //  СПЯЩИЙ РЕЖИМ
-    // ------------------------------------------------------------
-    //  Хранится в localStorage как 'showSleepMode' ('true'/'false').
-    //  Включён по умолчанию — если ключа нет, режим работает.
-    // ============================================================
+    const sharedPairSelect = document.getElementById('settingsSharedPairFormat');
+    if (sharedPairSelect) {
+        let sp = sharedPairSelect.value;
+        if (!['time', 'pair_num'].includes(sp)) sp = 'time';
+        sharedPairFormat = sp;
+        localStorage.setItem('sharedPairFormat', sharedPairFormat);
+    }
+
     showSleepMode = document.getElementById('settingsToggleSleepMode').checked;
     localStorage.setItem('showSleepMode', showSleepMode ? 'true' : 'false');
 
@@ -239,22 +270,26 @@ function saveSettingsFromUI() {
         }
     }
 
-    // Базовые виджеты
     showWidgetMiniCal = document.getElementById('settingsToggleWidgetMiniCal').checked;
     showWidgetGlobal  = document.getElementById('settingsToggleWidgetGlobal').checked;
     showWidgetLabs    = document.getElementById('settingsToggleWidgetLabs').checked;
     showWidgetSuggestions = document.getElementById('settingsToggleWidgetSuggestions').checked;
     showWidgetPacing  = document.getElementById('settingsToggleWidgetPacing').checked;
-    showWidgetNotes   = document.getElementById('settingsToggleWidgetNotes').checked;
 
     localStorage.setItem('showWidgetMiniCal', showWidgetMiniCal);
     localStorage.setItem('showWidgetGlobal',  showWidgetGlobal);
     localStorage.setItem('showWidgetLabs',    showWidgetLabs);
     localStorage.setItem('showWidgetSuggestions', showWidgetSuggestions);
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
-    localStorage.setItem('showWidgetNotes',   showWidgetNotes);
 
-    // Pro виджеты
+    showWidgetNotes1 = document.getElementById('settingsToggleWidgetNotes1').checked;
+    showWidgetNotes2 = document.getElementById('settingsToggleWidgetNotes2').checked;
+    showWidgetNotes3 = document.getElementById('settingsToggleWidgetNotes3').checked;
+
+    localStorage.setItem('showWidgetNotes1', showWidgetNotes1);
+    localStorage.setItem('showWidgetNotes2', showWidgetNotes2);
+    localStorage.setItem('showWidgetNotes3', showWidgetNotes3);
+
     showWidgetLabsPro    = document.getElementById('settingsToggleWidgetLabsPro').checked;
     showWidgetMoodleAvg  = document.getElementById('settingsToggleWidgetMoodleAvg').checked;
     showWidgetMoodleSubj = document.getElementById('settingsToggleWidgetMoodleSubj').checked;
@@ -372,17 +407,57 @@ function applyTheme() {
     }
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.setAttribute('data-bs-theme', theme === 'dark' ? 'dark' : 'light');
+    // Переменные темы могли измениться — кэш getThemeColor устарел.
+    if (typeof resetThemeColorCache === 'function') resetThemeColorCache();
     if (theme === 'custom') {
         if (typeof applyCustomTheme === 'function') applyCustomTheme();
     }
-    
-    // ДОБАВЛЕНО: Ждем завершения CSS-перехода (0.25s), чтобы getComputedStyle
-    // вернул уже конечный цвет, а не промежуточный.
+
     if (prevTheme !== theme && typeof refreshChartsTheme === 'function') {
         setTimeout(() => {
             refreshChartsTheme();
         }, 300);
     }
+}
+
+// ============================================================
+//  СКАЧИВАНИЕ ФАЙЛОВ (расписание, заметки, резервная копия)
+// ============================================================
+
+// Сохраняет ответ как файл. Имя берём из Content-Disposition
+// (filename*=UTF-8''…), иначе — fallbackName.
+async function _saveResponseAsFile(resp, fallbackName) {
+    const blob = await resp.blob();
+    let filename = fallbackName;
+    const cd = resp.headers.get('Content-Disposition') || '';
+
+    let m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+    if (m && m[1]) {
+        try { filename = decodeURIComponent(m[1]); }
+        catch (e) {}
+    } else {
+        m = /filename="?([^";]+)"?/i.exec(cd);
+        if (m && m[1]) filename = m[1];
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    // Не отзываем URL сразу: в некоторых браузерах скачивание
+    // не успевает начаться и файл приходит пустым.
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    return filename;
+}
+
+function _downloadErrorText(status, text) {
+    if (status === 409) return text || 'Данные ещё не готовы.';
+    if (status === 429) return 'Слишком часто. Подождите минуту и попробуйте снова.';
+    if (status === 401) return 'Требуется авторизация.';
+    return `HTTP ${status}`;
 }
 
 async function downloadICS() {
@@ -398,43 +473,18 @@ async function downloadICS() {
 
     try {
         const url = `/api/schedule.ics?group=${encodeURIComponent(group)}&subgroup=${encodeURIComponent(subgroup)}`;
-        const resp = await fetch(url);
+        // fetch, а не apiFetch: для 409 нужен текст ответа, а apiFetch
+        // превращает любой не-2xx в исключение без тела.
+        const resp = await fetch(url, { headers: authHeaders() });
 
         if (!resp.ok) {
-            if (resp.status === 409) {
-                let text = '';
-                try { text = await resp.text(); } catch (e) {}
-                throw new Error(text || 'Расписание ещё не загружено. Откройте группу в календаре, затем скачивайте .ics.');
-            }
-            if (resp.status === 429) {
-                throw new Error('Слишком часто. Подождите минуту и попробуйте снова.');
-            }
-            throw new Error(`HTTP ${resp.status}`);
+            let text = '';
+            try { text = await resp.text(); } catch (e) {}
+            throw new Error(_downloadErrorText(resp.status, text));
         }
 
-        const blob = await resp.blob();
-
-        let filename = `schedule_${group.replace(/[\/\\:*?"<>|]/g, '_')}_${subgroup}.ics`;
-        const cd = resp.headers.get('Content-Disposition') || '';
-
-        let m = /filename\*=UTF-8''([^;]+)/i.exec(cd);
-        if (m && m[1]) {
-            try { filename = decodeURIComponent(m[1]); }
-            catch (e) { /* оставляем fallback */ }
-        } else {
-            m = /filename="?([^";]+)"?/i.exec(cd);
-            if (m && m[1]) filename = m[1];
-        }
-
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(objectUrl);
-
+        const safeGroup = group.replace(/[\/\\:*?"<>|]/g, '_');
+        await _saveResponseAsFile(resp, `schedule_${safeGroup}_${subgroup}.ics`);
         showUpdateNotification('✅ Файл .ics скачан');
 
     } catch (e) {
@@ -446,41 +496,148 @@ async function downloadICS() {
     }
 }
 
-// Управляет видимостью Pro-виджетов и плашкой "Войдите в Pro"
+async function downloadTasksICS() {
+    showGlobalLoader('📝 Готовим .ics с заметками...');
+    try {
+        const resp = await fetch('/api/tasks.ics', { headers: authHeaders() });
+        if (!resp.ok) {
+            let text = '';
+            try { text = await resp.text(); } catch (e) {}
+            throw new Error(_downloadErrorText(resp.status, text));
+        }
+        await _saveResponseAsFile(resp, 'ezh_notes.ics');
+        showUpdateNotification('✅ Заметки сохранены в .ics');
+    } catch (e) {
+        console.error('[ics] tasks download failed', e);
+        showUpdateNotification(`❌ ${(e && e.message) || 'Не удалось собрать .ics'}`);
+    } finally {
+        hideGlobalLoader();
+    }
+}
+
+// ============================================================
+//  РЕЗЕРВНАЯ КОПИЯ
+// ============================================================
+
+async function downloadBackup() {
+    showGlobalLoader('💾 Собираем резервную копию...');
+    try {
+        const data = await apiLoadBackup();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const d = new Date();
+        const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+                    + `-${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ezh_backup_${stamp}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showUpdateNotification('✅ Копия сохранена');
+    } catch (e) {
+        console.error('[backup] export failed', e);
+        alert('Не удалось собрать копию: ' + apiErrorText(e, { subject: 'копия' }));
+    } finally {
+        hideGlobalLoader();
+    }
+}
+
+function pickBackupFile() {
+    const input = document.getElementById('backupFileInput');
+    if (!input) return;
+    input.value = '';
+    input.click();
+}
+
+async function onBackupFilePicked(input) {
+    const file = input && input.files && input.files[0];
+    if (!file) return;
+
+    let payload;
+    try {
+        payload = JSON.parse(await file.text());
+    } catch (e) {
+        alert('Не удалось прочитать файл: это не JSON.');
+        input.value = '';
+        return;
+    }
+    if (!payload || typeof payload !== 'object') {
+        alert('Файл копии пустой или повреждён.');
+        input.value = '';
+        return;
+    }
+
+    const tables = payload.tables || payload;
+    const counts = Object.keys(tables)
+        .filter(k => Array.isArray(tables[k]))
+        .map(k => `• ${k}: ${tables[k].length}`)
+        .join('\n');
+
+    if (!confirm(
+        'Восстановить данные из копии?\n\n' +
+        'Текущие заметки, друзья, лабы, настройки предметов, кастомное расписание ' +
+        'и преподаватели будут ЗАМЕНЕНЫ.\n\n' +
+        (counts || 'В файле нет таблиц с данными.')
+    )) {
+        input.value = '';
+        return;
+    }
+
+    showGlobalLoader('⏳ Восстанавливаем данные...');
+    try {
+        const res = await apiRestoreBackup(payload);
+        if (!res || !res.success) throw new Error((res && res.error) || 'неизвестная ошибка');
+        showUpdateNotification('✅ Данные восстановлены, перезагружаем…');
+        setTimeout(() => window.location.reload(), 900);
+    } catch (e) {
+        console.error('[backup] restore failed', e);
+        alert('Не удалось восстановить: ' + apiErrorText(e, { subject: 'копия' }));
+    } finally {
+        hideGlobalLoader();
+        input.value = '';
+    }
+}
+
 function applyWidgetVisibility() {
     const wm = document.getElementById('widgetMiniCalCard');
     const wg = document.getElementById('widgetGlobalCard');
     const wl = document.getElementById('widgetLabsCard');
     const ws = document.getElementById('widgetSuggestionsCard');
     const wp = document.getElementById('widgetPacingCard');
-    const wn = document.getElementById('widgetNotesCard');
-    
+
     if (wm) wm.style.display = showWidgetMiniCal ? '' : 'none';
     if (wg) wg.style.display = showWidgetGlobal  ? '' : 'none';
     if (wl) wl.style.display = (!window.isProActive && showWidgetLabs) ? '' : 'none';
     if (ws) ws.style.display = showWidgetSuggestions ? '' : 'none';
     if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
-    if (wn) wn.style.display = showWidgetNotes   ? '' : 'none';
 
-    // Pro widgets
+    // Заметки 1/2/3
+    const wn1 = document.getElementById('widgetNotesCard1');
+    const wn2 = document.getElementById('widgetNotesCard2');
+    const wn3 = document.getElementById('widgetNotesCard3');
+
+    if (wn1) wn1.style.display = showWidgetNotes1 ? '' : 'none';
+    if (wn2) wn2.style.display = showWidgetNotes2 ? '' : 'none';
+    if (wn3) wn3.style.display = showWidgetNotes3 ? '' : 'none';
+
     const wlp = document.getElementById('widgetLabsProCard');
     const wma = document.getElementById('widgetMoodleAvgGradeCard');
     const wms = document.getElementById('widgetMoodleSubjectGradesCard');
 
-    // Pro-виджеты рендерим только если Pro активен И данные уже загружены
     const proReady = window.isProActive && window.hasLoadedMoodleStats;
 
     if (wlp) wlp.style.display = (proReady && showWidgetLabsPro) ? '' : 'none';
     if (wma) wma.style.display = (proReady && showWidgetMoodleAvg) ? '' : 'none';
     if (wms) wms.style.display = (proReady && showWidgetMoodleSubj) ? '' : 'none';
 
-    // Управляем видимостью плашки в настройках
     const proLockMsg = document.getElementById('proWidgetsLockedMsg');
     const proGrid = document.getElementById('proWidgetsGrid');
     if (proLockMsg && proGrid) {
         if (window.isProActive) {
             proLockMsg.style.display = 'none';
-            proGrid.style.display = ''; 
+            proGrid.style.display = '';
         } else {
             proLockMsg.style.display = 'flex';
             proGrid.style.display = 'none';

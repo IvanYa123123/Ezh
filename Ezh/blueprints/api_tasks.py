@@ -1,11 +1,41 @@
 """Задачи и глобальный поиск."""
 from flask import Blueprint, jsonify, request
 
+from .common import validate_date
 from .db import get_db
 from .extensions import limiter
 
 
 bp = Blueprint('tasks', __name__)
+
+_VALID_TASK_STATUS = ('green', 'orange', 'red', 'completed')
+
+
+def _parse_task_payload(data, current=None):
+    """Общая валидация для POST и PUT.
+
+    current — уже сохранённая строка (для PUT). Если передана, поля,
+    которых нет в запросе, берутся из неё: частичное обновление
+    (например, только status) больше не падает с "date and text required"
+    и не перезаписывает заметку пустыми значениями.
+    """
+    base = dict(current or {})
+    date = str(data.get('date', base.get('date')) or '').strip()
+    text = str(data.get('text', base.get('text')) or '').strip()
+    status = str(data.get('status', base.get('status') or 'green')).strip()
+
+    if not date or not text:
+        return None, "date and text required"
+    if len(text) > 2000:
+        return None, "text too long"
+    # Дата приходит из календаря в ISO. Если пришло что-то иное —
+    # оставляем как есть (не ломаем уже существующие записи),
+    # но не даём пустой строке пройти дальше.
+    date = validate_date(date, strict=False) or date
+    if status not in _VALID_TASK_STATUS:
+        # Раньше молча подставлялся green и правка терялась незаметно.
+        return None, "invalid status"
+    return {"date": date, "text": text, "status": status}, None
 
 
 # ============================================================
@@ -19,20 +49,13 @@ def manage_tasks():
 
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
-        date = (data.get('date') or '').strip()
-        text = (data.get('text') or '').strip()
-        status = (data.get('status') or 'green').strip()
-
-        if not date or not text:
-            return jsonify({"error": "date and text required"}), 400
-        if len(text) > 2000:
-            return jsonify({"error": "text too long"}), 400
-        if status not in ('green', 'orange', 'red', 'completed'):
-            status = 'green'
+        payload, error = _parse_task_payload(data)
+        if error:
+            return jsonify({"error": error}), 400
 
         cursor = conn.execute(
             "INSERT INTO tasks (date, text, status) VALUES (?, ?, ?)",
-            (date, text, status)
+            (payload['date'], payload['text'], payload['status'])
         )
         conn.commit()
         return jsonify({"id": cursor.lastrowid})
@@ -59,18 +82,18 @@ def update_task(task_id):
 
     if request.method == "PUT":
         data = request.get_json(silent=True) or {}
-        date = (data.get('date') or '').strip()
-        text = (data.get('text') or '').strip()
-        status = (data.get('status') or 'green').strip()
-
-        if not date or not text:
-            return jsonify({"error": "date and text required"}), 400
-        if len(text) > 2000:
-            return jsonify({"error": "text too long"}), 400
+        row = conn.execute(
+            "SELECT date, text, status FROM tasks WHERE id=?", (task_id,)
+        ).fetchone()
+        if row is None:
+            return jsonify({"error": "not found"}), 404
+        payload, error = _parse_task_payload(data, current=dict(row))
+        if error:
+            return jsonify({"error": error}), 400
 
         conn.execute(
             "UPDATE tasks SET date=?, status=?, text=? WHERE id=?",
-            (date, status, text, task_id)
+            (payload['date'], payload['status'], payload['text'], task_id)
         )
         conn.commit()
         return jsonify({"success": True})

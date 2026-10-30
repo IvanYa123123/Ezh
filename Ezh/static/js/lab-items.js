@@ -138,6 +138,10 @@ function renderLabItemsList() {
 }
 
 async function onLabItemToggle(id, isCompleted) {
+    const subjectKey = _labItemsCurrentSubject;
+    const before = (subjectKey && _labItemsCache[subjectKey]) ? _labItemsCache[subjectKey] : [];
+    const wasAllDone = before.length > 0 && before.every(x => x.completed);
+
     try {
         await apiUpdateLabItem(id, { completed: isCompleted ? 1 : 0 });
     } catch (e) {
@@ -145,7 +149,7 @@ async function onLabItemToggle(id, isCompleted) {
         alert('Не удалось сохранить');
         return;
     }
-    const subjectKey = _labItemsCurrentSubject;
+
     if (subjectKey && _labItemsCache[subjectKey]) {
         const it = _labItemsCache[subjectKey].find(x => x.id === id);
         if (it) it.completed = isCompleted ? 1 : 0;
@@ -153,7 +157,17 @@ async function onLabItemToggle(id, isCompleted) {
     renderLabItemsList();
     await updateLabsCache();
     renderCharts();
-    
+
+    // Последняя работа по предмету — маленький праздник.
+    const after = (subjectKey && _labItemsCache[subjectKey]) ? _labItemsCache[subjectKey] : [];
+    const nowAllDone = after.length > 0 && after.every(x => x.completed);
+    if (!wasAllDone && nowAllDone) {
+        if (typeof celebrate === 'function') celebrate();
+        if (typeof showUpdateNotification === 'function') {
+            showUpdateNotification('🎉 Все работы по предмету сданы!');
+        }
+    }
+
     // ДИНАМИЧЕСКОЕ ОБНОВЛЕНИЕ ВИДЖЕТА
     if (typeof renderSuggestions === 'function') renderSuggestions(true);
 }

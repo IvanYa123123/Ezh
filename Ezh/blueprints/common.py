@@ -4,6 +4,7 @@ import re
 import json
 import time
 import threading
+from datetime import datetime
 
 from . import runtime
 
@@ -43,6 +44,73 @@ def validate_slug(raw) -> str:
     if not _SLUG_RE.match(s):
         raise ValueError("invalid slug")
     return s
+
+
+# ------------------------------------------------------------
+#  ДАТА / ВРЕМЯ / ПОВТОРЕНИЕ
+# ------------------------------------------------------------
+#  Раньше custom_schedule принимал от клиента любые строки:
+#  base_date="", time_range="без времени", recurrence="иногда".
+#  Такая запись сохранялась в БД, но никогда не попадала в календарь
+#  и ломала сортировку/рендер. Теперь формат проверяется на входе.
+# ------------------------------------------------------------
+
+_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_TIME_RANGE_RE = re.compile(r'^(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})$')
+_VALID_RECURRENCE = frozenset(("none", "weekly", "biweekly"))
+
+
+def validate_date(raw, strict: bool = True) -> str:
+    s = str(raw or "").strip()
+    if not _DATE_RE.match(s):
+        if strict:
+            raise ValueError("invalid date")
+        return ""
+    try:
+        datetime.strptime(s, "%Y-%m-%d")
+    except ValueError:
+        if strict:
+            raise ValueError("invalid date")
+        return ""
+    return s
+
+
+def validate_time_range(raw) -> str:
+    """Нормализует «8:30 - 10:00» → «08:30 - 10:00» и проверяет порядок."""
+    s = str(raw or "").strip()
+    m = _TIME_RANGE_RE.match(s)
+    if not m:
+        raise ValueError("invalid time range")
+    h1, m1, h2, m2 = (int(x) for x in m.groups())
+    if not (0 <= h1 <= 23 and 0 <= m1 <= 59 and 0 <= h2 <= 24 and 0 <= m2 <= 59):
+        raise ValueError("invalid time range")
+    if (h1, m1) >= (h2, m2) or (h2, m2) > (24, 0):
+        raise ValueError("time range must be positive")
+    return f"{h1:02d}:{m1:02d} - {h2:02d}:{m2:02d}"
+
+
+def validate_recurrence(raw) -> str:
+    s = str(raw or "none").strip().lower()
+    return s if s in _VALID_RECURRENCE else "none"
+
+
+def validate_exceptions(raw) -> str:
+    """Список ISO-дат исключений для повторяющихся событий."""
+    data = raw
+    if isinstance(raw, str):
+        try:
+            data = json.loads(raw or "[]")
+        except (ValueError, TypeError):
+            data = []
+    if not isinstance(data, list):
+        data = []
+    cleaned = []
+    for item in data[:366]:
+        try:
+            cleaned.append(validate_date(item))
+        except ValueError:
+            continue
+    return json.dumps(sorted(set(cleaned)), ensure_ascii=False)
 
 
 def make_safe_filename(name):

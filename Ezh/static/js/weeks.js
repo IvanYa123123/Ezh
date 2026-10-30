@@ -1,8 +1,20 @@
 // Навигация по неделям + сброс вертикального дня при смене недели.
+//
+// v3.18.0:
+//   • Кнопка недели теперь чередует две подписи: диапазон дат
+//     и номер академической недели. Период — 7.5 секунды.
+//     Академический номер считается от старта семестра:
+//       сентябрь–декабрь → 1 сентября
+//       февраль–июнь     → 7 февраля
+//       январь           → 1 сентября прошлого года
+//       июль–август      → 1 сентября текущего (показывать будет «1 неделя»)
+//     Пример: 26 октября 2026 — это 9 неделя осеннего семестра.
 
 const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6);
 
 let _weekDropdownListenerAdded = false;
+let _weekLabelInterval = null;
+let _weekLabelPhase = 0;
 
 function _weekParityLabel(weekDate) {
     const d = new Date(Date.UTC(weekDate.getFullYear(), weekDate.getMonth(), weekDate.getDate()));
@@ -12,6 +24,69 @@ function _weekParityLabel(weekDate) {
     return (weeks % 2 === 0)
         ? { label: 'Ч',  cls: 'week-even', title: 'Чётная неделя' }
         : { label: 'НЧ', cls: 'week-odd',  title: 'Нечётная неделя' };
+}
+
+function _getAcademicWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const y = d.getFullYear();
+    const m = d.getMonth();
+
+    let start;
+    if (m >= 8) {              // сентябрь–декабрь
+        start = new Date(y, 8, 1);
+    } else if (m >= 1 && m <= 5) { // февраль–июнь
+        start = new Date(y, 1, 7);
+    } else if (m === 0) {      // январь — ещё осенний семестр
+        start = new Date(y - 1, 8, 1);
+    } else {                   // июль–август — хвост прошлого учебного года
+        start = new Date(y - 1, 8, 1);
+    }
+    start.setHours(0, 0, 0, 0);
+
+    const startDow = start.getDay() || 7;
+    start.setDate(start.getDate() - (startDow - 1));
+
+    const dateDow = d.getDay() || 7;
+    d.setDate(d.getDate() - (dateDow - 1));
+
+    const weeks = Math.round((d - start) / (7 * 24 * 60 * 60 * 1000));
+    // Раньше для июля–августа start был в будущем и номер уходил
+    // в минус («-20 неделя»). Теперь это конец прошлого года, а
+    // минимум — первая неделя.
+    return Math.max(1, weeks + 1);
+}
+
+function _renderWeekLabel() {
+    const btn = document.getElementById('weekDropdownBtn');
+    if (!btn) return;
+
+    const dBtn = new Date(currentBaseDate);
+    dBtn.setHours(0, 0, 0, 0);
+    const endDBtn = new Date(dBtn);
+    endDBtn.setDate(endDBtn.getDate() + 6);
+
+    const parity = _weekParityLabel(dBtn);
+
+    let mainText;
+    if (_weekLabelPhase === 1) {
+        const weekNum = _getAcademicWeekNumber(dBtn);
+        mainText = `${weekNum} неделя`;
+    } else {
+        mainText = `${dBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} - ${endDBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}`;
+    }
+
+    btn.innerHTML = `📅 ${mainText} <span class="week-badge ${parity.cls}" title="${parity.title}">${parity.label}</span>`;
+}
+
+function startWeekLabelRotation() {
+    if (_weekLabelInterval) clearInterval(_weekLabelInterval);
+    _weekLabelPhase = 0;
+    _renderWeekLabel();
+    _weekLabelInterval = setInterval(() => {
+        _weekLabelPhase = (_weekLabelPhase + 1) % 2;
+        _renderWeekLabel();
+    }, 7500);
 }
 
 function updateWeekDropdown() {
@@ -50,14 +125,9 @@ function updateWeekDropdown() {
         menu.appendChild(li);
     }
 
-    let dBtn = new Date(realBase);
-    dBtn.setDate(dBtn.getDate() + (currentOffset * 7));
-    let endDBtn = new Date(dBtn);
-    endDBtn.setDate(endDBtn.getDate() + 6);
-    const btnParity = _weekParityLabel(dBtn);
-    btn.innerHTML = `📅 ${dBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} - ${endDBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} <span class="week-badge ${btnParity.cls}">${btnParity.label}</span>`;
+    // Кнопку рисуем через общий рендерер, чтобы не терять фазу чередования.
+    _renderWeekLabel();
 
-    // Фикс накопления слушателей: добавляем один раз
     if (!_weekDropdownListenerAdded) {
         _weekDropdownListenerAdded = true;
         btn.addEventListener('shown.bs.dropdown', () => {

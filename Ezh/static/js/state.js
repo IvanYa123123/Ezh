@@ -1,4 +1,8 @@
 // Глобальное состояние приложения.
+//
+// v3.18.0:
+//   • updateGroupDisplay() — синхронизирует текст в #groupDisplay
+//     со значениями скрытых #groupSelect / #subgroupSelect.
 
 let currentBaseDate = new Date();
 currentBaseDate.setDate(currentBaseDate.getDate() - (currentBaseDate.getDay() === 0 ? 6 : currentBaseDate.getDay() - 1));
@@ -33,6 +37,7 @@ let showFriends  = localStorage.getItem('showFriends')  !== 'false';
 let showStatus = localStorage.getItem('showStatus') !== 'false';
 let statusFormat = localStorage.getItem('statusFormat') || 'interval';
 let statusPrecision = localStorage.getItem('statusPrecision') || 'min';
+let sharedPairFormat = localStorage.getItem('sharedPairFormat') || 'time';
 if (!['min', 'sec', 'cs'].includes(statusPrecision)) statusPrecision = 'min';
 
 function getStatusTickMs() {
@@ -63,13 +68,6 @@ let taskDatesSet = new Set();
 
 let loaderInterval = null;
 
-// ============================================================
-//  СПЯЩИЙ РЕЖИМ
-// ------------------------------------------------------------
-//  Включён по умолчанию. Ежики выходят через 20 с бездействия.
-//  Сохранённое значение 'false' выключает режим полностью.
-// ============================================================
-
 let showSleepMode = localStorage.getItem('showSleepMode') !== 'false';
 
 function saveVisibleFriends() {
@@ -82,7 +80,11 @@ let showWidgetGlobal  = localStorage.getItem('showWidgetGlobal')  !== 'false';
 let showWidgetLabs    = localStorage.getItem('showWidgetLabs')    !== 'false';
 let showWidgetSuggestions = localStorage.getItem('showWidgetSuggestions') !== 'false';
 let showWidgetPacing  = localStorage.getItem('showWidgetPacing')  !== 'false';
-let showWidgetNotes   = localStorage.getItem('showWidgetNotes')   !== 'false';
+
+// Виджеты Заметок (1, 2, 3)
+let showWidgetNotes1 = localStorage.getItem('showWidgetNotes1') !== 'false';
+let showWidgetNotes2 = localStorage.getItem('showWidgetNotes2') === 'true';
+let showWidgetNotes3 = localStorage.getItem('showWidgetNotes3') === 'true';
 
 // Pro виджеты (появляются только при активном Pro)
 let showWidgetLabsPro    = localStorage.getItem('showWidgetLabsPro')    !== 'false';
@@ -94,6 +96,40 @@ let showTeachersSection = localStorage.getItem('showTeachersSection') !== 'false
 
 let separateFriendsTeachers = localStorage.getItem('separateFriendsTeachers') === 'true';
 let friendsTeachersTab = localStorage.getItem('friendsTeachersTab') || 'friends';
+
+// ============================================================
+//  ГРУППА В ШАПКЕ
+// ============================================================
+//  В шапке отображается #groupDisplay (текст). Реальные
+//  значения для логики хранятся в скрытых #groupSelect и
+//  #subgroupSelect. Эта функция синхронизирует отображение.
+// ============================================================
+
+function updateGroupDisplay() {
+    const displayEl = document.getElementById('groupDisplay');
+    const groupInput = document.getElementById('groupSelect');
+    const subgroupInput = document.getElementById('subgroupSelect');
+    if (!displayEl || !groupInput) return;
+
+    const group = (groupInput.value || '').trim();
+    const subgroup = subgroupInput ? subgroupInput.value : '0';
+
+    if (!group) {
+        displayEl.textContent = 'Группа не выбрана';
+        displayEl.classList.add('group-display-empty');
+        displayEl.title = 'Выберите группу — здесь или в настройках';
+        return;
+    }
+
+    let text = group;
+    if (subgroup === '1') text += ' · 1 подгр.';
+    else if (subgroup === '2') text += ' · 2 подгр.';
+    else text += ' · все';
+
+    displayEl.textContent = text;
+    displayEl.classList.remove('group-display-empty');
+    displayEl.title = 'Изменить можно в настройках';
+}
 
 // ============================================================
 //  ВИДИМОСТЬ ВИДЖЕТОВ И ПРО-РЕЖИМ
@@ -108,7 +144,9 @@ function hideWidget(widgetId, toggleId) {
     else if (toggleId === 'settingsToggleWidgetLabs') { showWidgetLabs = false; localStorage.setItem('showWidgetLabs', 'false'); }
     else if (toggleId === 'settingsToggleWidgetSuggestions') { showWidgetSuggestions = false; localStorage.setItem('showWidgetSuggestions', 'false'); }
     else if (toggleId === 'settingsToggleWidgetPacing') { showWidgetPacing = false; localStorage.setItem('showWidgetPacing', 'false'); }
-    else if (toggleId === 'settingsToggleWidgetNotes') { showWidgetNotes = false; localStorage.setItem('showWidgetNotes', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetNotes1') { showWidgetNotes1 = false; localStorage.setItem('showWidgetNotes1', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetNotes2') { showWidgetNotes2 = false; localStorage.setItem('showWidgetNotes2', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetNotes3') { showWidgetNotes3 = false; localStorage.setItem('showWidgetNotes3', 'false'); }
     else if (toggleId === 'settingsToggleWidgetLabsPro') { showWidgetLabsPro = false; localStorage.setItem('showWidgetLabsPro', 'false'); }
     else if (toggleId === 'settingsToggleWidgetMoodleAvg') { showWidgetMoodleAvg = false; localStorage.setItem('showWidgetMoodleAvg', 'false'); }
     else if (toggleId === 'settingsToggleWidgetMoodleSubj') { showWidgetMoodleSubj = false; localStorage.setItem('showWidgetMoodleSubj', 'false'); }
@@ -275,18 +313,23 @@ function cancelUndo() {
 }
 
 // ============================================================
-//  ВИДЖЕТ «ЗАМЕТКИ»
+//  ВИДЖЕТ «ЗАМЕТКИ» (1, 2, 3)
 // ============================================================
 
 function initNotesWidget() {
-    const ta = document.getElementById('notesWidgetText');
-    if (!ta) return;
-    try { ta.value = localStorage.getItem('notesWidget') || ''; } catch (e) {}
+    for (let i = 1; i <= 3; i++) {
+        const ta = document.getElementById(`notesWidgetText${i}`);
+        if (ta) {
+            try { ta.value = localStorage.getItem(`notesWidget${i}`) || ''; } catch (e) {}
+        }
+    }
 }
 
 function onNotesWidgetInput(el) {
     if (!el) return;
-    try { localStorage.setItem('notesWidget', el.value); } catch (e) {}
+    const idx = el.id.replace('notesWidgetText', '');
+    if (!idx) return;
+    try { localStorage.setItem(`notesWidget${idx}`, el.value); } catch (e) {}
 }
 
 // ============================================================
@@ -1076,13 +1119,30 @@ function _restoreLayout() {
     const allCards = {};
     document.querySelectorAll(_widgetZoneSelector()).forEach(c => { allCards[c.id] = c; });
 
+    let dropped = false;
+    const cleanedLayout = {};
+
     _widgetZoneIds.forEach(zoneId => {
         const zone = document.getElementById(zoneId);
-        if (!zone) return;
         const ids = Array.isArray(layout[zoneId]) ? layout[zoneId] : [];
+        const keptIds = [];
+
         ids.forEach(id => {
             const card = allCards[id];
-            if (card) zone.appendChild(card);
+            if (card) {
+                if (zone) zone.appendChild(card);
+                keptIds.push(id);
+            } else {
+                dropped = true;
+            }
         });
+
+        cleanedLayout[zoneId] = keptIds;
     });
+
+    if (dropped) {
+        try {
+            localStorage.setItem(WIDGET_LAYOUT_KEY, JSON.stringify(cleanedLayout));
+        } catch (e) {}
+    }
 }

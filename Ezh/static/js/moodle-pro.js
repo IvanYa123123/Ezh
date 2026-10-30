@@ -56,13 +56,17 @@ function setProMode(isActive) {
     window.isProActive = isActive;
 
     if (isActive) {
-        badge.className = 'app-mode-badge-stylish pro-mode ms-2';
-        badge.textContent = 'Pro';
-        badge.title = 'Режим Pro активен (Нажмите для настроек)';
+        if (badge) {
+            badge.className = 'app-mode-badge-stylish pro-mode ms-2';
+            badge.textContent = 'Pro';
+            badge.title = 'Режим Pro активен (Нажмите для настроек)';
+        }
     } else {
-        badge.className = 'app-mode-badge-stylish basic-mode ms-2';
-        badge.textContent = 'Basic';
-        badge.title = 'Базовая версия (Нажмите для входа)';
+        if (badge) {
+            badge.className = 'app-mode-badge-stylish basic-mode ms-2';
+            badge.textContent = 'Basic';
+            badge.title = 'Базовая версия (Нажмите для входа)';
+        }
         window.hasLoadedMoodleStats = false;
 
         if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) {
@@ -180,15 +184,22 @@ async function loadMoodleStats(force = false, isBackground = false) {
             </div>`;
     }
 
-    if (document.getElementById('app-mode-badge').textContent === 'Pro') {
-        if (!isBackground) document.getElementById('proAvgGradeText').innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+    const modeBadge = document.getElementById('app-mode-badge');
+    if (modeBadge && modeBadge.textContent === 'Pro') {
+        const avgEl = document.getElementById('proAvgGradeText');
+        if (!isBackground && avgEl) {
+            avgEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+        }
     }
 
     try {
         const url = `/api/moodle/stats?force=${force ? '1' : '0'}`;
-        const fetchOpts = {};
+        const fetchOpts = { headers: authHeaders() };
         if (moodleAbortController) fetchOpts.signal = moodleAbortController.signal;
 
+        // Обычный fetch, а не apiFetch: код ниже обрабатывает 401
+        // (выход из Pro) и читает тело ошибки — исключение здесь
+        // сломало бы эту ветку.
         const rawResp = await fetch(url, fetchOpts);
 
         if (rawResp.status === 401) {

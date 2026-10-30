@@ -1,6 +1,5 @@
 """Слой работы с БД: подключение, схема, миграции."""
 import os
-import re
 import json
 import time
 import sqlite3
@@ -50,6 +49,23 @@ def close_db(exc=None):
             db.close()
         except Exception:
             pass
+
+
+def ensure_db_initialized():
+    """Единственная точка инициализации БД.
+
+    Раньше в app.py был собственный _db_init_lock/_db_ready,
+    а здесь — свой. Оба создавали потокобезопасную инициализацию,
+    но правки приходилось вносить в двух местах. Теперь всё
+    здесь, а app.py просто вызывает эту функцию из before_request.
+    """
+    global _db_ready
+    if _db_ready:
+        return
+    with _db_init_lock:
+        if not _db_ready:
+            init_db()
+            _db_ready = True
 
 
 def _column_exists(conn, table, column):

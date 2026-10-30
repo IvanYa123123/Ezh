@@ -1,11 +1,10 @@
 // Горячие клавиши:
-//   Ctrl/⌘ + K — открыть глобальный поиск
+//   Ctrl/⌘ + K — фокус на поле поиска в шапке
 //   Ctrl/⌘ + N — создать заметку на сегодня
 //   Esc        — свернуть развёрнутый день / отменить ввод заметки
 //
-// Обработчик висит на document в фазе bubbling. Если открыта
-// Bootstrap-модалка — Esc отдаём ей (Bootstrap сам её закроет).
-// В полях ввода не мешаем печатать.
+// v3.18.0: Ctrl+K теперь фокусит инлайн-поле #globalSearchInput,
+// а не открывает модалку. Если поля нет — fallback на openSearchModal.
 
 (function () {
 
@@ -25,23 +24,53 @@
         return document.querySelector('#searchModal.show') !== null;
     }
 
+    function _focusInlineSearch() {
+        const inline = document.getElementById('globalSearchInput');
+        if (inline) {
+            inline.focus();
+            inline.select();
+            return true;
+        }
+        return false;
+    }
+
     document.addEventListener('keydown', (e) => {
 
         const key = (e.key || '').toLowerCase();
 
-        // ─── Ctrl/⌘ + K: глобальный поиск ─────────────────────
+        // ─── [ / ]: заметки, { / }: события ────────────────────
+        // navigateNote()/navigateEvent() были в коде, но без кнопок
+        // и клавиш. Скобки выбраны вместо Alt+←/→: в Chrome на Windows
+        // Alt+стрелка — это «назад/вперёд» на уровне браузера, и
+        // preventDefault от неё не спасает.
+        if (key === '[' || key === ']' || key === '{' || key === '}') {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (_isTypingContext(e.target)) return;
+            if (_isModalOpen()) return;
+            e.preventDefault();
+            const dir = (key === ']' || key === '}') ? 1 : -1;
+            const isEvent = (key === '{' || key === '}');
+            if (isEvent) {
+                if (typeof navigateEventFromHere === 'function') navigateEventFromHere(dir);
+            } else if (typeof navigateNoteFromHere === 'function') {
+                navigateNoteFromHere(dir);
+            }
+            return;
+        }
+
+        // ─── Ctrl/⌘ + K: фокус на инлайн-поиск ─────────────────
         if (key === 'k' && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
-            // Если поиск уже открыт — просто фокусируем поле и выделяем
+            e.preventDefault();
+
             if (_isSearchModalOpen()) {
-                e.preventDefault();
                 const inp = document.getElementById('searchInput');
                 if (inp) { inp.focus(); inp.select(); }
                 return;
             }
-            // В обычных полях ввода не мешаем пользователю печатать
-            if (_isTypingContext(e.target)) return;
 
-            e.preventDefault();
+            if (_focusInlineSearch()) return;
+
+            // Fallback на модалку, если поле почему-то отсутствует
             if (typeof openSearchModal === 'function') openSearchModal();
             return;
         }
@@ -57,7 +86,6 @@
         // ─── Esc: свернуть день / отменить ввод заметки ────────
         if (key === 'escape') {
 
-            // 1) Отмена ввода заметки: Esc внутри textarea заметки
             const t = e.target;
             if (t && t.id && t.id.indexOf('task-input-') === 0) {
                 e.preventDefault();
@@ -70,10 +98,8 @@
                 return;
             }
 
-            // 2) Bootstrap-модалки: не мешаем, они сами закроются по Esc
             if (_isModalOpen()) return;
 
-            // 3) Развёрнутый день: сворачиваем
             if (typeof expandedDayDateStr !== 'undefined' && expandedDayDateStr) {
                 e.preventDefault();
                 if (typeof toggleExpandDay === 'function') {
@@ -87,7 +113,6 @@
         const today = getLocalDateStr(new Date());
         const wrapId = 'task-input-wrap-' + today;
 
-        // Если сегодняшний день не в текущей видимой неделе — прыгаем
         if (!document.getElementById(wrapId)) {
             if (typeof goToToday === 'function') {
                 goToToday();
@@ -96,8 +121,6 @@
             }
         }
 
-        // renderCalendar выполняется синхронно до первого await,
-        // так что к следующему кадру DOM уже готов.
         requestAnimationFrame(() => {
             const wrap = document.getElementById(wrapId);
             if (!wrap) return;

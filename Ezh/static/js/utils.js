@@ -44,26 +44,48 @@ function isScheduleDifferent(newSched, oldSched) {
     return getHash(newSched) !== getHash(oldSched);
 }
 
+// ============================================================
+//  КОРПУС ПО РИМСКОЙ ЦИФРЕ
+// ------------------------------------------------------------
+//  Раньше цифра искалась только в НАЧАЛЕ строки аудитории, поэтому
+//  «Ауд. I-416» (так пишут кастомные пары и часть ICS) давал
+//  unknown, и сравнение «разных корпусов» у друзей врало.
+// ============================================================
+
+const _CAMPUS_BY_ROMAN = {
+    VII: 'galosha', VIII: 'galosha', IX: 'galosha',
+    V: 'gogol', VI: 'gogol',
+    I: 'univer', II: 'univer', III: 'univer', IV: 'univer'
+};
+
+const _ROMAN_LOCATION_RE = /(?:^|[^A-ZА-ЯЁ])(VIII|VII|IX|VI|IV|V|III|II|I)(?=[^A-ZА-ЯЁ0-9]|$)/;
+
+function _romanFromLocation(text) {
+    if (!text || typeof text !== 'string') return null;
+    const m = text.toUpperCase().match(_ROMAN_LOCATION_RE);
+    return m ? m[1] : null;
+}
+
+function _romanFromLesson(text) {
+    if (!text || typeof text !== 'string') return null;
+    const up = text.toUpperCase();
+
+    // В названии предмета корпус упоминается только явно:
+    // «Ауд. I-416» или «корпус V».
+    const labelled = up.match(
+        /(?:АУД|КАБ|КОРП|КОРПУС|АУДИТОРИЯ)[.\s]*[:\-]?\s*(VIII|VII|IX|VI|IV|V|III|II|I)(?=[^A-ZА-ЯЁ0-9]|$)/
+    );
+    if (labelled) return labelled[1];
+
+    // ...или как «I-416» — цифра сразу после номера корпуса.
+    const plain = up.match(/(?:^|[^A-ZА-ЯЁ])(VIII|VII|IX|VI|IV|V|III|II|I)\s*[-–]\s*\d/);
+    return plain ? plain[1] : null;
+}
+
 function getCampus(item) {
     if (!item) return 'unknown';
-    let roman = null;
-
-    if (item.location) {
-        let loc = item.location.toUpperCase().trim();
-        let m = loc.match(/^(VIII|VII|IX|VI|IV|V|III|II|I)(?=[^A-ZА-Яa-zа-я0-9]|$)/);
-        if (m) roman = m[1];
-    }
-
-    if (!roman && item.lesson) {
-        let txt = item.lesson.toUpperCase();
-        let m2 = txt.match(/(?:АУД|КАБ|КОРП|КОРПУС|АУДИТОРИЯ)[.\s]*[:\-]?\s*(VIII|VII|IX|VI|IV|V|III|II|I)(?:[^A-ZА-Я0-9]|$)/);
-        if (m2) roman = m2[1];
-    }
-
-    if (roman === 'VII' || roman === 'VIII' || roman === 'IX') return 'galosha';
-    if (roman === 'V' || roman === 'VI') return 'gogol';
-    if (roman === 'I' || roman === 'II' || roman === 'III' || roman === 'IV') return 'univer';
-    return 'unknown';
+    const roman = _romanFromLocation(item.location) || _romanFromLesson(item.lesson);
+    return (roman && _CAMPUS_BY_ROMAN[roman]) || 'unknown';
 }
 
 function highlightMatch(text, query) {
@@ -76,8 +98,9 @@ function highlightMatch(text, query) {
 }
 
 function parseTimeRangeToMins(tr) {
-    if (!tr) return [0, 0];
+    if (typeof tr !== 'string' || !tr) return [0, 0];
     let parts = tr.split('-');
+    if (parts.length < 2) return [0, 0];
     let s = parts[0].trim().split(':');
     let e = parts[1].trim().split(':');
     return [parseInt(s[0]||0)*60 + parseInt(s[1]||0), parseInt(e[0]||0)*60 + parseInt(e[1]||0)];
@@ -177,14 +200,29 @@ function formatDurationMs(ms, precision = 'min') {
 
 // ============================================================
 //  ТЕМЫ
+// ------------------------------------------------------------
+//  getComputedStyle().getPropertyValue() заставляет браузер
+//  пересчитывать стили. renderCharts вызывает её ~10 раз за
+//  отрисовку, а отрисовок за сессию много. Значения переменных
+//  меняются только вместе с темой, поэтому кэшируем их и
+//  сбрасываем кэш в applyTheme()/applyCustomTheme().
 // ============================================================
+
+let _themeColorCache = new Map();
+
 function getThemeColor(varName, fallback = '#000000') {
+    if (_themeColorCache.has(varName)) return _themeColorCache.get(varName);
+    let value = fallback;
     try {
         const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-        return v || fallback;
-    } catch (e) {
-        return fallback;
-    }
+        if (v) value = v;
+    } catch (e) { /* fallback */ }
+    _themeColorCache.set(varName, value);
+    return value;
+}
+
+function resetThemeColorCache() {
+    _themeColorCache = new Map();
 }
 
 // ============================================================

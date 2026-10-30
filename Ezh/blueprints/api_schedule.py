@@ -3,7 +3,8 @@ import os
 import json
 import time
 import hashlib
-from datetime import datetime, timezone
+import threading
+from datetime import datetime, timezone, timedelta
 from urllib.parse import quote
 
 from flask import Blueprint, jsonify, request, Response
@@ -11,7 +12,8 @@ from flask import Blueprint, jsonify, request, Response
 from . import runtime
 from .common import (
     validate_group, validate_subgroup, make_safe_filename,
-    needs_sync, mark_synced,
+    needs_sync, mark_synced, MtimeJsonCache,
+    validate_date, validate_time_range, validate_recurrence, validate_exceptions,
 )
 from .db import get_db
 from .extensions import limiter
@@ -27,6 +29,36 @@ def _safe_print(*args, **kwargs):
             print(*args, **kwargs)
     except Exception:
         pass
+
+
+# ============================================================
+#  КЭШ JSON-ФАЙЛОВ РАСПИСАНИЙ
+# ------------------------------------------------------------
+#  Каждый друг в «Друзьях» — это отдельный /api/schedule_all.
+#  Раньше на каждый запрос файл читался и парсился заново
+#  (json.load — самая дорогая часть ответа). Теперь разбор
+#  кэшируется по mtime: файл меняется только при синхронизации,
+#  поэтому повторные чтения бесплатны.
+# ============================================================
+
+_schedule_caches = {}
+_schedule_caches_lock = threading.Lock()
+
+
+def _schedule_cache(path):
+    with _schedule_caches_lock:
+        cache = _schedule_caches.get(path)
+        if cache is None:
+            cache = MtimeJsonCache(path)
+            _schedule_caches[path] = cache
+        return cache
+
+
+def _read_schedule_file(path):
+    if not os.path.exists(path):
+        return []
+    data = _schedule_cache(path).read(default_factory=list)
+    return data if isinstance(data, list) else []
 
 
 # ============================================================
@@ -53,22 +85,13 @@ def get_schedule_all():
     safe_group = make_safe_filename(group)
     cache_file = os.path.join(runtime.SCHEDULES_DIR, f"{safe_group}_{subgroup}.json")
 
-    if os.path.exists(cache_file):
-        try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
-                return jsonify(json.load(f))
-        except (json.JSONDecodeError, OSError):
-            pass
+    cached = _read_schedule_file(cache_file)
+    if cached:
+        return jsonify(cached)
 
     schedule = runtime.planner.get_semester_schedule(group, subgroup)
     if schedule:
-        try:
-            tmp = cache_file + '.tmp'
-            with open(tmp, 'w', encoding='utf-8') as f:
-                json.dump(schedule, f, ensure_ascii=False)
-            os.replace(tmp, cache_file)
-        except OSError:
-            pass
+        _schedule_cache(cache_file).write(schedule, ensure_ascii=False)
     return jsonify(schedule)
 
 
@@ -96,28 +119,16 @@ def sync_schedule():
     cache_file = os.path.join(runtime.SCHEDULES_DIR, f"{safe_group}_{subgroup}.json")
 
     if schedule:
-        if os.path.exists(cache_file):
-            try:
-                with open(cache_file, 'r', encoding='utf-8') as f:
-                    old_schedule = json.load(f)
-                if len(schedule) < len(old_schedule) * 0.9:
-                    _safe_print(
-                        f"[Защита] Отмена записи: получено {len(schedule)} пар, "
-                        f"в кэше {len(old_schedule)}",
-                        flush=True,
-                    )
-                    return jsonify(old_schedule)
-            except (json.JSONDecodeError, OSError):
-                pass
+        old_schedule = _read_schedule_file(cache_file)
+        if old_schedule and len(schedule) < len(old_schedule) * 0.9:
+            _safe_print(
+                f"[Защита] Отмена записи: получено {len(schedule)} пар, "
+                f"в кэше {len(old_schedule)}",
+                flush=True,
+            )
+            return jsonify(old_schedule)
 
-        try:
-            tmp = cache_file + '.tmp'
-            with open(tmp, 'w', encoding='utf-8') as f:
-                json.dump(schedule, f, ensure_ascii=False)
-            os.replace(tmp, cache_file)
-        except OSError:
-            pass
-
+        _schedule_cache(cache_file).write(schedule, ensure_ascii=False)
         mark_synced(sync_key)
     else:
         if not os.path.exists(cache_file):
@@ -148,31 +159,33 @@ def _stable_uid(*parts):
 
 def _fold_ics_line(line: str, limit: int = 75) -> str:
     """RFC 5545 line folding: строки не длиннее 75 октетов.
-    Продолжение начинается с пробела. Учитываем, что кириллица
-    в UTF-8 весит 2 байта, поэтому режем посимвольно, а не
-    побайтно — иначе разрубим многобайтовый символ пополам.
+
+    Продолжение начинается с одного пробела, поэтому первая строка
+    может занимать limit байт, а каждая следующая — limit-1
+    (один байт уходит под пробел-маркер). Режем посимвольно, а не
+    побайтно — иначе разрубим многобайтовый UTF-8 символ пополам.
+
+    Раньше здесь была мёртвая ветка `current = b' ' if not first or True else b''`
+    — `not first or True` всегда True, и условие читалось как баг.
+    Переписано без неоднозначности: явные first_limit/cont_limit.
     """
     if not line:
         return line
-    encoded = line.encode('utf-8')
-    if len(encoded) <= limit:
+    if len(line.encode('utf-8')) <= limit:
         return line
 
     parts = []
-    current = b''
-    first = True
+    current = bytearray()
+    current_limit = limit  # первая строка — до limit байт
+
     for char in line:
         char_bytes = char.encode('utf-8')
-        # Первая строка — до limit байт, продолжения — ' ' + 74 байт
-        effective_limit = limit if first else limit - 1
-        if len(current) + len(char_bytes) > effective_limit:
+        if len(current) + len(char_bytes) > current_limit:
             parts.append(current.decode('utf-8'))
-            current = b' ' if not first or True else b''
-            # На первой итерации при флаше first станет False
-            if first:
-                first = False
-                current = b' '
+            current = bytearray(b' ')
+            current_limit = limit - 1  # продолжения: ' ' + до limit-1 байт
         current += char_bytes
+
     if current:
         parts.append(current.decode('utf-8'))
     return '\r\n'.join(parts)
@@ -259,13 +272,8 @@ def export_ics():
 
     schedule = []
     if cache_exists:
-        try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
-                schedule = json.load(f)
-            _safe_print(f"[ics] loaded from cache: {len(schedule)} items", flush=True)
-        except (json.JSONDecodeError, OSError) as e:
-            _safe_print(f"[ics] cache read failed: {e}", flush=True)
-            schedule = []
+        schedule = _read_schedule_file(cache_file)
+        _safe_print(f"[ics] loaded from cache: {len(schedule)} items", flush=True)
 
     if not schedule:
         _safe_print(f"[ics] no cache — returning 409", flush=True)
@@ -285,12 +293,108 @@ def export_ics():
 
     return Response(
         ics_text,
-        mimetype='text/calendar; charset=utf-8',
+        # content_type, а не mimetype: иначе Flask добавляет charset повторно
+        # и получается «text/calendar; charset=utf-8; charset=utf-8».
+        content_type='text/calendar; charset=utf-8',
         headers={
             'Content-Disposition': (
                 f"attachment; filename=\"{ascii_filename}\"; "
                 f"filename*=UTF-8''{utf8_filename}"
             ),
+            'Cache-Control': 'no-store',
+        }
+    )
+
+
+# ============================================================
+#  ЭКСПОРТ ЗАМЕТОК В .ICS
+# ------------------------------------------------------------
+#  Заметки живут в SQLite, а не в кэше расписания, поэтому
+#  отдельный генератор. Дедлайн — событие на весь день,
+#  статус переносится в CATEGORIES и X-EZHEDNEVNIK-STATUS.
+# ============================================================
+
+_TASK_STATUS_LABEL = {
+    'green': 'Обычная',
+    'orange': 'Важная',
+    'red': 'Срочная',
+    'completed': 'Выполнено',
+}
+
+
+def _generate_tasks_ics(tasks, calendar_name="Заметки EZHednevnik"):
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Ezh Dnevnik//Tasks//RU",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        f"X-WR-CALNAME:{_ics_escape(calendar_name)}",
+    ]
+    dtstamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+
+    for task in tasks:
+        date = str(task.get('date') or '')
+        text = str(task.get('text') or '').strip()
+        if not date or not text:
+            continue
+        try:
+            day = datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            continue
+
+        # Событие на весь день: DTEND — следующий день (RFC 5545).
+        dtstart = day.strftime('%Y%m%d')
+        dtend = (day + timedelta(days=1)).strftime('%Y%m%d')
+        status = str(task.get('status') or 'green')
+        completed = status == 'completed'
+        uid = _stable_uid("task", date, text) + "@ezh-dnevnik"
+
+        lines.append("BEGIN:VEVENT")
+        lines.append(f"UID:{uid}")
+        lines.append(f"DTSTAMP:{dtstamp}")
+        lines.append(f"DTSTART;VALUE=DATE:{dtstart}")
+        lines.append(f"DTEND;VALUE=DATE:{dtend}")
+        lines.append(f"SUMMARY:{_ics_escape(text)}")
+        lines.append(f"CATEGORIES:{_ics_escape(_TASK_STATUS_LABEL.get(status, status))}")
+        lines.append(f"X-EZHEDNEVNIK-STATUS:{_ics_escape(status)}")
+        lines.append("STATUS:COMPLETED" if completed else "STATUS:NEEDS-ACTION")
+        lines.append("TRANSP:TRANSPARENT")
+        if completed:
+            lines.append("PERCENT-COMPLETE:100")
+        lines.append("END:VEVENT")
+
+    lines.append("END:VCALENDAR")
+
+    folded = [_fold_ics_line(line) for line in lines]
+    return "\r\n".join(folded) + "\r\n"
+
+
+@bp.route("/api/tasks.ics")
+@limiter.limit("30 per minute")
+def export_tasks_ics():
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT date, text, status FROM tasks ORDER BY date, id"
+    ).fetchall()
+
+    tasks = [{"date": r["date"], "text": r["text"], "status": r["status"]} for r in rows]
+    if not tasks:
+        return Response(
+            "Заметок пока нет — сначала добавьте хотя бы одну.",
+            status=409,
+            mimetype='text/plain; charset=utf-8'
+        )
+
+    ics_text = _generate_tasks_ics(tasks)
+    filename = "ezh_notes.ics"
+    _safe_print(f"[ics] tasks export: {len(tasks)} notes, {len(ics_text)} bytes", flush=True)
+
+    return Response(
+        ics_text,
+        content_type='text/calendar; charset=utf-8',
+        headers={
+            'Content-Disposition': f"attachment; filename=\"{filename}\"",
             'Cache-Control': 'no-store',
         }
     )
@@ -321,10 +425,10 @@ def manage_subjects():
             "INSERT OR REPLACE INTO subject_settings "
             "(subject, custom_name, link, teacher, location) VALUES (?, ?, ?, ?, ?)",
             (subject,
-             data.get('custom_name', '') or '',
-             link,
-             data.get('teacher', '') or '',
-             data.get('location', '') or '')
+             _clean_field(data.get('custom_name')),
+             link[:2000],
+             _clean_field(data.get('teacher')),
+             _clean_field(data.get('location')))
         )
         conn.commit()
         return jsonify({"success": True})
@@ -347,6 +451,55 @@ def manage_subjects():
 #  КАСТОМНОЕ РАСПИСАНИЕ
 # ============================================================
 
+_MAX_TEXT_FIELD = 200
+
+
+def _clean_field(value, limit=_MAX_TEXT_FIELD) -> str:
+    return str(value or '').strip()[:limit]
+
+
+def _parse_custom_payload(data, need_group, current=None):
+    """Проверяет и нормализует тело запроса custom_schedule.
+
+    Возвращает (payload, None) либо (None, текст_ошибки).
+    Без этого в БД могли попасть base_date="", time_range="когда-нибудь"
+    и recurrence="иногда": запись сохранялась, но в календарь не попадала
+    никогда и молча терялась.
+    """
+    base = dict(current or {})
+    payload = {}
+
+    if need_group:
+        try:
+            payload['group'] = validate_group((data.get('group') or '').strip())
+        except ValueError as e:
+            return None, str(e)
+
+    lesson = _clean_field(data.get('lesson', base.get('lesson')))
+    if not lesson:
+        return None, "lesson required"
+    payload['lesson'] = lesson
+
+    try:
+        payload['base_date'] = validate_date(data.get('base_date', base.get('base_date')))
+    except ValueError:
+        return None, "invalid base_date (ожидается YYYY-MM-DD)"
+
+    try:
+        payload['time_range'] = validate_time_range(data.get('time_range', base.get('time_range')))
+    except ValueError:
+        return None, "invalid time_range (ожидается HH:MM - HH:MM)"
+
+    payload['type_name'] = _clean_field(data.get('type_name', base.get('type_name')), 50)
+    payload['teacher'] = _clean_field(data.get('teacher', base.get('teacher')))
+    payload['location'] = _clean_field(data.get('location', base.get('location')))
+    raw_event = data.get('is_event', base.get('is_event', 0))
+    payload['is_event'] = 1 if str(raw_event).strip() in ('1', 'true', 'True') else 0
+    payload['recurrence'] = validate_recurrence(data.get('recurrence', base.get('recurrence')))
+    payload['exceptions'] = validate_exceptions(data.get('exceptions', base.get('exceptions')))
+    return payload, None
+
+
 @bp.route("/api/custom_schedule", methods=["GET", "POST"])
 @limiter.limit("120 per minute")
 def manage_custom_schedule():
@@ -354,31 +507,24 @@ def manage_custom_schedule():
 
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
-        group = (data.get('group') or '').strip()
-        lesson = (data.get('lesson') or '').strip()
-        if not group or not lesson:
-            return jsonify({"error": "group and lesson required"}), 400
-        if len(lesson) > 200:
-            return jsonify({"error": "lesson too long"}), 400
-        try:
-            group = validate_group(group)
-        except ValueError as e:
-            return jsonify({"error": str(e)}), 400
+        payload, error = _parse_custom_payload(data, need_group=True)
+        if error:
+            return jsonify({"error": error}), 400
 
         cursor = conn.execute(
             "INSERT INTO custom_schedule "
             "(group_name, base_date, time_range, lesson, type_name, teacher, location, is_event, recurrence, exceptions) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (group,
-             data.get('base_date', '') or '',
-             data.get('time_range', '') or '',
-             lesson,
-             data.get('type_name', '') or '',
-             data.get('teacher', '') or '',
-             data.get('location', '') or '',
-             int(data.get('is_event', 0) or 0),
-             data.get('recurrence', 'none') or 'none',
-             data.get('exceptions', '[]') or '[]')
+            (payload['group'],
+             payload['base_date'],
+             payload['time_range'],
+             payload['lesson'],
+             payload['type_name'],
+             payload['teacher'],
+             payload['location'],
+             payload['is_event'],
+             payload['recurrence'],
+             payload['exceptions'])
         )
         conn.commit()
         return jsonify({"id": cursor.lastrowid})
@@ -414,25 +560,23 @@ def update_custom_schedule(item_id):
 
     if request.method == "PUT":
         data = request.get_json(silent=True) or {}
-        lesson = (data.get('lesson') or '').strip()
-        if not lesson:
-            return jsonify({"error": "lesson required"}), 400
-        if len(lesson) > 200:
-            return jsonify({"error": "lesson too long"}), 400
+        payload, error = _parse_custom_payload(data, need_group=False)
+        if error:
+            return jsonify({"error": error}), 400
 
         conn.execute(
             "UPDATE custom_schedule SET base_date=?, time_range=?, lesson=?, "
             "type_name=?, teacher=?, location=?, is_event=?, recurrence=?, exceptions=? "
             "WHERE id=?",
-            (data.get('base_date', '') or '',
-             data.get('time_range', '') or '',
-             lesson,
-             data.get('type_name', '') or '',
-             data.get('teacher', '') or '',
-             data.get('location', '') or '',
-             int(data.get('is_event', 0) or 0),
-             data.get('recurrence', 'none') or 'none',
-             data.get('exceptions', '[]') or '[]',
+            (payload['base_date'],
+             payload['time_range'],
+             payload['lesson'],
+             payload['type_name'],
+             payload['teacher'],
+             payload['location'],
+             payload['is_event'],
+             payload['recurrence'],
+             payload['exceptions'],
              item_id)
         )
         conn.commit()
