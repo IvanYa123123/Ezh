@@ -1719,23 +1719,24 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 
 .group-display {
     display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: var(--bg-surface-alt);
-    color: var(--text-primary);
+    color: var(--text-muted);
     font-size: 0.9em;
-    font-weight: 600;
-    border: 1px solid var(--border-color);
+    font-weight: 500;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: default;
+    cursor: pointer;
     user-select: none;
     line-height: 1.4;
+    transition: color 0.15s ease;
+}
+.group-display:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 .group-display-empty {
-    color: var(--text-muted);
     font-weight: 400;
     font-style: italic;
 }
@@ -1767,4 +1768,44 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     color: var(--accent-hover);
     padding: 0 2px;
     border-radius: 3px;
+}
+
+/* ============================================================
+   30. НАВИГАЦИЯ ПО ЗАМЕТКАМ/СОБЫТИЯМ В РАЗВЁРНУТОМ ДНЕ
+   ------------------------------------------------------------
+   Раньше кнопки жили в шапке приложения. Теперь — только
+   в .fullscreen-day, рядом с датой. Обычная неделя их не видит.
+   ============================================================ */
+
+.day-nav-buttons {
+    display: none;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.day-col.fullscreen-day .day-nav-buttons {
+    display: flex;
+}
+
+.day-col.fullscreen-day .day-nav-buttons-left {
+    justify-content: flex-start;
+}
+
+.day-col.fullscreen-day .day-nav-buttons-right {
+    justify-content: flex-end;
+}
+
+.day-nav-buttons .btn {
+    padding: 3px 8px;
+    font-size: 0.85em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+/* При полном развороте три flex-ребёнка распределяются space-between:
+   левая группа, дата по центру, правая группа. */
+.day-col.fullscreen-day .day-header {
+    justify-content: space-between;
+    flex-wrap: wrap;
 }

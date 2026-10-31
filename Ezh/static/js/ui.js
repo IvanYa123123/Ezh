@@ -1,5 +1,5 @@
-// Лоадер, уведомления, undo-полоса.
-// v3.16.4: плавный переход ежика (squash & stretch + пыль).
+// Лоадер, уведомления, undo-полоса, прыжок ёжика.
+// v3.19.0: добавлен ezhJump() + обработчик клика по логотипу.
 
 const loadingPhrases = [
     "Грызем гранит науки...",
@@ -246,7 +246,12 @@ function hideUndoBar() {
 
 // ============================================================
 //  Вращение ёжика при скролле
+// ------------------------------------------------------------
+//  Крутится внутренний #ezh-logo. Прыжок (ezhJump) — на внешней
+//  обёртке .ezh-logo-wrap, поэтому эти две анимации не конфликтуют:
+//  rotate — на ребёнке, jump — на родителе.
 // ============================================================
+
 let ezhScrollTimer = null;
 let currentEzhRotation = 0;
 let lastScrollY = window.scrollY;
@@ -270,6 +275,50 @@ window.addEventListener('scroll', () => {
     }
 }, { passive: true });
 
+// ============================================================
+//  ПРЫЖОК ЁЖИКА
+// ------------------------------------------------------------
+//  Вызывается кликом по .ezh-logo-wrap (см. index.html).
+//  Анимация полностью в CSS (keyframe ezhJump в animations.css,
+//  секция 21). Здесь только ставим/снимаем класс — с защитой
+//  от повторного клика, пока идёт анимация.
+// ============================================================
+
+function ezhJump() {
+    const wrap = document.querySelector('.ezh-logo-wrap');
+    if (!wrap) return;
+    if (wrap.classList.contains('ezh-jumping')) return;
+
+    wrap.classList.add('ezh-jumping');
+
+    const clear = () => wrap.classList.remove('ezh-jumping');
+    wrap.addEventListener('animationend', function onEnd(e) {
+        if (e.animationName === 'ezhJump') {
+            wrap.removeEventListener('animationend', onEnd);
+            clear();
+        }
+    });
+
+    // Страховка: если браузер почему-то не сгенерировал animationend
+    // (например, prefers-reduced-motion отключил анимацию), всё равно
+    // снимаем класс, чтобы следующее нажатие сработало.
+    setTimeout(() => {
+        if (wrap.classList.contains('ezh-jumping')) {
+            wrap.classList.remove('ezh-jumping');
+        }
+    }, 900);
+}
+
+// Клик по обёртке — единственная точка входа. Дублируем через
+// делегирование на document, чтобы новый фрагмент логотипа
+// (если его когда-нибудь перерисуют) работал сразу, без init.
+document.addEventListener('click', (e) => {
+    const wrap = e.target.closest && e.target.closest('.ezh-logo-wrap');
+    if (!wrap) return;
+    e.preventDefault();
+    e.stopPropagation();
+    ezhJump();
+});
 
 // ============================================================
 //  RIPPLE ПО КНОПКАМ
@@ -307,7 +356,6 @@ function initRipple() {
         setTimeout(() => { if (span.parentElement) span.parentElement.removeChild(span); }, 620);
     }, { passive: true });
 }
-
 
 // ============================================================
 //  ПРАЗДНИК (например, последняя лаба по предмету сдана)

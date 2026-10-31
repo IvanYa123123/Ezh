@@ -98,23 +98,17 @@
         <div class="row align-items-center g-2">
             <div class="col-md-3">
                 <h5 class="mb-0 fw-bold d-flex align-items-center brand-title" style="color: var(--accent); letter-spacing: -0.5px;">
-                    <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
+                    <span class="ezh-logo-wrap" onclick="ezhJump()" title="Прыгнуть">
+                        <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
+                    </span>
                     <span>дневник</span>
                     <span id="app-mode-badge" class="app-mode-badge-stylish basic-mode ms-2" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
                 </h5>
             </div>
 
-            <!-- Поле поиска (вместо кнопки) -->
-            <div class="col-md-3">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text border-end-0" style="font-size: 0.9em;">🔍</span>
-                    <input type="text" id="globalSearchInput" class="form-control border-start-0" placeholder="Поиск по заметкам и событиям..." autocomplete="off">
-                </div>
-            </div>
-
             <!-- Группа и подгруппа: только текст, редактируется в настройках -->
             <div class="col-md-2">
-                <span id="groupDisplay" class="group-display group-display-empty" title="Изменить можно в настройках">Группа не выбрана</span>
+                <span id="groupDisplay" class="group-display group-display-empty" title="Изменить можно в настройках" onclick="openSettingsModal()">Группа не выбрана</span>
                 <input type="hidden" id="groupSelect" value="">
                 <select id="subgroupSelect" style="display:none;">
                     <option value="0">Все подгруппы</option>
@@ -123,21 +117,15 @@
                 </select>
             </div>
 
-            <div class="col-md-4 d-flex align-items-center justify-content-end gap-2">
+            <!-- Правый блок: настройки → поиск → сегодня → неделя -->
+            <div class="col-12 col-md-7 d-flex align-items-center justify-content-end gap-2 flex-wrap mt-2 mt-md-0">
                 <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
                         onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
-                <!-- Переход по заметкам и событиям (было в коде, но без кнопок) -->
-                <div class="btn-group btn-group-sm nav-mini-group" role="group" aria-label="Переход по заметкам и событиям">
-                    <button type="button" class="btn btn-outline-secondary fw-bold"
-                            onclick="navigateNoteFromHere(-1)" title="Предыдущая заметка (клавиша [)">📝‹</button>
-                    <button type="button" class="btn btn-outline-secondary fw-bold"
-                            onclick="navigateNoteFromHere(1)" title="Следующая заметка (клавиша ])">📝›</button>
-                    <button type="button" class="btn btn-outline-secondary fw-bold"
-                            onclick="navigateEventFromHere(-1)" title="Предыдущее событие (клавиша {)">🎯‹</button>
-                    <button type="button" class="btn btn-outline-secondary fw-bold"
-                            onclick="navigateEventFromHere(1)" title="Следующее событие (клавиша })">🎯›</button>
-                </div>
+                <input type="text" id="globalSearchInput" class="form-control form-control-sm"
+                       placeholder="Поиск по заметкам..."
+                       autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"
+                       style="max-width: 220px; min-width: 140px;">
 
                 <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="goToToday()">Сегодня</button>
                 <div class="dropdown">
@@ -175,7 +163,9 @@
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
                             <div class="vr mx-1"></div>
                             <div class="dropdown d-flex align-items-center">
-                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">Кого показывать?</button>
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm"
+                                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                        data-bs-popper-config='{"placement":"bottom-start"}'>Кого показывать?</button>
                                 <div id="friendsLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="friendTogglesDropdown" style="min-width: 250px;"></ul>
                             </div>
@@ -197,7 +187,9 @@
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
                             <div class="vr mx-1"></div>
                             <div class="dropdown d-flex align-items-center">
-                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">Кого показывать?</button>
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm"
+                                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                        data-bs-popper-config='{"placement":"bottom-start"}'>Кого показывать?</button>
                                 <div id="teachersLoader" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display: none;"></div>
                                 <ul class="dropdown-menu shadow-sm border-0" id="teacherTogglesDropdown" style="min-width: 250px;"></ul>
                             </div>

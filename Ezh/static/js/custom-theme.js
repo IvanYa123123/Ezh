@@ -617,20 +617,27 @@ function _applyCustomBackground(data, resolvedPhotoUrl) {
     const bgBody = data.colors['--bg-body'] || '#f8fafc';
     const layers = [], sizes = [], repeats = [], attaches = [];
 
-    if (resolvedPhotoUrl) {
-        const overlayAlpha = Math.max(0, Math.min(1, 1 - data.photoOpacity));
-        layers.push(`linear-gradient(${hexToRgba(bgBody, overlayAlpha)}, ${hexToRgba(bgBody, overlayAlpha)})`);
-        sizes.push('cover'); repeats.push('no-repeat'); attaches.push('fixed');
-        layers.push(`url("${resolvedPhotoUrl}")`);
-        sizes.push('cover'); repeats.push('no-repeat'); attaches.push('fixed');
-    }
-
+    // ВАЖНО: порядок слоёв в CSS background-image — от верхнего к нижнему.
+    // Первый слой рисуется ПОВЕРХ остальных. Поэтому стикеры ставим
+    // первыми: они должны быть видны над фото и затемняющим оверлеем.
+    //
+    // Раньше порядок был обратный — overlay → photo → sticker, и при
+    // загруженном фото стикеры оказывались под ним и были невидимы.
     const stickerUrl = data.stickers
         ? stickersToSvgDataUri(data.stickers, data.stickersOpacity)
         : null;
     if (stickerUrl) {
         layers.push(`url("${stickerUrl}")`);
         sizes.push('180px 180px'); repeats.push('repeat'); attaches.push('fixed');
+    }
+
+    // Фото: сначала затемняющий градиент, под ним — само фото.
+    if (resolvedPhotoUrl) {
+        const overlayAlpha = Math.max(0, Math.min(1, 1 - data.photoOpacity));
+        layers.push(`linear-gradient(${hexToRgba(bgBody, overlayAlpha)}, ${hexToRgba(bgBody, overlayAlpha)})`);
+        sizes.push('cover'); repeats.push('no-repeat'); attaches.push('fixed');
+        layers.push(`url("${resolvedPhotoUrl}")`);
+        sizes.push('cover'); repeats.push('no-repeat'); attaches.push('fixed');
     }
 
     document.body.style.backgroundImage = layers.length ? layers.join(', ') : '';

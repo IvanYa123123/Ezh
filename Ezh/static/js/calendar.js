@@ -110,7 +110,23 @@ function _renderDayColumn(dateStr, displayDate, isToday, eventItems, pairItems, 
     return `
         <div class="day-col ${isToday ? 'day-today' : ''}" id="day-col-${dateStr}" ondragover="allowDrop(event)" ondrop="drop(event, '${dateStr}')">
             <div class="day-header">
+                <div class="day-nav-buttons day-nav-buttons-left">
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="event.stopPropagation(); navigateNoteFromHere(-1)"
+                            title="Предыдущая заметка (клавиша [)">📝‹</button>
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="event.stopPropagation(); navigateNoteFromHere(1)"
+                            title="Следующая заметка (клавиша ])">📝›</button>
+                </div>
                 <span class="day-nav-center">${displayDate}</span>
+                <div class="day-nav-buttons day-nav-buttons-right">
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="event.stopPropagation(); navigateEventFromHere(-1)"
+                            title="Предыдущее событие (клавиша {)">🎯‹</button>
+                    <button type="button" class="btn btn-outline-secondary fw-bold"
+                            onclick="event.stopPropagation(); navigateEventFromHere(1)"
+                            title="Следующее событие (клавиша })">🎯›</button>
+                </div>
             </div>
 
             <div class="day-schedule-wrap">

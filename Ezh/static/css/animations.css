@@ -1,22 +1,5 @@
 /* ============================================================
    animations.css — централизованные анимации
-   ------------------------------------------------------------
-   v3.15.3 — направленная волна календаря переработана:
-
-     • Stagger привязан к классу .fade-in (только первый рендер).
-       Раньше селекторы .calendar-grid > *:nth-child(N) ловили
-       и slide-right/slide-left, поэтому волна била по всем
-       направлениям одинаково — шла слева направо по очереди.
-
-     • При листании (slide-right / slide-left) все колонки
-       анимируются без задержек — как единый блок. Это и даёт
-       эффект «перелистывания», а не «проявления».
-
-     • Направление (см. правила в секции 2):
-         →  (next week)  →  .slide-right  →  enterFromRight
-         ←  (prev week)  →  .slide-left   →  enterFromLeft
-
-   Остальные секции не менялись с v3.15.1.
    ============================================================ */
 
 /* ============================================================
@@ -227,29 +210,13 @@
 
 /* ============================================================
    2. КОЛОНКИ КАЛЕНДАРЯ — НАПРАВЛЕННАЯ ВОЛНА
-   ------------------------------------------------------------
-   Сдвиг только по X. getBoundingClientRect().top не меняется,
-   поэтому _layoutScheduleNotes работает во время анимации.
-
-   Порядок правил важен:
-     1) Отключаем анимацию родителя .calendar-grid.
-     2) Базовая волна + stagger — ТОЛЬКО для .fade-in.
-     3) Направленные override — БЕЗ stagger.
    ============================================================ */
 
-/* --- Отключаем анимацию родителя ---
-   style.css анимирует .calendar-grid целиком (slideLeft/slideRight/
-   fadeIn). Это накладывается на детские анимации и размывает
-   эффект. Детей достаточно. */
 .calendar-grid.slide-right,
 .calendar-grid.slide-left,
 .calendar-grid.fade-in {
     animation: none !important;
 }
-
-/* --- Базовая волна: первый рендер (fade-in) ---
-   Строго привязана к .fade-in. Другие режимы (.slide-right,
-   .slide-left) не задевает — у них своя анимация ниже. */
 
 .calendar-grid.fade-in > .day-col,
 .calendar-grid.fade-in > .friend-col,
@@ -260,9 +227,6 @@
     animation-fill-mode: backwards;
 }
 
-/* Stagger — только внутри .fade-in. Все 7 колонок мерцают
-   каскадом слева направо. Уместно только при первом показе
-   недели, не при листании. */
 .calendar-grid.fade-in > *:nth-child(1) { animation-delay: 0.00s; }
 .calendar-grid.fade-in > *:nth-child(2) { animation-delay: 0.04s; }
 .calendar-grid.fade-in > *:nth-child(3) { animation-delay: 0.08s; }
@@ -271,12 +235,6 @@
 .calendar-grid.fade-in > *:nth-child(6) { animation-delay: 0.20s; }
 .calendar-grid.fade-in > *:nth-child(7) { animation-delay: 0.24s; }
 
-/* --- Направленные: листание ---
-   Все 7 колонок двигаются синхронно, единым блоком.
-   Никаких animation-delay — иначе получается волна. */
-
-/* Листание вперёд (→): контент уезжает ВЛЕВО.
-   Колонки стартуют на 48px правее и «доходят» до места. */
 .calendar-grid.slide-right > .day-col,
 .calendar-grid.slide-right > .friend-col,
 .calendar-grid.slide-right > .teacher-col {
@@ -287,8 +245,6 @@
     animation-delay: 0s;
 }
 
-/* Листание назад (←): контент уезжает ВПРАВО.
-   Колонки стартуют на 48px левее и «доходят» до места. */
 .calendar-grid.slide-left > .day-col,
 .calendar-grid.slide-left > .friend-col,
 .calendar-grid.slide-left > .teacher-col {
@@ -299,7 +255,6 @@
     animation-delay: 0s;
 }
 
-/* Карточка события — попап, отдельно от волны колонок */
 .schedule-item.event-card {
     animation: animScaleIn 0.24s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
 }
@@ -612,5 +567,116 @@ body.widget-dragging .section-drag-handle {
     .widget-drop-placeholder {
         animation-duration: 2.4s !important;
         animation-iteration-count: infinite !important;
+    }
+}
+
+/* ============================================================
+   20. ПЛАВНАЯ СМЕНА ПОДПИСИ НЕДЕЛИ
+   ============================================================ */
+
+@keyframes weekLabelSwap {
+    0%   { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.week-label-swap {
+    animation: weekLabelSwap 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform;
+}
+
+/* ============================================================
+   21. ПРЫЖОК ЁЖИКА (ui.js: ezhJump)
+   ------------------------------------------------------------
+   Прыжок с лёгким наклоном, без деформации (scale).
+   Внутренний #ezh-logo продолжает крутиться при скролле —
+   внешний jump и внутренний rotate живут на разных элементах.
+   ============================================================ */
+
+.ezh-logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    line-height: 1;
+    transform-origin: center bottom;
+    transition: background 0.15s ease;
+    will-change: transform;
+}
+
+.ezh-logo-wrap:hover {
+    background: var(--accent-soft);
+}
+
+.ezh-logo-wrap:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.ezh-logo-wrap.ezh-jumping {
+    animation: ezhJump 0.65s cubic-bezier(0.28, 0.84, 0.42, 1);
+}
+
+@keyframes ezhJump {
+    0%   { transform: translateY(0)     rotate(0deg); }
+    20%  { transform: translateY(2px)   rotate(-5deg); }
+    40%  { transform: translateY(-20px) rotate(5deg);  }
+    60%  { transform: translateY(-24px) rotate(0deg);  }
+    80%  { transform: translateY(2px)   rotate(-2deg); }
+    100% { transform: translateY(0)     rotate(0deg);  }
+}
+
+.ezh-logo-wrap.ezh-jumping::before,
+.ezh-logo-wrap.ezh-jumping::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    animation: ezhDust 0.55s ease-out forwards;
+    animation-delay: 0.35s;
+}
+.ezh-logo-wrap.ezh-jumping::after {
+    animation-delay: 0.42s;
+    animation-duration: 0.6s;
+}
+.ezh-logo-wrap {
+    position: relative;
+}
+
+@keyframes ezhDust {
+    0%   { opacity: 0.55; transform: translate(-50%, 0) scale(0.4); }
+    40%  { opacity: 0.8;  transform: translate(calc(-50% - 8px), -6px) scale(1); }
+    100% { opacity: 0;    transform: translate(calc(-50% - 16px), -14px) scale(0.3); }
+}
+.ezh-logo-wrap.ezh-jumping::after {
+    animation-name: ezhDustRight;
+}
+@keyframes ezhDustRight {
+    0%   { opacity: 0.55; transform: translate(-50%, 0) scale(0.4); }
+    40%  { opacity: 0.8;  transform: translate(calc(-50% + 8px), -6px) scale(1); }
+    100% { opacity: 0;    transform: translate(calc(-50% + 16px), -14px) scale(0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ezh-logo-wrap.ezh-jumping {
+        animation: none !important;
+    }
+    .ezh-logo-wrap.ezh-jumping::before,
+    .ezh-logo-wrap.ezh-jumping::after {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+    .week-label-swap {
+        animation: none !important;
     }
 }

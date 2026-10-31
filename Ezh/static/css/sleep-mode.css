@@ -105,7 +105,10 @@ body.cursor-hidden * {
 .hh-sleep .leg-front1 { animation-delay: -0.12s; }
 .hh-sleep .leg-front2 { animation-delay:  0s;    }
 
-.hh-sleep.resting .leg {
+/* Пока ёжик прыгает по календарю (.calendar-jumping), стандартное
+   правило покоя .resting не должно отключать лапки — ими управляет
+   keyframe legPushOff (см. секцию 13). */
+.hh-sleep.resting:not(.calendar-jumping) .leg {
     animation: none !important;
     transform: rotate(0deg) !important;
 }
@@ -232,11 +235,6 @@ body.cursor-hidden * {
 
 /* ============================================================
    8. ВИСЯЩИЙ ЕЖИК (НА ЗУБАХ НА НИЖНЕМ УГЛУ)
-   ------------------------------------------------------------
-   transform-origin: точка РТА в координатах SVG-viewBox (100×82).
-   Было: 84.5px 54.5px — это нос, качание шло вокруг кончика
-   мордочки. Стало: 73px 60px — это рот (улыбка). Теперь ёжик
-   висит на виджете, зацепившись именно ртом.
    ============================================================ */
 
 @keyframes swingHang {
@@ -334,5 +332,40 @@ body.cursor-hidden * {
     .angry-sticker {
         animation-duration: 0.7s !important;
         animation-iteration-count: 1 !important;
+    }
+}
+
+/* ============================================================
+   13. ПРЫЖОК ПО КОЛОНКАМ КАЛЕНДАРЯ
+   ------------------------------------------------------------
+   doCalendarJump в sleep-mode.js навешивает .calendar-jumping
+   на .hh-sleep прямо перед каждым hopTo().
+   Внешний контейнер двигается по дуге через translate3d.
+   Внутренние лапки анимируются keyframe legPushOff — они
+   сгибаются для приседа, выпрямляются для толчка, поджимаются
+   в воздухе и пружинят при посадке. Сам ёжик (тело) не
+   деформируется.
+   ============================================================ */
+
+@keyframes legPushOff {
+    0%   { transform: rotate(0deg)   scaleY(1)   !important; }
+    15%  { transform: rotate(-12deg) scaleY(0.6) !important; }   /* присед */
+    30%  { transform: rotate(12deg)  scaleY(1.4) !important; }   /* толчок */
+    60%  { transform: rotate(-15deg) scaleY(0.7) !important; }   /* подгиб в воздухе */
+    85%  { transform: rotate(0deg)   scaleY(1.05)!important; }   /* приземление */
+    100% { transform: rotate(0deg)   scaleY(1)   !important; }
+}
+
+.hh-sleep.calendar-jumping .leg {
+    animation: legPushOff 0.65s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hh-sleep.calendar-jumping.is-final-hop .leg {
+    animation-duration: 0.5s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hh-sleep.calendar-jumping .leg {
+        animation: none !important;
     }
 }

@@ -3,12 +3,9 @@
 // v3.18.0:
 //   • Кнопка недели теперь чередует две подписи: диапазон дат
 //     и номер академической недели. Период — 7.5 секунды.
-//     Академический номер считается от старта семестра:
-//       сентябрь–декабрь → 1 сентября
-//       февраль–июнь     → 7 февраля
-//       январь           → 1 сентября прошлого года
-//       июль–август      → 1 сентября текущего (показывать будет «1 неделя»)
-//     Пример: 26 октября 2026 — это 9 неделя осеннего семестра.
+//   • Плавный переход между подписями: при смене текста вешается
+//     CSS-класс .week-label-swap, который проигрывает
+//     keyframe weekLabelSwap (см. animations.css, секция 20).
 
 const _WEEK_PARITY_ANCHOR_MS = Date.UTC(2020, 0, 6);
 
@@ -51,12 +48,13 @@ function _getAcademicWeekNumber(date) {
     d.setDate(d.getDate() - (dateDow - 1));
 
     const weeks = Math.round((d - start) / (7 * 24 * 60 * 60 * 1000));
-    // Раньше для июля–августа start был в будущем и номер уходил
-    // в минус («-20 неделя»). Теперь это конец прошлого года, а
-    // минимум — первая неделя.
     return Math.max(1, weeks + 1);
 }
 
+// Плавная смена подписи: если текст не изменился — не перерисовываем
+// (иначе анимация играла бы на каждый вызов updateWeekDropdown());
+// если изменился — сбрасываем и заново навешиваем .week-label-swap,
+// чтобы keyframe отработал с нуля.
 function _renderWeekLabel() {
     const btn = document.getElementById('weekDropdownBtn');
     if (!btn) return;
@@ -76,7 +74,16 @@ function _renderWeekLabel() {
         mainText = `${dBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})} - ${endDBtn.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}`;
     }
 
-    btn.innerHTML = `📅 ${mainText} <span class="week-badge ${parity.cls}" title="${parity.title}">${parity.label}</span>`;
+    const newHtml = `📅 ${mainText} <span class="week-badge ${parity.cls}" title="${parity.title}">${parity.label}</span>`;
+
+    if (btn._lastLabelHtml === newHtml) return;
+    btn._lastLabelHtml = newHtml;
+
+    // Снимаем класс, форсируем reflow, ставим HTML, вешаем класс заново.
+    btn.classList.remove('week-label-swap');
+    void btn.offsetWidth;
+    btn.innerHTML = newHtml;
+    btn.classList.add('week-label-swap');
 }
 
 function startWeekLabelRotation() {
@@ -126,6 +133,7 @@ function updateWeekDropdown() {
     }
 
     // Кнопку рисуем через общий рендерер, чтобы не терять фазу чередования.
+    // Если разметка не изменилась — анимация не играет (см. _lastLabelHtml).
     _renderWeekLabel();
 
     if (!_weekDropdownListenerAdded) {

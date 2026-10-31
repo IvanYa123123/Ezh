@@ -26,6 +26,11 @@
 //     heldWidget и чистим busyWidgets/busyElements, чтобы при
 //     возврате ежи не отбирали виджеты у самих себя.
 //   • Предметы на спине сдвинуты ближе к иголкам (35, 38).
+//   • v3.19.0: doCalendarJump навешивает .calendar-jumping на
+//     .hh-sleep прямо перед каждым hopTo(). CSS (sleep-mode.css,
+//     секция 13) проигрывает keyframe calendarHop — squash-stretch
+//     при отрыве от колонки и приземлении. Внешний контейнер всё
+//     это время двигается через translate3d, анимации не конфликтуют.
 
 (function () {
     'use strict';
@@ -503,6 +508,10 @@
         if (h.cancelled) return;
         setResting(h, true);
 
+        // На каждом прыжке вешаем .calendar-jumping — CSS проигрывает
+        // squash-stretch на .hh-normal-wrap. Внешний .hh-sleep при этом
+        // продолжает двигаться через translate3d (см. setPos/hopTo),
+        // поэтому анимации не конфликтуют.
         for (let i = 0; i < cells.length; i++) {
             if (h.cancelled) return;
             const r = cells[i].getBoundingClientRect();
@@ -513,7 +522,10 @@
             const tx = r.left + window.scrollX + r.width / 2 - h.cfg.size / 2;
             const ty = r.top + window.scrollY + r.height / 2 - h.cfg.size * 0.35;
 
+            h.el.classList.add('calendar-jumping');
             await hopTo(h, tx, ty, 650, 90);
+            h.el.classList.remove('calendar-jumping');
+
             if (h.cancelled) {
                 cells[i].classList.remove('sleep-active');
                 return;
@@ -526,7 +538,9 @@
         const lastRect = cells[cells.length - 1].getBoundingClientRect();
         const endX = lastRect.right + window.scrollX + 20;
         const endY = lastRect.bottom + window.scrollY + 10;
+        h.el.classList.add('calendar-jumping', 'is-final-hop');
         await hopTo(h, endX, endY, 500, 40);
+        h.el.classList.remove('calendar-jumping', 'is-final-hop');
         setResting(h, true);
     }
 
