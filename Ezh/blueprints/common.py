@@ -248,12 +248,17 @@ def needs_sync(key):
     return (time.time() - last) > runtime.MIN_SYNC_INTERVAL
 
 
-def mark_synced(key):
+def mark_synced(key, interval=None):
     _ensure_caches()
     cache = _sync_times_cache
     with cache.lock:
         data = cache.read(default_factory=dict)
         if not isinstance(data, dict):
             data = {}
-        data[key] = time.time()
+        if interval is None:
+            data[key] = time.time()
+        else:
+            # Сдвигаем отметку так, чтобы следующий needs_sync() сработал
+            # не раньше, чем через interval секунд.
+            data[key] = time.time() - runtime.MIN_SYNC_INTERVAL + interval
         cache.write(data)

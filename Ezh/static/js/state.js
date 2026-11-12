@@ -32,7 +32,6 @@ let customScheduleItems = [];
 
 let showTeacher  = localStorage.getItem('showTeacher')  !== 'false';
 let showLocation = localStorage.getItem('showLocation') !== 'false';
-let showFriends  = localStorage.getItem('showFriends')  !== 'false';
 
 let showStatus = localStorage.getItem('showStatus') !== 'false';
 let statusFormat = localStorage.getItem('statusFormat') || 'interval';

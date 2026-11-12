@@ -1813,6 +1813,15 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
    31. ФИНАЛЬНЫЙ ФИКС ШАПКИ И ПОИСКА
    ============================================================ */
 
+/* Оставляем на переднем плане и добавляем отступ снизу */
+.controls-header {
+    background-color: var(--bg-surface) !important; /* Жесткий фон, чтобы календарь не просвечивал */
+    position: sticky;
+    top: 15px;
+    z-index: 1050;
+    margin-bottom: 20px !important; /* Чуть уменьшили отступ до календаря */
+}
+
 /* Убираем полосу над статусом */
 #scheduleStatus.schedule-status {
     border-top: none !important;
@@ -1825,7 +1834,7 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 
 /* Отступ для группы под логотипом */
 #groupDisplay {
-    margin-top: 8px !important; 
+    margin-top: 4px !important; 
     margin-left: 2px;
     font-size: 0.85rem;
     display: inline-block;
@@ -1835,27 +1844,52 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 #syncFreshness:empty {
     display: none !important;
 }
+#syncFreshness {
+    min-height: 1.2em;
+}
+
+/* --- ОДИНАКОВЫЕ КВАДРАТИКИ ДЛЯ КНОПКИ И ПОИСКА --- */
+.header-icon-btn,
+.header-search-wrap {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.header-icon-btn {
+    font-size: 1.1em;
+    color: var(--text-secondary);
+    line-height: 1;
+}
+
+.header-icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
 
 /* --- СВОРАЧИВАЮЩИЙСЯ ПОИСК --- */
 .header-search-wrap {
     position: relative;
-    width: 36px;
-    height: 32px;
-    box-sizing: border-box;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-surface);
     overflow: hidden;
-    flex-shrink: 0;
-    transition: width 0.25s ease, border-color 0.15s ease;
+    transition: width 0.25s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .header-search-wrap:hover,
 .header-search-wrap:focus-within,
 .header-search-wrap:has(input:not(:placeholder-shown)) {
-    width: 160px !important; /* Идеальная ширина, чтобы не сдвигать кнопки */
+    width: 160px !important; 
     border-color: var(--accent);
     box-shadow: 0 0 0 0.15rem var(--accent-soft);
+    justify-content: flex-start;
 }
 
 .header-search-wrap .header-search-icon {
@@ -1902,12 +1936,11 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
 
 /* ============================================================
    32. ФИКС ОКНА РЕЗУЛЬТАТОВ (Запрещает дергаться и вылезать)
-   Переопределяем JS, который ставит ширину 400px и left = 0.
    ============================================================ */
 #globalSearchResults {
     width: 340px !important;
-    left: auto !important;   /* Отменяем JS-позиционирование */
-    right: 20px !important;  /* Жестко прижимаем к правому краю экрана */
+    left: auto !important;   
+    right: 20px !important;  
     max-width: calc(100vw - 40px) !important;
 }
 
@@ -1915,4 +1948,96 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     .header-search-wrap { width: 100%; flex: 1 1 auto; }
     .header-search-wrap .header-search-icon { left: 12px; transform: translate(0, -50%); }
     .header-search-wrap input { opacity: 1; }
+}
+/* Уменьшаем отступ до индикатора синхронизации ровно в 2 раза */
+.sync-freshness {
+    padding-top: 0 !important;
+    margin-top: 3px !important; /* Вместо 6px сверху и 6px снизу */
+}
+
+#syncFreshness {
+    min-height: 1em;
+}
+/* === ЦЕНТРИРОВАНИЕ СТАТУС-СТРОКИ ПО ВЕРТИКАЛИ === */
+@media (min-width: 768px) {
+    #scheduleStatus {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+    }
+}
+
+/* === УМЕНЬШЕНИЕ РАССТОЯНИЯ ДО ВИДЖЕТОВ (Друзья/Преподаватели) === */
+#mainColumnSections {
+    margin-top: 8px !important; /* Было 24px */
+}
+#friendsSection, #teachersSection {
+    margin-top: 0 !important;
+}
+/* ============================================================
+   ФИНАЛЬНЫЙ ФИКС ШАПКИ: ВСЕГДА НА ЭКРАНЕ И РАВНЫЕ ОТСТУПЫ
+   ============================================================ */
+
+.controls-header {
+    position: sticky !important;
+    top: 10px !important;
+    z-index: 1060 !important; 
+    background-color: var(--bg-surface) !important; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; 
+}
+
+.main-column {
+    margin-top: 15px !important; 
+}
+/* ============================================================
+   АНИМАЦИЯ РАСКРЫТИЯ ПАР ДРУЗЕЙ
+   ============================================================ */
+.friend-schedule-details {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out;
+}
+.friend-schedule-details > .friend-schedule-inner {
+    overflow: hidden;
+    min-height: 0;
+}
+.friend-schedule-details.expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.toggle-arrow {
+    display: inline-block;
+    font-size: 0.8em;
+    transition: transform 0.25s ease;
+    color: var(--text-muted);
+}
+.toggle-arrow.expanded {
+    transform: rotate(180deg);
+}
+/* ============================================================
+   ФИКС Z-INDEX: МОДАЛКИ И ВЫПАДАЮЩИЕ СПИСКИ ВСЕГДА ПОВЕРХ ШАПКИ
+   ============================================================ */
+
+/* Затемнение фона */
+.modal-backdrop {
+    z-index: 2000 !important;
+}
+
+/* Сами модальные окна (настройки, добавление друга, события и т.д.) */
+.modal {
+    z-index: 2005 !important;
+}
+
+/* Выпадающие списки (например, выбор недели в шапке) */
+.dropdown-menu {
+    z-index: 2010 !important;
+}
+
+/* Автокомплит (поиск, ввод группы) */
+.autocomplete-list {
+    z-index: 2010 !important;
 }

@@ -95,11 +95,11 @@
 
 <div class="container-fluid p-3">
     <!-- ИДЕАЛЬНАЯ ШАПКА -->
-    <div class="controls-header bg-white p-2 rounded shadow-sm border mb-3">
+    <div class="controls-header bg-white py-2 px-3 rounded shadow-sm border mb-3 position-relative">
         <div class="row align-items-center g-2">
             
-            <!-- Левая колонка: логотип и группа под ним -->
-            <div class="col-12 col-md-4 d-flex flex-column align-items-start">
+            <!-- Левая колонка: только логотип -->
+            <div class="col-12 col-md-4 d-flex align-items-center">
                 <h5 class="mb-0 fw-bold d-flex align-items-center brand-title" style="color: var(--accent); letter-spacing: -0.5px;">
                     <span class="ezh-logo-wrap" onclick="ezhJump()" title="Прыгнуть">
                         <span id="ezh-logo" style="font-size: 2.2rem; line-height: 0.5; margin-right: 0px; margin-left: -5px; display: inline-block; transition: transform 0.05s linear; transform-origin: center;">🦔</span>
@@ -107,36 +107,27 @@
                     <span>дневник</span>
                     <span id="app-mode-badge" class="app-mode-badge-stylish basic-mode ms-2" title="Нажмите для входа в Еж Про" onclick="openMoodleModal()">Basic</span>
                 </h5>
-                <span id="groupDisplay" class="group-display group-display-empty mt-2" title="Изменить можно в настройках" onclick="openSettingsModal()">Группа не выбрана</span>
-                <input type="hidden" id="groupSelect" value="">
-                <select id="subgroupSelect" style="display:none;">
-                    <option value="0">Все подгруппы</option>
-                    <option value="1">1 подгруппа</option>
-                    <option value="2">2 подгруппа</option>
-                </select>
             </div>
 
             <!-- Центральная колонка: статус -->
             <div class="col-12 col-md-4 text-center">
-                <div class="small schedule-status" id="scheduleStatus"></div>
+                <div class="small schedule-status" id="scheduleStatus" style="margin-top: 0;"></div>
             </div>
 
             <!-- Правая колонка: настройки, поиск, сегодня, неделя -->
-            <!-- УБРАН flex-wrap, чтобы кнопки не прыгали на новую строку -->
-            <div class="col-12 col-md-4 d-flex align-items-center justify-content-end gap-2 mt-2 mt-md-0">
-                <button class="btn btn-outline-secondary btn-sm fw-bold shadow-sm header-icon-btn"
-                        onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
+            <div class="col-12 col-md-4 d-flex align-items-center justify-content-end gap-2 mt-2 mt-md-0 flex-nowrap">
+                <button class="btn btn-outline-secondary fw-bold shadow-sm header-icon-btn" onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
                 <!-- Умный поиск -->
                 <div class="header-search-wrap" title="Поиск по заметкам">
                     <span class="header-search-icon">🔍</span>
-                    <input type="text" id="globalSearchInput" name="search_q_x9f2"
+                    <input type="text" id="globalSearchInput"
                            placeholder="Поиск..."
-                           autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
+                           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 </div>
 
-                <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="goToToday()">Сегодня</button>
-                <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm flex-shrink-0" onclick="goToToday()">Сегодня</button>
+                <div class="dropdown flex-shrink-0">
                     <button class="btn btn-outline-primary btn-sm dropdown-toggle fw-bold shadow-sm" type="button" id="weekDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="min-width: 220px;">
                         📅 Неделя
                     </button>
@@ -145,14 +136,24 @@
             </div>
         </div>
         
-        <!-- Нижняя строка: индикатор свежести -->
+        <!-- Нижняя строка: Группа слева, синхронизация справа -->
         <div class="row mt-1">
-            <div class="col-12 text-end small sync-freshness" id="syncFreshness"></div>
+            <div class="col-6 text-start">
+                <span id="groupDisplay" class="group-display group-display-empty" title="Изменить можно в настройках" onclick="openSettingsModal()">Группа не выбрана</span>
+                <input type="hidden" id="groupSelect" value="">
+                <select id="subgroupSelect" style="display:none;">
+                    <option value="0">Все подгруппы</option>
+                    <option value="1">1 подгруппа</option>
+                    <option value="2">2 подгруппа</option>
+                </select>
+            </div>
+            <div class="col-6 text-end small sync-freshness" id="syncFreshness"></div>
         </div>
     </div>
 
     <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div class="row">
+        <!-- ЛЕВАЯ КОЛОНКА: КАЛЕНДАРЬ И ГОРИЗОНТАЛЬНЫЕ ВИДЖЕТЫ -->
         <div class="col-xl-9 col-lg-8 mb-4 main-column">
             <div class="d-flex flex-column w-100">
                 <div class="calendar-nav-row">
@@ -165,9 +166,10 @@
                     </div>
                 </div>
 
+                <!-- СЕКЦИИ ДРУЗЕЙ И ПРЕПОДАВАТЕЛЕЙ -->
                 <div id="mainColumnSections">
                     <div id="friendsSection" data-draggable-section>
-                        <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
+                        <div class="mt-2 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="friendsControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
                             <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToTeachersBtn" onclick="switchFriendsTeachersTab('teachers')" title="Переключиться на преподавателей" style="display: none;">🎓</button>
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddFriendModal()">+ Добавить друга</button>
@@ -191,7 +193,7 @@
                     </div>
 
                     <div id="teachersSection" data-draggable-section>
-                        <div class="mt-4 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
+                        <div class="mt-2 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
                             <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToFriendsBtn" onclick="switchFriendsTeachersTab('friends')" title="Переключиться на друзей" style="display: none;">👥</button>
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
@@ -210,10 +212,13 @@
                         <div id="teachersCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
                     </div>
                 </div>
+                
+                <!-- Виджеты, которые переносятся под календарь -->
                 <div id="underCalendarWidgetsZone"></div>
             </div>
         </div>
 
+        <!-- ПРАВАЯ КОЛОНКА: ВЕРТИКАЛЬНЫЕ ВИДЖЕТЫ -->
         <div class="col-xl-3 col-lg-4 sidebar-column">
             <div id="rightWidgetsZone" class="sticky-top d-flex flex-column gap-3" style="top: 15px;">
 
@@ -715,10 +720,6 @@
               <label class="settings-row" for="settingsToggleLocation">
                 <span class="settings-row-label">Номера аудиторий</span>
                 <input class="form-check-input" type="checkbox" id="settingsToggleLocation" onchange="saveSettingsFromUI()">
-              </label>
-              <label class="settings-row" for="settingsToggleFriends">
-                <span class="settings-row-label">Подробные пары друзей</span>
-                <input class="form-check-input" type="checkbox" id="settingsToggleFriends" onchange="saveSettingsFromUI()">
               </label>
               <div class="settings-row-inline">
                 <span class="settings-row-label">Как писать общие пары</span>

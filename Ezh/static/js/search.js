@@ -1,6 +1,7 @@
 // Глобальный поиск: инлайн-поле в шапке + модалка (fallback для Ctrl+K).
 // v3.18.0: поле #globalSearchInput вместо кнопки. Результаты —
 // выпадашкой под полем, как у автокомплита группы.
+// v3.19.0: Защита от автозаполнения браузера при фоновых процессах.
 
 let _searchDebounceTimer = null;
 let _searchResults = { tasks: [], events: [] };
@@ -77,6 +78,15 @@ function initInlineSearch() {
     }
 
     input.addEventListener('input', () => {
+        // ЗАЩИТА ОТ АВТОЗАПОЛНЕНИЯ: если браузер вставил текст, пока мы не в поле —
+        // немедленно очищаем его и скрываем выпадашку.
+        if (document.activeElement !== input) {
+            input.value = '';
+            _inlineSearchQuery = '';
+            hide();
+            return;
+        }
+
         _inlineSearchQuery = input.value.trim();
         if (_inlineSearchDebounce) clearTimeout(_inlineSearchDebounce);
         if (_inlineSearchQuery.length < 2) { hide(); return; }
@@ -148,6 +158,11 @@ function initSearch() {
     if (!modalEl) return;
 
     input.addEventListener('input', () => {
+        // Аналогичная защита для поля в модалке
+        if (document.activeElement !== input) {
+            input.value = '';
+            return;
+        }
         if (_searchDebounceTimer) clearTimeout(_searchDebounceTimer);
         _searchDebounceTimer = setTimeout(() => runSearch(input.value), 220);
     });

@@ -232,7 +232,11 @@ async function loadTeacherSchedule(slug, force) {
         return teacherSchedulesCache[slug];
     } catch (e) {
         console.error('[teachers] schedule load failed', slug, e);
-        teacherSchedulesCache[slug] = [];
+        // При 429 пустой результат НЕ кэшируем — иначе преподаватель
+        // «залипнет» пустым до перезагрузки страницы.
+        if (e.status !== 429) {
+            teacherSchedulesCache[slug] = [];
+        }
         return [];
     }
 }

@@ -11,7 +11,7 @@ bp = Blueprint('tasks', __name__)
 _VALID_TASK_STATUS = ('green', 'orange', 'red', 'completed')
 
 
-def _parse_task_payload(data, current=None):
+def _parse_task_payload(data, current=None, strict_date=True):
     """Общая валидация для POST и PUT.
 
     current — уже сохранённая строка (для PUT). Если передана, поля,
@@ -28,10 +28,17 @@ def _parse_task_payload(data, current=None):
         return None, "date and text required"
     if len(text) > 2000:
         return None, "text too long"
-    # Дата приходит из календаря в ISO. Если пришло что-то иное —
-    # оставляем как есть (не ломаем уже существующие записи),
-    # но не даём пустой строке пройти дальше.
-    date = validate_date(date, strict=False) or date
+
+    if strict_date:
+        try:
+            date = validate_date(date, strict=True)
+        except ValueError:
+            return None, "invalid date (ожидается YYYY-MM-DD)"
+    else:
+        # Для PUT оставляем мягкую проверку, чтобы не ломать уже
+        # существующие записи с нестандартной датой.
+        date = validate_date(date, strict=False) or date
+
     if status not in _VALID_TASK_STATUS:
         # Раньше молча подставлялся green и правка терялась незаметно.
         return None, "invalid status"
@@ -87,7 +94,7 @@ def update_task(task_id):
         ).fetchone()
         if row is None:
             return jsonify({"error": "not found"}), 404
-        payload, error = _parse_task_payload(data, current=dict(row))
+        payload, error = _parse_task_payload(data, current=dict(row), strict_date=False)
         if error:
             return jsonify({"error": error}), 400
 

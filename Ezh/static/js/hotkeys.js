@@ -1,10 +1,16 @@
 // Горячие клавиши:
 //   Ctrl/⌘ + K — фокус на поле поиска в шапке
-//   Ctrl/⌘ + N — создать заметку на сегодня
 //   Esc        — свернуть развёрнутый день / отменить ввод заметки
+//   [ / ]      — предыдущая/следующая заметка
+//   { / }      — предыдущее/следующее событие
 //
 // v3.18.0: Ctrl+K теперь фокусит инлайн-поле #globalSearchInput,
 // а не открывает модалку. Если поля нет — fallback на openSearchModal.
+//
+// v3.19.0: навигация по заметкам/событиям переведена на физические
+// коды клавиш (e.code), чтобы работать на русской раскладке.
+// Ctrl+N убран: браузер перехватывает его раньше и preventDefault
+// не помогает.
 
 (function () {
 
@@ -37,19 +43,22 @@
     document.addEventListener('keydown', (e) => {
 
         const key = (e.key || '').toLowerCase();
+        const code = e.code || '';
 
         // ─── [ / ]: заметки, { / }: события ────────────────────
-        // navigateNote()/navigateEvent() были в коде, но без кнопок
-        // и клавиш. Скобки выбраны вместо Alt+←/→: в Chrome на Windows
-        // Alt+стрелка — это «назад/вперёд» на уровне браузера, и
-        // preventDefault от неё не спасает.
-        if (key === '[' || key === ']' || key === '{' || key === '}') {
+        // Физические коды клавиш: не зависят от раскладки.
+        const isNotePrev  = code === 'BracketLeft';
+        const isNoteNext  = code === 'BracketRight';
+        const isEventPrev = code === 'BraceLeft';
+        const isEventNext = code === 'BraceRight';
+
+        if (isNotePrev || isNoteNext || isEventPrev || isEventNext) {
             if (e.ctrlKey || e.metaKey || e.altKey) return;
             if (_isTypingContext(e.target)) return;
             if (_isModalOpen()) return;
             e.preventDefault();
-            const dir = (key === ']' || key === '}') ? 1 : -1;
-            const isEvent = (key === '{' || key === '}');
+            const dir = (isNoteNext || isEventNext) ? 1 : -1;
+            const isEvent = isEventPrev || isEventNext;
             if (isEvent) {
                 if (typeof navigateEventFromHere === 'function') navigateEventFromHere(dir);
             } else if (typeof navigateNoteFromHere === 'function') {
@@ -75,13 +84,8 @@
             return;
         }
 
-        // ─── Ctrl/⌘ + N: заметка на сегодня ────────────────────
-        if (key === 'n' && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
-            if (_isTypingContext(e.target)) return;
-            e.preventDefault();
-            _openTodayTaskInput();
-            return;
-        }
+        // ─── Ctrl/⌘ + N убран: браузер перехватывает его раньше
+        //     нас и preventDefault не помогает. Используйте кнопку «+».
 
         // ─── Esc: свернуть день / отменить ввод заметки ────────
         if (key === 'escape') {

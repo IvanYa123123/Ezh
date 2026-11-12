@@ -24,15 +24,20 @@ function getLocalDateStr(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-function fixTime(str) {
+function fixTime(str, pairNum) {
     if (!str) return '';
-    return str.replace('13:50', '14:00').replace('15:20', '15:30');
+    // Точечная коррекция старых данных СевГУ. Применяется только при
+    // известном номере пары — пользовательские пары/события не трогаем.
+    const n = Number(pairNum);
+    if (n === 3) return str.replace('13:50', '14:00');
+    if (n === 4) return str.replace('15:20', '15:30');
+    return str;
 }
 
 function applyTimeFix(scheduleArray) {
     if (!scheduleArray) return [];
     scheduleArray.forEach(item => {
-        if (item.time_range) item.time_range = fixTime(item.time_range);
+        if (item.time_range) item.time_range = fixTime(item.time_range, item.n);
     });
     return scheduleArray;
 }

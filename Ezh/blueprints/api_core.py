@@ -38,7 +38,7 @@ def get_groups():
     local_groups = load_local_groups()
     if local_groups:
         resp = jsonify(local_groups)
-        resp.headers['Cache-Control'] = 'public, max-age=3600'
+        resp.headers['Cache-Control'] = 'no-store'
         return resp
 
     # Локального справочника нет — пробуем API СевГУ.
@@ -50,7 +50,7 @@ def get_groups():
         if r.status_code == 200:
             try:
                 resp = jsonify(r.json())
-                resp.headers['Cache-Control'] = 'public, max-age=3600'
+                resp.headers['Cache-Control'] = 'no-store'
                 return resp
             except ValueError:
                 _safe_print("[groups] API вернул не JSON", flush=True)

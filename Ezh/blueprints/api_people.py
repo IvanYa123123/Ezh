@@ -131,7 +131,7 @@ def get_teachers():
 
 
 @bp.route("/api/teacher_schedule")
-@limiter.limit("30 per minute")
+@limiter.limit("120 per minute")
 def get_teacher_schedule():
     slug = (request.args.get('slug') or '').strip()
     if not slug:

@@ -1,20 +1,4 @@
 // Друзья: список, папки, drag-n-drop, синхронизация расписаний.
-// v3.15.2:
-//   • fetchAllFriendsSchedules и syncFriendsSchedules дедуплицируют
-//     запросы по ключу group__subgroup. Если три друга в одной группе —
-//     уходит один HTTP-запрос, а не три.
-//   • saveFriendsOrder работает при недоступном localStorage.
-//   • fetchFriends защищён счётчиком поколений.
-// v3.16.6:
-//   • fetchAllFriendsSchedules и syncFriendsSchedules тоже проверяют
-//     поколение. Раньше при быстром переключении группы старые
-//     загрузки могли перетереть friendsSchedules новыми данными
-//     (или записать в id, которых в новом списке уже нет).
-// v3.17.1:
-//   • Общие пары можно подписывать двумя способами: «в 15:40»
-//     или «4 пара» (см. sharedPairFormat в state.js и настройку
-//     «Как писать общие пары» в settings.js). Логика — в хелперах
-//     _labelCommonPair и _labelWhen.
 
 const campusNames = { 'galosha': 'Галоша', 'gogol': 'Гоголя', 'univer': 'Университетская' };
 
@@ -309,13 +293,6 @@ function hideAllFriends(e) {
 
 // ============================================================
 //  ФОРМАТ ОБЩИХ ПАР
-// ------------------------------------------------------------
-//  Настройка «Как писать общие пары» (settings.js) хранит
-//  строку sharedPairFormat:
-//    'time'     → «Общая пара в 15:40»
-//    'pair_num' → «Общая 4 пара»
-//  Хелперы ниже — единая точка форматирования, чтобы при
-//  следующей смене формата не искать по всему файлу.
 // ============================================================
 
 function _labelCommonPair(item) {
@@ -337,26 +314,12 @@ function _labelWhen(timeStr, pairNum) {
 
 // ============================================================
 //  ЗАГРУЗКА РАСПИСАНИЙ ДРУЗЕЙ
-// ------------------------------------------------------------
-//  Дедупликация: если несколько друзей в одной группе и
-//  подгруппе, HTTP-запрос уходит один раз, результат
-//  раздаётся всем. Раньше было N запросов на N друзей, и
-//  при 5 друзьях rate-limit /api/schedule_all срабатывал
-//  уже после пятой перезагрузки страницы.
-//
-//  Generation guard: если во время загрузки пользователь
-//  нажмёт «Найти» (fetchFriends увеличит _friendsGeneration),
-//  устаревшие загрузки не должны писать в friendsSchedules
-//  по id, которых в новом списке уже нет.
 // ============================================================
 
 function _friendScheduleKey(friend) {
     return `${friend.group}__${friend.subgroup || '0'}`;
 }
 
-// Друзья загружаются пачкой: раньше каждый ответ вызывал
-// renderFriendsCalendar(), то есть при 10 друзьях календарь
-// перерисовывался 10 раз подряд. Теперь — один раз на кадр.
 let _friendsRenderQueued = false;
 
 function _queueFriendsRender() {
@@ -826,8 +789,12 @@ function renderFriendsCalendar(dir = null) {
                 let fCampEnd = getCampus(daySchedule[daySchedule.length - 1]);
                 let fFirstNum = daySchedule[0].n;
                 let fLastNum  = daySchedule[daySchedule.length - 1].n;
+                const detailId = `friend-details-${friend.id}-${dateStr}`;
 
-                html += `<div class="fw-bold text-primary mb-2 text-center border-bottom pb-1" style="font-size: 0.8em;">🕒 ${fStart} - ${fEnd}</div>`;
+                // Треугольник и убранный стикер часов
+                html += `<div class="fw-bold text-primary mb-2 text-center border-bottom pb-1" style="font-size: 0.8em; cursor: pointer; user-select: none;" onclick="toggleFriendSchedule('${detailId}', this)">
+                    ${fStart} - ${fEnd} <span class="toggle-arrow">▼</span>
+                </div>`;
 
                 const allMatch = _allPairsMatch(myDaySchedule, daySchedule);
 
@@ -874,56 +841,58 @@ function renderFriendsCalendar(dir = null) {
                     }
                 }
 
-                if (showFriends) {
-                    html += `<div class="mt-2 border-top pt-2">`;
-                    daySchedule.forEach(fItem => {
-                        const subjectKey = `${fItem.lesson} (${fItem.type_name})`;
+                // Обертка для плавного раскрытия пар
+                html += `<div id="${detailId}" class="friend-schedule-details mt-2 border-top pt-2">`;
+                html += `<div class="friend-schedule-inner">`;
 
-                        let displayLesson   = fItem.lesson;
-                        let lessonLink      = '';
-                        let displayTeacher  = fItem.teacher  || '';
-                        let displayLocation = fItem.location || '';
+                daySchedule.forEach(fItem => {
+                    const subjectKey = `${fItem.lesson} (${fItem.type_name})`;
 
-                        if (cachedSubjectSettings && cachedSubjectSettings[subjectKey]) {
-                            const s = cachedSubjectSettings[subjectKey];
-                            if (s.custom_name) displayLesson   = s.custom_name;
-                            if (s.link)        lessonLink      = s.link;
-                            if (s.teacher)     displayTeacher  = s.teacher;
-                            if (s.location)    displayLocation = s.location;
-                        }
+                    let displayLesson   = fItem.lesson;
+                    let lessonLink      = '';
+                    let displayTeacher  = fItem.teacher  || '';
+                    let displayLocation = fItem.location || '';
 
-                        let typeBadge = fItem.type_name
-                            ? `<span class="badge bg-secondary" style="font-size: 0.7em;">${escapeHtml(fItem.type_name)}</span>`
-                            : '';
+                    if (cachedSubjectSettings && cachedSubjectSettings[subjectKey]) {
+                        const s = cachedSubjectSettings[subjectKey];
+                        if (s.custom_name) displayLesson   = s.custom_name;
+                        if (s.link)        lessonLink      = s.link;
+                        if (s.teacher)     displayTeacher  = s.teacher;
+                        if (s.location)    displayLocation = s.location;
+                    }
 
-                        let lessonHtml = lessonLink
-                            ? `<a href="${lessonLink}" target="_blank" class="text-decoration-none fw-bold"
-                                  style="color: var(--accent);"
-                                  title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</a>`
-                            : `<span title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</span>`;
+                    let typeBadge = fItem.type_name
+                        ? `<span class="badge bg-secondary" style="font-size: 0.7em;">${escapeHtml(fItem.type_name)}</span>`
+                        : '';
 
-                        let teacherHtml = (showTeacher && displayTeacher)
-                            ? `<div class="schedule-item-teacher">${escapeHtml(displayTeacher)}</div>`
-                            : '';
-                        let locationHtml = (showLocation && displayLocation)
-                            ? `<div class="schedule-item-location">${escapeHtml(displayLocation)}</div>`
-                            : '';
+                    let lessonHtml = lessonLink
+                        ? `<a href="${lessonLink}" target="_blank" class="text-decoration-none fw-bold"
+                              style="color: var(--accent);"
+                              title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</a>`
+                        : `<span title="${escapeHtml(fItem.lesson)}">${escapeHtml(displayLesson)}</span>`;
 
-                        html += `
-                            <div class="schedule-item shadow-sm" style="border-left: 3px solid var(--border-color);">
-                                <div class="schedule-item-top">
-                                    <span class="schedule-item-time">
-                                        <strong class="text-primary">${fixTime(fItem.time_range)}</strong>
-                                    </span>
-                                </div>
-                                ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
-                                <div class="schedule-item-title">${lessonHtml}</div>
-                                ${teacherHtml}
-                                ${locationHtml}
-                            </div>`;
-                    });
-                    html += `</div>`;
-                }
+                    let teacherHtml = (showTeacher && displayTeacher)
+                        ? `<div class="schedule-item-teacher">${escapeHtml(displayTeacher)}</div>`
+                        : '';
+                    let locationHtml = (showLocation && displayLocation)
+                        ? `<div class="schedule-item-location">${escapeHtml(displayLocation)}</div>`
+                        : '';
+
+                    html += `
+                        <div class="schedule-item shadow-sm" style="border-left: 3px solid var(--border-color);">
+                            <div class="schedule-item-top">
+                                <span class="schedule-item-time">
+                                    <strong class="text-primary">${fixTime(fItem.time_range)}</strong>
+                                </span>
+                            </div>
+                            ${typeBadge ? `<div class="schedule-item-badge">${typeBadge}</div>` : ''}
+                            <div class="schedule-item-title">${lessonHtml}</div>
+                            ${teacherHtml}
+                            ${locationHtml}
+                        </div>`;
+                });
+                
+                html += `</div></div>`; // закрываем friend-schedule-inner и friend-schedule-details
             } else {
                 html += `<div class="text-muted text-center mt-2" style="font-size: 0.8em;">Выходной</div>`;
             }
@@ -935,4 +904,14 @@ function renderFriendsCalendar(dir = null) {
         wrapper.appendChild(grid);
         container.appendChild(wrapper);
     });
+}
+
+function toggleFriendSchedule(id, headerEl) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isExpanded = el.classList.toggle('expanded');
+    const arrow = headerEl.querySelector('.toggle-arrow');
+    if (arrow) {
+        arrow.classList.toggle('expanded', isExpanded);
+    }
 }

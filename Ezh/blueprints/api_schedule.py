@@ -44,6 +44,18 @@ def _safe_print(*args, **kwargs):
 _schedule_caches = {}
 _schedule_caches_lock = threading.Lock()
 
+_sync_locks = {}
+_sync_locks_guard = threading.Lock()
+
+
+def _get_sync_lock(key):
+    with _sync_locks_guard:
+        lock = _sync_locks.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            _sync_locks[key] = lock
+        return lock
+
 
 def _schedule_cache(path):
     with _schedule_caches_lock:
@@ -89,10 +101,16 @@ def get_schedule_all():
     if cached:
         return jsonify(cached)
 
-    schedule = runtime.planner.get_semester_schedule(group, subgroup)
-    if schedule:
-        _schedule_cache(cache_file).write(schedule, ensure_ascii=False)
-    return jsonify(schedule)
+    sync_key = f"{group}_{subgroup}"
+    with _get_sync_lock(sync_key):
+        cached = _read_schedule_file(cache_file)  # двойная проверка
+        if cached:
+            return jsonify(cached)
+
+        schedule = runtime.planner.get_semester_schedule(group, subgroup)
+        if schedule:
+            _schedule_cache(cache_file).write(schedule, ensure_ascii=False)
+        return jsonify(schedule)
 
 
 @bp.route("/api/schedule_sync")
@@ -132,7 +150,9 @@ def sync_schedule():
         mark_synced(sync_key)
     else:
         if not os.path.exists(cache_file):
-            mark_synced(sync_key)
+            # Сервер СевГУ молчит, кэша нет. Повторим через 10 минут,
+            # а не через 6 часов.
+            mark_synced(sync_key, interval=600)
 
     return jsonify(schedule)
 
@@ -443,7 +463,7 @@ def manage_subjects():
         "location": row["location"],
     } for row in cursor.fetchall()}
     resp = jsonify(settings)
-    resp.headers['Cache-Control'] = 'private, max-age=300'
+    resp.headers['Cache-Control'] = 'private, no-store'
     return resp
 
 

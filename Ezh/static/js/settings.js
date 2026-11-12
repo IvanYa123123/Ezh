@@ -128,7 +128,6 @@ function updateSettingsGroupValue() {
 function openSettingsModal() {
     document.getElementById('settingsToggleTeacher').checked  = showTeacher;
     document.getElementById('settingsToggleLocation').checked = showLocation;
-    document.getElementById('settingsToggleFriends').checked  = showFriends;
     document.getElementById('settingsToggleStatus').checked   = showStatus;
     document.getElementById('settingsToggleSleepMode').checked = showSleepMode;
 
@@ -241,12 +240,10 @@ function restoreSettingsSections() {
 function saveSettingsFromUI() {
     showTeacher  = document.getElementById('settingsToggleTeacher').checked;
     showLocation = document.getElementById('settingsToggleLocation').checked;
-    showFriends  = document.getElementById('settingsToggleFriends').checked;
     showStatus   = document.getElementById('settingsToggleStatus').checked;
 
     localStorage.setItem('showTeacher',  showTeacher);
     localStorage.setItem('showLocation', showLocation);
-    localStorage.setItem('showFriends',  showFriends);
     localStorage.setItem('showStatus',   showStatus);
 
     const sharedPairSelect = document.getElementById('settingsSharedPairFormat');

@@ -363,6 +363,11 @@ async function syncMoodleDeadlinesToCalendar() {
 
             let text = `Сдать: ${cleanCourse} — ${act.name}`;
 
+            let existing = [];
+            try { existing = await apiLoadTasks(taskDateStr, taskDateStr); }
+            catch (e) { existing = []; }
+            if (existing.some(t => t.text === text)) continue;
+
             try {
                 await apiCreateTask({date: taskDateStr, text: text, status: 'red'});
                 added++;
@@ -591,7 +596,10 @@ function renderProWidgets() {
 
         if (keys.length === 0) {
             select.innerHTML = '<option value="">Нет оцененных работ</option>';
-            if (proSubjectChart) proSubjectChart.destroy();
+            if (proSubjectChart) {
+                proSubjectChart.destroy();
+                proSubjectChart = null;
+            }
             return;
         }
 
@@ -756,7 +764,7 @@ function renderProSubjectChart() {
         detailsEl.innerHTML = html;
     }
 
-    if (proSubjectChart) proSubjectChart.destroy();
+    if (proSubjectChart) { proSubjectChart.destroy(); proSubjectChart = null; }
     const ctx = document.getElementById('proSubjectChart');
     if (ctx && ctx.offsetParent !== null) {
         const cAccent = getThemeColor('--accent', '#6366f1');
