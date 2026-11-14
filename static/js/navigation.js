@@ -1,0 +1,127 @@
+// Навигация по календарю: заметки, события, стрелки.
+//
+// v3.7.0:
+//   • navigateNoteFromHere / navigateEventFromHere — обёртки для кнопок
+//     в шапке и горячих клавиш. Раньше функции навигации по заметкам
+//     и событиям существовали, но к ним не было ни одной кнопки.
+//   • Если искать нечего — показываем понятный тост вместо тишины.
+
+function _navAnchorDate() {
+    if (typeof expandedDayDateStr !== 'undefined' && expandedDayDateStr) return expandedDayDateStr;
+    return getLocalDateStr(currentBaseDate);
+}
+
+function computeNextNoteDate(currentDateStr) {
+    let sorted = [...taskDatesSet].sort();
+    return sorted.find(d => d > currentDateStr) || null;
+}
+function computePrevNoteDate(currentDateStr) {
+    let sorted = [...taskDatesSet].sort().reverse();
+    return sorted.find(d => d < currentDateStr) || null;
+}
+
+function findNextEventDate(fromDateStr) {
+    let [y, m, d] = fromDateStr.split('-').map(Number);
+    let start = new Date(y, m - 1, d);
+    for (let i = 1; i <= 730; i++) {
+        let dt = new Date(start);
+        dt.setDate(dt.getDate() + i);
+        let dateStr = getLocalDateStr(dt);
+        if (getCustomItemsForDate(dateStr).some(x => x.is_event)) return dateStr;
+    }
+    return null;
+}
+function findPrevEventDate(fromDateStr) {
+    let [y, m, d] = fromDateStr.split('-').map(Number);
+    let start = new Date(y, m - 1, d);
+    for (let i = 1; i <= 730; i++) {
+        let dt = new Date(start);
+        dt.setDate(dt.getDate() - i);
+        let dateStr = getLocalDateStr(dt);
+        if (getCustomItemsForDate(dateStr).some(x => x.is_event)) return dateStr;
+    }
+    return null;
+}
+
+function _notifyNothingFound(kind, direction) {
+    if (typeof showUpdateNotification !== 'function') return;
+    const where = direction > 0 ? 'дальше' : 'раньше';
+    showUpdateNotification(`Больше ${kind} ${where} нет`);
+}
+
+function navigateNote(fromDateStr, direction) {
+    let target = direction > 0
+        ? computeNextNoteDate(fromDateStr)
+        : computePrevNoteDate(fromDateStr);
+    if (target) jumpToDate(target);
+    else _notifyNothingFound('заметок', direction);
+}
+
+function navigateEvent(fromDateStr, direction) {
+    let target = direction > 0
+        ? findNextEventDate(fromDateStr)
+        : findPrevEventDate(fromDateStr);
+    if (target) jumpToDate(target);
+    else _notifyNothingFound('событий', direction);
+}
+
+// Кнопки в шапке: отсчёт от текущего дня/развёрнутого дня.
+function navigateNoteFromHere(direction) { navigateNote(_navAnchorDate(), direction); }
+function navigateEventFromHere(direction) { navigateEvent(_navAnchorDate(), direction); }
+
+// ============================================================
+//  СТРЕЛКИ ← →
+// ------------------------------------------------------------
+//  • День развёрнут (fullscreen-day) → шаг на 1 день.
+//  • Иначе                          → шаг на неделю.
+//  Вызывается из HTML вместо changeWeek.
+// ============================================================
+
+function navigatePrev() {
+    if (expandedDayDateStr) _navigateDay(-1);
+    else                    changeWeek(-1);
+}
+function navigateNext() {
+    if (expandedDayDateStr) _navigateDay(1);
+    else                    changeWeek(1);
+}
+
+function _navigateDay(offset) {
+    window._calDir = offset > 0 ? 'right' : 'left';
+    let [y, m, d] = expandedDayDateStr.split('-').map(Number);
+    let target = new Date(y, m - 1, d);
+    target.setDate(target.getDate() + offset);
+    let targetStr = getLocalDateStr(target);
+
+    let dow = target.getDay();
+    if (dow === 0) dow = 7;
+    let monday = new Date(target);
+    monday.setDate(monday.getDate() - (dow - 1));
+
+    currentBaseDate = monday;
+    expandedDayDateStr = targetStr;
+    renderCalendar();
+    if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
+}
+
+function jumpToDate(dateStr) {
+    let [y, m, d] = dateStr.split('-').map(Number);
+    let target = new Date(y, m - 1, d);
+    let dow = target.getDay();
+    if (dow === 0) dow = 7;
+    let monday = new Date(target);
+    monday.setDate(monday.getDate() - (dow - 1));
+
+    currentBaseDate = monday;
+    expandedDayDateStr = dateStr;
+    renderCalendar();
+
+    setTimeout(() => {
+        let el = document.getElementById(`day-col-${dateStr}`);
+        if (!el) return;
+        let headerEl = document.querySelector('.controls-header');
+        let offset = headerEl ? headerEl.offsetHeight + 20 : 90;
+        let top = window.pageYOffset + el.getBoundingClientRect().top - offset;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }, 80);
+}
