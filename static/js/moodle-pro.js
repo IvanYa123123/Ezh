@@ -526,10 +526,7 @@ function _groupCourseLabs(course) {
 function _groupIsDone(course, group, forcedDone) {
     if (forcedDone) return true;
     // Если сдана хотя бы одна лаба с таким номером — засчитываем всю группу.
-    return group.acts.some(a => {
-        const s = _courseEffectiveStatus(course, a);
-        return s === 'Сдано' || s === 'На проверке';
-    });
+    return group.acts.some(a => a.status === 'Сдано' || a.status === 'На проверке');
 }
 
 function _groupRepresentative(group, done) {

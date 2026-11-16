@@ -338,21 +338,31 @@ function drop(e, newDate) {
 
 async function refreshTaskDates() {
     try {
-        let dates = await apiLoadTaskDates();
-        taskDatesSet = new Set(dates);
+        // Один запрос вместо двух: counts уже содержит все даты с заметками.
+        let counts = {};
         try {
-            const counts = await apiLoadTaskDateCounts() || {};
-            if (counts && counts.counts && typeof counts.counts === 'object') {
-                taskCountsByDate = counts.counts;
-                taskSeverityByDate = counts.severity || {};
+            const data = await apiLoadTaskDateCounts() || {};
+            if (data && data.counts && typeof data.counts === 'object') {
+                counts = data.counts;
+                taskSeverityByDate = data.severity || {};
             } else {
-                taskCountsByDate = counts;
+                counts = data;
                 taskSeverityByDate = {};
             }
         } catch (e) {
-            taskCountsByDate = {};
+            // Старый сервер/ошибка — откатываемся на отдельный список дат.
+            counts = {};
             taskSeverityByDate = {};
+            const dates = await apiLoadTaskDates();
+            taskDatesSet = new Set(dates);
+            taskCountsByDate = {};
+            if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
+            if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
+            return;
         }
+
+        taskCountsByDate = counts;
+        taskDatesSet = new Set(Object.keys(counts));
         if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
         if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
     } catch (e) { console.error("refreshTaskDates", e); }
