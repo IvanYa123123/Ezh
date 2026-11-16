@@ -59,6 +59,9 @@ class SevSUTeacherPlanner:
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        # Разбор 250-400 КБ ICS — дорогая операция. Держим результат
+        # в памяти, пока файл не изменился (mtime+size).
+        self._ics_mem = {}
 
         # Retry-политика как в planner.py
         try:
@@ -215,14 +218,24 @@ class SevSUTeacherPlanner:
 
     def _read_schedule_cache(self, ics_path: str, meta_path: str):
         try:
-            with open(ics_path, 'r', encoding='utf-8') as f:
-                ics = f.read()
+            st = os.stat(ics_path)
         except OSError:
             return None
 
-        schedule = parse_ics_schedule(ics)
-        if not schedule:
-            return None
+        mem_key = (st.st_mtime_ns, st.st_size)
+        cached_schedule = self._ics_mem.get(ics_path)
+        if cached_schedule and cached_schedule[0] == mem_key:
+            schedule = cached_schedule[1]
+        else:
+            try:
+                with open(ics_path, 'r', encoding='utf-8') as f:
+                    ics = f.read()
+            except OSError:
+                return None
+            schedule = parse_ics_schedule(ics)
+            if not schedule:
+                return None
+            self._ics_mem[ics_path] = (mem_key, schedule)
 
         age = 0.0
         try:
@@ -234,7 +247,7 @@ class SevSUTeacherPlanner:
             # Нет/битый meta — считаем возраст по mtime самого ICS,
             # иначе отсутствие meta делало кэш «вечно свежим».
             try:
-                age = max(0.0, time.time() - os.path.getmtime(ics_path))
+                age = max(0.0, time.time() - st.st_mtime)
             except OSError:
                 age = float('inf')
 

@@ -272,9 +272,10 @@ def _security_headers(response):
     response.headers.pop('Server', None)
 
     if request.path.startswith('/static/'):
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
+        # no-cache вместо no-store: браузер хранит файл, но каждый раз
+        # перепроверяет его по ETag/Last-Modified. Свежесть та же,
+        # а при неизменённом файле сервер отдаёт 304 без тела.
+        response.headers['Cache-Control'] = 'no-cache, must-revalidate, max-age=0'
     return response
 
 
