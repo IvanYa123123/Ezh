@@ -27,9 +27,16 @@ if getattr(sys, 'frozen', False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-COOKIES_FILE = os.path.join(BASE_DIR, "moodle_cookies.json")
-CACHE_FILE = os.path.join(BASE_DIR, "moodle_stats_cache.json")
-ERROR_LOG_FILE = os.path.join(BASE_DIR, "moodle_errors.log")
+# Изменяемые файлы — в подпапке data рядом с приложением.
+DATA_DIR = os.path.join(BASE_DIR, "data")
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except OSError:
+    DATA_DIR = BASE_DIR
+
+COOKIES_FILE = os.path.join(DATA_DIR, "moodle_cookies.json")
+CACHE_FILE = os.path.join(DATA_DIR, "moodle_stats_cache.json")
+ERROR_LOG_FILE = os.path.join(DATA_DIR, "moodle_errors.log")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -462,8 +469,13 @@ def get_stats():
             cache_age = None
     cache_fresh = cache_age is not None and 0 <= cache_age < STATS_CACHE_TTL
 
-    if not force and cache_fresh:
-        return _cached_response()
+    # Без принудительного обновления всегда отдаём сохранённый кэш,
+    # даже устаревший: Pro-режим должен показывать последние данные
+    # с сайта, не дёргая Moodle при каждом входе.
+    if not force:
+        if cached_data:
+            return _cached_response(stale=not cache_fresh)
+        return jsonify({"data": [], "timestamp": 0, "stale": True, "empty": True})
 
     if not _scrape_lock.acquire(blocking=False):
         if cached_data:

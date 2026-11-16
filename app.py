@@ -32,6 +32,36 @@ else:
 
 _CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
 
+# Все изменяемые файлы (БД, кэши, cookies, логи) живут в подпапке data,
+# чтобы рядом с exe не появлялась куча технических файлов.
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+_LEGACY_DATA_ITEMS = (
+    "planner.db", "planner.db-wal", "planner.db-shm",
+    "custom_groups.json", ".sync_times.json",
+    ".shortcut_asked", "teachers.json", "schedules", "teacher_schedules",
+    "moodle_cookies.json", "moodle_stats_cache.json",
+    "moodle_errors.log", "moodle_errors.log.1",
+)
+
+
+def _migrate_legacy_data():
+    """Переносит данные старой версии из корня установки в data/."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    for name in _LEGACY_DATA_ITEMS:
+        src = os.path.join(BASE_DIR, name)
+        dst = os.path.join(DATA_DIR, name)
+        if not os.path.exists(src) or os.path.exists(dst):
+            continue
+        try:
+            os.replace(src, dst)
+        except OSError:
+            try:
+                import shutil
+                shutil.move(src, dst)
+            except OSError as e:
+                _safe_print(f"[data] не удалось перенести {name}: {e}", flush=True)
+
 
 def _safe_print(*args, **kwargs):
     try:
@@ -60,13 +90,16 @@ def _read_app_version():
     return "dev"
 
 
+_migrate_legacy_data()
+
 runtime.IS_EXE         = IS_EXE
 runtime.BASE_DIR       = BASE_DIR
 runtime.BUNDLE_DIR     = BUNDLE_DIR
-runtime.DB_FILE        = os.path.join(BASE_DIR, "planner.db")
-runtime.SCHEDULES_DIR  = os.path.join(BASE_DIR, "schedules")
-runtime.CUSTOM_GROUPS_FILE = os.path.join(BASE_DIR, "custom_groups.json")
-runtime.SYNC_TIMES_FILE    = os.path.join(BASE_DIR, ".sync_times.json")
+runtime.DATA_DIR       = DATA_DIR
+runtime.DB_FILE        = os.path.join(DATA_DIR, "planner.db")
+runtime.SCHEDULES_DIR  = os.path.join(DATA_DIR, "schedules")
+runtime.CUSTOM_GROUPS_FILE = os.path.join(DATA_DIR, "custom_groups.json")
+runtime.SYNC_TIMES_FILE    = os.path.join(DATA_DIR, ".sync_times.json")
 runtime.GROUPS_FILE    = os.path.join(BUNDLE_DIR, "Group.txt")
 runtime.TEMPLATES_DIR  = os.path.join(BUNDLE_DIR, "templates")
 runtime.STATIC_DIR     = os.path.join(BUNDLE_DIR, "static")
@@ -78,7 +111,7 @@ os.makedirs(runtime.SCHEDULES_DIR, exist_ok=True)
 _safe_print(f"[version] {runtime.APP_VERSION} (BASE_DIR = {BASE_DIR})", flush=True)
 
 runtime.planner = SevSUPlanner()
-runtime.teacher_planner = SevSUTeacherPlanner(BASE_DIR)
+runtime.teacher_planner = SevSUTeacherPlanner(DATA_DIR)
 
 try:
     runtime.teacher_planner.start_background_refresh(interval_hours=6)
@@ -348,7 +381,21 @@ def _get_desktop_dir() -> str:
     onedrive_desktop = os.path.join(home, 'OneDrive', 'Desktop')
     if os.path.isdir(onedrive_desktop):
         return onedrive_desktop
+    if not os.path.isdir(desktop):
+        try:
+            os.makedirs(desktop, exist_ok=True)
+        except OSError:
+            pass
     return desktop
+
+
+def _shortcut_log(message: str) -> None:
+    """Диагностика создания ярлыка: data\\shortcut.log."""
+    try:
+        with open(os.path.join(DATA_DIR, 'shortcut.log'), 'a', encoding='utf-8') as f:
+            f.write(time.strftime('%Y-%m-%d %H:%M:%S ') + message + '\n')
+    except OSError:
+        pass
 
 
 def _ps_quote(value: str) -> str:
@@ -356,16 +403,63 @@ def _ps_quote(value: str) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def _create_shortcut_com(exe_path: str, exe_dir: str, shortcut_path: str) -> bool:
+    """Создаёт .lnk через IShellLink (pywin32), без запуска скриптов.
+
+    Это самый надёжный путь: не зависит от ExecutionPolicy, антивирус
+    меньше реагирует, чем на powershell -EncodedCommand.
+    """
+    try:
+        import pythoncom
+        from win32com.shell import shell
+    except Exception as e:
+        _shortcut_log(f"COM: pywin32 недоступен: {e}")
+        return False
+
+    pythoncom.CoInitialize()
+    try:
+        link = pythoncom.CoCreateInstance(
+            shell.CLSID_ShellLink, None,
+            pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink,
+        )
+        link.SetPath(exe_path)
+        link.SetWorkingDirectory(exe_dir)
+        link.SetDescription("EZHednevnik - дневник студента СевГУ")
+        link.SetIconLocation(exe_path, 0)
+        link.QueryInterface(pythoncom.IID_IPersistFile).Save(shortcut_path, 0)
+        ok = os.path.exists(shortcut_path) and os.path.getsize(shortcut_path) > 0
+        _shortcut_log(f"COM: {'OK' if ok else 'файл не создан'} -> {shortcut_path}")
+        return ok
+    except Exception as e:
+        _shortcut_log(f"COM: ошибка: {e}")
+        return False
+    finally:
+        try:
+            pythoncom.CoUninitialize()
+        except Exception:
+            pass
+
+
 def _create_desktop_shortcut() -> bool:
     if sys.platform != 'win32':
         return False
     if not IS_EXE:
+        _shortcut_log("пропуск: приложение запущено не из exe")
         return False
 
     exe_path = sys.executable
     exe_dir = os.path.dirname(exe_path)
-    desktop = _get_desktop_dir()
+    desktop = os.environ.get('EZH_SHORTCUT_DIR') or _get_desktop_dir()
     shortcut_path = os.path.join(desktop, 'EZHednevnik.lnk')
+
+    if _create_shortcut_com(exe_path, exe_dir, shortcut_path):
+        return True
+
+    system_root = os.environ.get('SystemRoot', r'C:\Windows')
+    powershell = os.path.join(
+        system_root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+    if not os.path.exists(powershell):
+        powershell = 'powershell'
 
     ps_script = (
         '$ErrorActionPreference = "Stop"; '
@@ -379,19 +473,26 @@ def _create_desktop_shortcut() -> bool:
         'exit 0'
     )
 
-    try:
-        encoded = base64.b64encode(ps_script.encode('utf-16-le')).decode('ascii')
-        result = subprocess.run(
-            ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass',
-             '-EncodedCommand', encoded],
-            capture_output=True, timeout=25, text=True,
-            creationflags=_CREATE_NO_WINDOW,
-        )
-        if result.returncode == 0 and os.path.exists(shortcut_path):
-            _safe_print("[shortcut] OK (powershell)", flush=True)
-            return True
-    except Exception as e:
-        _safe_print(f"[shortcut] powershell ошибка: {e}", flush=True)
+    for args in (
+        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+         '-WindowStyle', 'Hidden', '-Command', ps_script],
+        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+         '-WindowStyle', 'Hidden', '-EncodedCommand',
+         base64.b64encode(ps_script.encode('utf-16-le')).decode('ascii')],
+    ):
+        try:
+            result = subprocess.run(
+                [powershell] + args,
+                capture_output=True, timeout=25, text=True,
+                creationflags=_CREATE_NO_WINDOW,
+            )
+            if result.returncode == 0 and os.path.exists(shortcut_path):
+                _shortcut_log("powershell: OK")
+                return True
+            err = (result.stderr or '').strip()[:300]
+            _shortcut_log(f"powershell rc={result.returncode}: {err}")
+        except Exception as e:
+            _shortcut_log(f"powershell: {e}")
 
     exe_path_esc = exe_path.replace('"', '""')
     exe_dir_esc = exe_dir.replace('"', '""')
@@ -415,16 +516,21 @@ def _create_desktop_shortcut() -> bool:
             f.write(vbs)
             vbs_path = f.name
 
+        wscript = os.path.join(system_root, 'System32', 'cscript.exe')
+        if not os.path.exists(wscript):
+            wscript = 'cscript'
         result = subprocess.run(
-            ['cscript', '//Nologo', vbs_path],
+            [wscript, '//Nologo', vbs_path],
             capture_output=True, timeout=15, text=True,
             creationflags=_CREATE_NO_WINDOW,
         )
         if result.returncode == 0 and os.path.exists(shortcut_path):
-            _safe_print("[shortcut] OK (vbscript)", flush=True)
+            _shortcut_log("vbscript: OK")
             return True
+        err = (result.stderr or '').strip()[:300]
+        _shortcut_log(f"vbscript rc={result.returncode}: {err}")
     except Exception as e:
-        _safe_print(f"[shortcut] vbs ошибка: {e}", flush=True)
+        _shortcut_log(f"vbscript: {e}")
     finally:
         if vbs_path:
             try:
@@ -432,27 +538,106 @@ def _create_desktop_shortcut() -> bool:
             except OSError:
                 pass
 
+    _shortcut_log("ИТОГ: не удалось создать ярлык")
     return False
+
+
+def _default_browser_command(url: str):
+    """Возвращает argv браузера по умолчанию из реестра или None."""
+    if sys.platform != 'win32':
+        return None
+    try:
+        import winreg
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r'Software\Microsoft\Windows\Shell\Associations'
+            r'\UrlAssociations\http\UserChoice',
+        ) as key:
+            prog_id = winreg.QueryValueEx(key, 'ProgId')[0]
+        if not prog_id:
+            return None
+        with winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT,
+            prog_id + r'\shell\open\command',
+        ) as key:
+            command = winreg.QueryValueEx(key, '')[0]
+        if not command:
+            return None
+        command = command.strip()
+        if command.startswith('"'):
+            end = command.find('"', 1)
+            if end < 0:
+                return None
+            exe = command[1:end]
+            rest = command[end + 1:].strip()
+        else:
+            parts = command.split(None, 1)
+            exe = parts[0]
+            rest = parts[1] if len(parts) > 1 else ''
+        if not os.path.exists(exe):
+            return None
+        import shlex
+        args = shlex.split(rest, posix=False) if rest else []
+        cleaned = []
+        for a in args:
+            a = a.replace('%1', url).replace('%L', url)
+            if len(a) > 1 and a[0] == '"' and a[-1] == '"':
+                a = a[1:-1]
+            cleaned.append(a)
+        args = cleaned
+        if not any(url in a for a in args):
+            args.append(url)
+        return [exe] + args
+    except Exception:
+        return None
 
 
 def _open_url_in_browser(url: str) -> bool:
     if sys.platform == 'win32':
+        # 1) ShellExecuteW: штатный путь Windows, но иногда браузер
+        #    открывает вкладку в фоновом окне и ничего не показывает.
+        try:
+            import ctypes
+            rc = ctypes.windll.shell32.ShellExecuteW(
+                None, "open", url, None, None, 1)
+            if rc > 32:
+                _shortcut_log(f"browser: ShellExecuteW OK ({url})")
+                return True
+            _shortcut_log(f"browser: ShellExecuteW rc={rc}")
+        except Exception as e:
+            _shortcut_log(f"browser: ShellExecuteW {e}")
+
+        # 2) Явный запуск браузера по умолчанию.
+        argv = _default_browser_command(url)
+        if argv:
+            try:
+                subprocess.Popen(argv, close_fds=True,
+                                 creationflags=_CREATE_NO_WINDOW)
+                _shortcut_log(f"browser: прямой запуск OK ({argv[0]})")
+                return True
+            except Exception as e:
+                _shortcut_log(f"browser: прямой запуск {e}")
+
+        # 3) os.startfile
         try:
             os.startfile(url)
+            _shortcut_log("browser: os.startfile OK")
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            _shortcut_log(f"browser: os.startfile {e}")
+
+        # 4) cmd start
         try:
             subprocess.Popen(['cmd', '/c', 'start', '', url],
                              shell=False, close_fds=True,
                              creationflags=_CREATE_NO_WINDOW)
+            _shortcut_log("browser: cmd start OK")
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            _shortcut_log(f"browser: cmd start {e}")
     try:
         import webbrowser
-        webbrowser.open(url, new=2)
-        return True
+        return bool(webbrowser.open(url, new=2))
     except Exception:
         return False
 
@@ -542,7 +727,7 @@ def _run_console_mode(port: int, debug: bool, open_browser: bool, offer_shortcut
             desktop = _get_desktop_dir()
             shortcut_path = os.path.join(desktop, 'EZHednevnik.lnk')
             if not os.path.exists(shortcut_path):
-                flag_file = os.path.join(BASE_DIR, '.shortcut_asked')
+                flag_file = os.path.join(DATA_DIR, '.shortcut_asked')
                 if not os.path.exists(flag_file):
                     try:
                         with open(flag_file, 'w', encoding='utf-8') as f:
@@ -627,7 +812,7 @@ def _run_gui_mode(port: int):
 
     root = tk.Tk()
     root.title("EZHednevnik")
-    root.geometry("440x395")
+    root.geometry("440x430")
     root.resizable(False, False)
     root.configure(bg=_GUI['bg'])
 
@@ -694,19 +879,52 @@ def _run_gui_mode(port: int):
              font=("Consolas", 10),
              bg=_GUI['surface'], fg=_GUI['text_muted']).pack(anchor="w", pady=(4, 0))
 
+    hint_var = tk.StringVar(value="")
+    tk.Label(status_inner, textvariable=hint_var,
+             font=("Segoe UI", 8), wraplength=360, justify="left",
+             bg=_GUI['surface'], fg=_GUI['text_muted']).pack(anchor="w", pady=(3, 0))
+
+    def _copy_url():
+        url = f"http://127.0.0.1:{port}"
+        try:
+            root.clipboard_clear()
+            root.clipboard_append(url)
+            hint_var.set("Ссылка скопирована.")
+        except Exception:
+            hint_var.set("Не удалось скопировать ссылку.")
+
+    copy_label = tk.Label(status_inner, text="Скопировать ссылку",
+                          font=("Segoe UI", 8, "underline"),
+                          bg=_GUI['surface'], fg=_GUI['accent'], cursor="hand2")
+    copy_label.pack(anchor="w", pady=(2, 0))
+    copy_label.bind("<Button-1>", lambda _e: _copy_url())
+
     buttons_wrap = tk.Frame(root, bg=_GUI['bg'])
     buttons_wrap.pack(fill="x", padx=20)
 
     def on_open_browser():
-        if not _open_url_in_browser(f"http://127.0.0.1:{port}"):
+        url = f"http://127.0.0.1:{port}"
+        ok = _open_url_in_browser(url)
+        try:
+            root.clipboard_clear()
+            root.clipboard_append(url)
+        except Exception:
+            pass
+        if ok:
+            hint_var.set("Браузер запущен. Если окно не появилось — "
+                         "ссылка уже скопирована, вставьте её в адресную строку.")
+        else:
+            hint_var.set("Не удалось открыть браузер. Ссылка скопирована.")
             messagebox.showwarning(
                 "EZHednevnik",
-                f"Не удалось открыть браузер.\n\nОткройте вручную:\nhttp://127.0.0.1:{port}"
+                f"Не удалось открыть браузер.\n\n"
+                f"Откройте вручную:\n{url}\n\n"
+                f"Ссылка скопирована в буфер обмена."
             )
 
     def on_shortcut():
         root.withdraw()
-        root.update()
+        root.update_idletasks()
         ok = _create_desktop_shortcut()
         root.deiconify()
         if ok:
@@ -717,7 +935,8 @@ def _run_gui_mode(port: int):
                 "EZHednevnik",
                 "Не удалось создать ярлык автоматически.\n\n"
                 "Создайте вручную:\n"
-                "правый клик на .exe → «Отправить» → «Рабочий стол (создать ярлык)»."
+                "правый клик на .exe → «Отправить» → «Рабочий стол (создать ярлык)».\n\n"
+                "Подробности записаны в data\\shortcut.log"
             )
 
     def on_stop():
@@ -781,6 +1000,13 @@ def _run_gui_mode(port: int):
 
 
 if __name__ == "__main__":
+    # Служебный режим для диагностики ярлыка без запуска GUI.
+    if "--make-shortcut" in sys.argv:
+        _ok = _create_desktop_shortcut()
+        _safe_print(f"[shortcut] result={_ok}", flush=True)
+        # os._exit: в этом режиме не должно оставаться висящих процессов.
+        os._exit(0 if _ok else 1)
+
     use_gui = IS_EXE and "--console" not in sys.argv
     if "--gui" in sys.argv:
         use_gui = True
