@@ -149,10 +149,8 @@ function openSettingsModal() {
     document.getElementById('settingsToggleWidgetSuggestions').checked = showWidgetSuggestions;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
 
-    // Заметки 1/2/3
-    document.getElementById('settingsToggleWidgetNotes1').checked = showWidgetNotes1;
-    document.getElementById('settingsToggleWidgetNotes2').checked = showWidgetNotes2;
-    document.getElementById('settingsToggleWidgetNotes3').checked = showWidgetNotes3;
+    // Заметки 1..10 — компактный ряд кнопок
+    renderNotesToggleRow();
 
     // Pro виджеты
     document.getElementById('settingsToggleWidgetLabsPro').checked = showWidgetLabsPro;
@@ -171,6 +169,15 @@ function openSettingsModal() {
     document.getElementById('settingsNotifUnit').value      = notificationUnit;
 
     updateNotificationsHint();
+
+    const moodleSyncToggle = document.getElementById('settingsToggleMoodleSyncOnStart');
+    if (moodleSyncToggle) {
+        moodleSyncToggle.checked = (typeof isMoodleSyncOnStartEnabled === 'function')
+            ? isMoodleSyncOnStartEnabled()
+            : localStorage.getItem('moodleSyncOnStart') === '1';
+    }
+    if (typeof syncMoodleSyncOnStartWarning === 'function') syncMoodleSyncOnStartWarning();
+
     restoreSettingsSections();
 
     if (typeof renderCustomThemePanel === 'function') renderCustomThemePanel();
@@ -279,14 +286,6 @@ function saveSettingsFromUI() {
     localStorage.setItem('showWidgetSuggestions', showWidgetSuggestions);
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
 
-    showWidgetNotes1 = document.getElementById('settingsToggleWidgetNotes1').checked;
-    showWidgetNotes2 = document.getElementById('settingsToggleWidgetNotes2').checked;
-    showWidgetNotes3 = document.getElementById('settingsToggleWidgetNotes3').checked;
-
-    localStorage.setItem('showWidgetNotes1', showWidgetNotes1);
-    localStorage.setItem('showWidgetNotes2', showWidgetNotes2);
-    localStorage.setItem('showWidgetNotes3', showWidgetNotes3);
-
     showWidgetLabsPro    = document.getElementById('settingsToggleWidgetLabsPro').checked;
     showWidgetMoodleAvg  = document.getElementById('settingsToggleWidgetMoodleAvg').checked;
     showWidgetMoodleSubj = document.getElementById('settingsToggleWidgetMoodleSubj').checked;
@@ -334,6 +333,11 @@ function saveSettingsFromUI() {
     localStorage.setItem('notificationsEnabled', notificationsEnabled ? 'true' : 'false');
     localStorage.setItem('notificationAdvance', String(notificationAdvance));
     localStorage.setItem('notificationUnit', notificationUnit);
+
+    const moodleSyncToggle = document.getElementById('settingsToggleMoodleSyncOnStart');
+    if (moodleSyncToggle) {
+        localStorage.setItem('moodleSyncOnStart', moodleSyncToggle.checked ? '1' : '0');
+    }
 
     renderCalendar();
     updateScheduleStatus();
@@ -597,6 +601,28 @@ async function onBackupFilePicked(input) {
     }
 }
 
+function renderNotesToggleRow() {
+    const row = document.getElementById('notesToggleRow');
+    if (!row) return;
+
+    row.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+        const active = getNoteWidgetVisibility(i);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'note-toggle-chip' + (active ? ' active' : '');
+        btn.textContent = String(i);
+        btn.title = active ? `Заметка ${i}: показывается` : `Заметка ${i}: скрыта`;
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.addEventListener('click', () => {
+            setNoteWidgetVisibility(i, !getNoteWidgetVisibility(i));
+            applyWidgetVisibility();
+            renderNotesToggleRow();
+        });
+        row.appendChild(btn);
+    }
+}
+
 function applyWidgetVisibility() {
     const wm = document.getElementById('widgetMiniCalCard');
     const wg = document.getElementById('widgetGlobalCard');
@@ -610,24 +636,28 @@ function applyWidgetVisibility() {
     if (ws) ws.style.display = showWidgetSuggestions ? '' : 'none';
     if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
 
-    // Заметки 1/2/3
-    const wn1 = document.getElementById('widgetNotesCard1');
-    const wn2 = document.getElementById('widgetNotesCard2');
-    const wn3 = document.getElementById('widgetNotesCard3');
-
-    if (wn1) wn1.style.display = showWidgetNotes1 ? '' : 'none';
-    if (wn2) wn2.style.display = showWidgetNotes2 ? '' : 'none';
-    if (wn3) wn3.style.display = showWidgetNotes3 ? '' : 'none';
+    // Заметки 1..10
+    for (let i = 1; i <= 10; i++) {
+        const card = document.getElementById('widgetNotesCard' + i);
+        if (card) card.style.display = getNoteWidgetVisibility(i) ? '' : 'none';
+    }
 
     const wlp = document.getElementById('widgetLabsProCard');
     const wma = document.getElementById('widgetMoodleAvgGradeCard');
     const wms = document.getElementById('widgetMoodleSubjectGradesCard');
 
     const proReady = window.isProActive && window.hasLoadedMoodleStats;
+    const proSidebar = document.getElementById('moodleProSidebar');
+    const inProSidebar = (el) => !!(proSidebar && el && proSidebar.contains(el));
 
-    if (wlp) wlp.style.display = (proReady && showWidgetLabsPro) ? '' : 'none';
-    if (wma) wma.style.display = (proReady && showWidgetMoodleAvg) ? '' : 'none';
-    if (wms) wms.style.display = (proReady && showWidgetMoodleSubj) ? '' : 'none';
+    // Внутри полноэкранной Pro-модалки виджеты показываются всегда,
+    // когда данные загружены: это отдельная колонка, а не сетка с настройками.
+    if (wlp) wlp.style.display = (inProSidebar(wlp) ? proReady
+        : (proReady && showWidgetLabsPro)) ? '' : 'none';
+    if (wma) wma.style.display = (inProSidebar(wma) ? proReady
+        : (proReady && showWidgetMoodleAvg)) ? '' : 'none';
+    if (wms) wms.style.display = (inProSidebar(wms) ? proReady
+        : (proReady && showWidgetMoodleSubj)) ? '' : 'none';
 
     const proLockMsg = document.getElementById('proWidgetsLockedMsg');
     const proGrid = document.getElementById('proWidgetsGrid');

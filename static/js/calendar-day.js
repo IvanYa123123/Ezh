@@ -86,9 +86,23 @@ function rebalanceDayText(dateStr) {
     let isExpanded = col && col.classList.contains('fullscreen-day');
 
     if (cards.length === 0) {
+        let hint = container.querySelector('.day-empty-hint');
+        if (isExpanded) {
+            if (!hint) {
+                hint = document.createElement('div');
+                hint.className = 'day-empty-hint';
+                hint.innerHTML = 'Нажмите <b>+</b>, чтобы создать заметку';
+                container.appendChild(hint);
+            }
+        } else if (hint) {
+            hint.remove();
+        }
         if (wrap) wrap.style.display = isExpanded ? 'block' : 'none';
         return;
     }
+
+    const oldHint = container.querySelector('.day-empty-hint');
+    if (oldHint) oldHint.remove();
 
     let lengths = cards.map(card => {
         let fullEl = card.querySelector('.task-text-full');

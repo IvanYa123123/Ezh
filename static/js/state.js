@@ -74,6 +74,8 @@ if (!['min', 'hour', 'day', 'week'].includes(notificationUnit)) {
 let theme = localStorage.getItem('theme') || 'light';
 
 let taskDatesSet = new Set();
+let taskCountsByDate = {};
+let taskSeverityByDate = {};
 
 let loaderInterval = null;
 
@@ -94,6 +96,47 @@ let showWidgetPacing  = localStorage.getItem('showWidgetPacing')  !== 'false';
 let showWidgetNotes1 = localStorage.getItem('showWidgetNotes1') !== 'false';
 let showWidgetNotes2 = localStorage.getItem('showWidgetNotes2') === 'true';
 let showWidgetNotes3 = localStorage.getItem('showWidgetNotes3') === 'true';
+let showWidgetNotes4 = localStorage.getItem('showWidgetNotes4') === 'true';
+let showWidgetNotes5 = localStorage.getItem('showWidgetNotes5') === 'true';
+let showWidgetNotes6 = localStorage.getItem('showWidgetNotes6') === 'true';
+let showWidgetNotes7 = localStorage.getItem('showWidgetNotes7') === 'true';
+let showWidgetNotes8 = localStorage.getItem('showWidgetNotes8') === 'true';
+let showWidgetNotes9 = localStorage.getItem('showWidgetNotes9') === 'true';
+let showWidgetNotes10 = localStorage.getItem('showWidgetNotes10') === 'true';
+
+function getNoteWidgetVisibility(idx) {
+    switch (Number(idx)) {
+        case 1: return showWidgetNotes1;
+        case 2: return showWidgetNotes2;
+        case 3: return showWidgetNotes3;
+        case 4: return showWidgetNotes4;
+        case 5: return showWidgetNotes5;
+        case 6: return showWidgetNotes6;
+        case 7: return showWidgetNotes7;
+        case 8: return showWidgetNotes8;
+        case 9: return showWidgetNotes9;
+        case 10: return showWidgetNotes10;
+        default: return false;
+    }
+}
+
+function setNoteWidgetVisibility(idx, value) {
+    const v = !!value;
+    switch (Number(idx)) {
+        case 1: showWidgetNotes1 = v; break;
+        case 2: showWidgetNotes2 = v; break;
+        case 3: showWidgetNotes3 = v; break;
+        case 4: showWidgetNotes4 = v; break;
+        case 5: showWidgetNotes5 = v; break;
+        case 6: showWidgetNotes6 = v; break;
+        case 7: showWidgetNotes7 = v; break;
+        case 8: showWidgetNotes8 = v; break;
+        case 9: showWidgetNotes9 = v; break;
+        case 10: showWidgetNotes10 = v; break;
+        default: return;
+    }
+    try { localStorage.setItem(`showWidgetNotes${idx}`, v ? 'true' : 'false'); } catch (e) {}
+}
 
 // Pro виджеты (появляются только при активном Pro)
 let showWidgetLabsPro    = localStorage.getItem('showWidgetLabsPro')    !== 'false';
@@ -153,15 +196,18 @@ function hideWidget(widgetId, toggleId) {
     else if (toggleId === 'settingsToggleWidgetLabs') { showWidgetLabs = false; localStorage.setItem('showWidgetLabs', 'false'); }
     else if (toggleId === 'settingsToggleWidgetSuggestions') { showWidgetSuggestions = false; localStorage.setItem('showWidgetSuggestions', 'false'); }
     else if (toggleId === 'settingsToggleWidgetPacing') { showWidgetPacing = false; localStorage.setItem('showWidgetPacing', 'false'); }
-    else if (toggleId === 'settingsToggleWidgetNotes1') { showWidgetNotes1 = false; localStorage.setItem('showWidgetNotes1', 'false'); }
-    else if (toggleId === 'settingsToggleWidgetNotes2') { showWidgetNotes2 = false; localStorage.setItem('showWidgetNotes2', 'false'); }
-    else if (toggleId === 'settingsToggleWidgetNotes3') { showWidgetNotes3 = false; localStorage.setItem('showWidgetNotes3', 'false'); }
+    else if (toggleId && toggleId.startsWith('settingsToggleWidgetNotes')) {
+        const n = parseInt(toggleId.replace('settingsToggleWidgetNotes', ''), 10);
+        if (n >= 1 && n <= 10) setNoteWidgetVisibility(n, false);
+    }
     else if (toggleId === 'settingsToggleWidgetLabsPro') { showWidgetLabsPro = false; localStorage.setItem('showWidgetLabsPro', 'false'); }
     else if (toggleId === 'settingsToggleWidgetMoodleAvg') { showWidgetMoodleAvg = false; localStorage.setItem('showWidgetMoodleAvg', 'false'); }
     else if (toggleId === 'settingsToggleWidgetMoodleSubj') { showWidgetMoodleSubj = false; localStorage.setItem('showWidgetMoodleSubj', 'false'); }
 
     const checkbox = document.getElementById(toggleId);
     if (checkbox) checkbox.checked = false;
+
+    if (typeof renderNotesToggleRow === 'function') renderNotesToggleRow();
 }
 
 // ============================================================
@@ -322,23 +368,291 @@ function cancelUndo() {
 }
 
 // ============================================================
-//  ВИДЖЕТ «ЗАМЕТКИ» (1, 2, 3)
+//  ВИДЖЕТ «ЗАМЕТКИ» (до 10 штук, с форматированием)
 // ============================================================
 
+const NOTE_WIDGET_COUNT = 10;
+
+function _noteEscapeText(text) {
+    return String(text == null ? '' : text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function sanitizeNoteHtml(html) {
+    const host = document.createElement('div');
+    host.innerHTML = String(html || '');
+
+    const allowedTags = new Set(['B', 'STRONG', 'BR', 'DIV', 'SPAN', 'P']);
+    const allowedClass = /^(note-check|note-check-box|note-check-text|note-size-[sml]|done)$/;
+    const dropTags = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META']);
+
+    const clean = (parent) => {
+        for (const child of Array.from(parent.childNodes)) {
+            if (child.nodeType === 3) continue;
+            if (child.nodeType !== 1) {
+                child.remove();
+                continue;
+            }
+            const tag = child.tagName;
+            if (dropTags.has(tag)) {
+                child.remove();
+                continue;
+            }
+            if (tag === 'FONT') {
+                const size = child.getAttribute('size');
+                const span = document.createElement('span');
+                span.className = 'note-size-' + (
+                    size === '1' || size === '2' ? 's'
+                        : size === '5' || size === '6' || size === '7' ? 'l' : 'm');
+                while (child.firstChild) span.appendChild(child.firstChild);
+                child.replaceWith(span);
+                clean(parent);
+                continue;
+            }
+            if (!allowedTags.has(tag)) {
+                const frag = document.createDocumentFragment();
+                while (child.firstChild) frag.appendChild(child.firstChild);
+                child.replaceWith(frag);
+                clean(parent);
+                continue;
+            }
+            for (const attr of Array.from(child.attributes)) {
+                if (attr.name !== 'class' && attr.name !== 'contenteditable') {
+                    child.removeAttribute(attr.name);
+                }
+            }
+            if (child.classList.length) {
+                const keep = Array.from(child.classList).filter(c => allowedClass.test(c));
+                if (keep.length) child.className = keep.join(' ');
+                else child.removeAttribute('class');
+            }
+            clean(child);
+        }
+    };
+
+    clean(host);
+    return host.innerHTML;
+}
+
+function _currentNoteBlock(ed) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    let node = sel.anchorNode;
+    if (!node || !ed.contains(node)) return null;
+    let el = node.nodeType === 1 ? node : node.parentElement;
+    while (el && el.parentElement !== ed) el = el.parentElement;
+    return el;
+}
+
+function _placeNoteCaret(el) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    const ed = el.closest('[contenteditable="true"]');
+    if (ed) ed.focus();
+}
+
+function _makeNoteCheckItem() {
+    const item = document.createElement('div');
+    item.className = 'note-check';
+    const box = document.createElement('span');
+    box.className = 'note-check-box';
+    box.setAttribute('contenteditable', 'false');
+    box.textContent = '☐';
+    const text = document.createElement('span');
+    text.className = 'note-check-text';
+    text.innerHTML = '<br>';
+    item.appendChild(box);
+    item.appendChild(text);
+    return item;
+}
+
+function _saveNote(ed) {
+    if (!ed || !ed.id) return;
+    const idx = ed.id.replace('notesWidgetText', '');
+    if (!idx) return;
+    try {
+        localStorage.setItem(`notesWidgetHtml${idx}`, sanitizeNoteHtml(ed.innerHTML));
+        localStorage.setItem(`notesWidget${idx}`, ed.innerText || '');
+    } catch (e) {
+        console.warn('[notes] не удалось сохранить заметку', e);
+    }
+}
+
+function _ensureNoteToolbar(ed) {
+    if (ed.dataset.noteToolbar === '1') return;
+    ed.dataset.noteToolbar = '1';
+
+    const bar = document.createElement('div');
+    bar.className = 'note-toolbar';
+    bar.innerHTML = `
+        <button type="button" class="note-tool-btn" data-note-act="bold" title="Жирный"><b>B</b></button>
+        <span class="note-tool-sep"></span>
+        <button type="button" class="note-tool-btn" data-note-act="check" title="Пункт с галочкой">☑</button>
+    `;
+    ed.parentNode.insertBefore(bar, ed);
+
+    bar.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) e.preventDefault();
+    });
+
+    bar.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-note-act]');
+        if (!btn) return;
+        const act = btn.dataset.noteAct;
+        if (act === 'bold') {
+            document.execCommand('styleWithCSS', false, false);
+            document.execCommand('bold');
+        } else if (act === 'check') {
+            toggleNoteCheck(ed);
+        }
+        _saveNote(ed);
+    });
+}
+
+function toggleNoteCheck(ed) {
+    let block = _currentNoteBlock(ed);
+
+    if (!block || block === ed) {
+        block = document.createElement('div');
+        if (ed.childNodes.length) {
+            while (ed.firstChild) block.appendChild(ed.firstChild);
+        } else {
+            block.innerHTML = '<br>';
+        }
+        ed.appendChild(block);
+    }
+
+    if (block.classList.contains('note-check')) {
+        const text = block.querySelector('.note-check-text');
+        const div = document.createElement('div');
+        div.innerHTML = text ? text.innerHTML : '<br>';
+        block.replaceWith(div);
+        _placeNoteCaret(div);
+    } else {
+        const text = document.createElement('span');
+        text.className = 'note-check-text';
+        while (block.firstChild) text.appendChild(block.firstChild);
+        if (!text.innerHTML.trim()) text.innerHTML = '<br>';
+
+        const item = document.createElement('div');
+        item.className = 'note-check';
+        const box = document.createElement('span');
+        box.className = 'note-check-box';
+        box.setAttribute('contenteditable', 'false');
+        box.textContent = '☐';
+        item.appendChild(box);
+        item.appendChild(text);
+        block.replaceWith(item);
+        _placeNoteCaret(text);
+    }
+    _saveNote(ed);
+}
+
+function _bindNoteEditor(ed) {
+    ed.addEventListener('input', () => {
+        clearTimeout(ed._noteSaveTimer);
+        ed._noteSaveTimer = setTimeout(() => _saveNote(ed), 250);
+    });
+    ed.addEventListener('blur', () => _saveNote(ed));
+
+    ed.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+    });
+
+    ed.addEventListener('click', (e) => {
+        const box = e.target.closest('.note-check-box');
+        if (!box) return;
+        const item = box.closest('.note-check');
+        if (!item) return;
+        const done = item.classList.toggle('done');
+        box.textContent = done ? '☑' : '☐';
+        _saveNote(ed);
+    });
+
+    ed.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || e.shiftKey) return;
+
+        // e.target здесь — сам contenteditable-редактор, поэтому пункт
+        // определяем по текущему блоку выделения, а не по e.target.
+        const block = _currentNoteBlock(ed);
+        const item = (block && block.classList && block.classList.contains('note-check'))
+            ? block : null;
+        if (!item) return;
+        e.preventDefault();
+
+        const text = item.querySelector('.note-check-text');
+        if (text && !(text.innerText || '').trim()) {
+            const div = document.createElement('div');
+            div.innerHTML = '<br>';
+            item.replaceWith(div);
+            _placeNoteCaret(div);
+            _saveNote(ed);
+            return;
+        }
+
+        const next = _makeNoteCheckItem();
+        const nextText = next.querySelector('.note-check-text');
+
+        // Если курсор стоит в середине пункта — переносим «хвост» в новый пункт.
+        try {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount && text && text.contains(sel.anchorNode)) {
+                const caret = sel.getRangeAt(0);
+                const tail = document.createRange();
+                tail.selectNodeContents(text);
+                tail.setStart(caret.endContainer, caret.endOffset);
+                const frag = tail.extractContents();
+                const holder = document.createElement('div');
+                holder.appendChild(frag);
+                if (holder.innerHTML.trim()) nextText.innerHTML = holder.innerHTML;
+            }
+        } catch (err) {}
+
+        item.after(next);
+        _placeNoteCaret(nextText);
+        _saveNote(ed);
+    });
+}
+
 function initNotesWidget() {
-    for (let i = 1; i <= 3; i++) {
-        const ta = document.getElementById(`notesWidgetText${i}`);
-        if (ta) {
-            try { ta.value = localStorage.getItem(`notesWidget${i}`) || ''; } catch (e) {}
+    for (let i = 1; i <= NOTE_WIDGET_COUNT; i++) {
+        const ed = document.getElementById(`notesWidgetText${i}`);
+        if (!ed) continue;
+
+        _ensureNoteToolbar(ed);
+
+        if (ed.dataset.noteReady !== '1') {
+            ed.dataset.noteReady = '1';
+
+            let html = '';
+            try {
+                html = localStorage.getItem(`notesWidgetHtml${i}`) || '';
+            } catch (e) {}
+
+            if (!html) {
+                try {
+                    const legacy = localStorage.getItem(`notesWidget${i}`) || '';
+                    if (legacy) html = _noteEscapeText(legacy).replace(/\n/g, '<br>');
+                } catch (e) {}
+            }
+
+            ed.innerHTML = sanitizeNoteHtml(html);
+            _bindNoteEditor(ed);
         }
     }
 }
 
 function onNotesWidgetInput(el) {
-    if (!el) return;
-    const idx = el.id.replace('notesWidgetText', '');
-    if (!idx) return;
-    try { localStorage.setItem(`notesWidget${idx}`, el.value); } catch (e) {}
+    _saveNote(el);
 }
 
 // ============================================================

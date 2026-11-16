@@ -88,6 +88,7 @@ async function apiCreateTask(t)           { return apiPost('/api/tasks', t); }
 async function apiUpdateTask(id, t)       { return apiPut(`/api/tasks/${id}`, t); }
 async function apiDeleteTask(id)          { return apiDelete(`/api/tasks/${id}`); }
 async function apiLoadTaskDates()         { return apiGet('/api/task_dates'); }
+async function apiLoadTaskDateCounts()    { return apiGet('/api/task_date_counts'); }
 async function apiLoadFriends()           { return apiGet('/api/friends'); }
 async function apiCreateFriend(f)         { return apiPost('/api/friends', f); }
 async function apiUpdateFriend(id, f)     { return apiPut(`/api/friends/${id}`, f); }

@@ -78,6 +78,18 @@ function _renderEventCard(ev) {
 //  переопределённого преподавателя и аудиторию.
 // ============================================================
 
+function _pairIsNow(item) {
+    if (!item || item.is_event) return false;
+    if (item.date !== getLocalDateStr(new Date())) return false;
+    const m = /^(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})/.exec(item.time_range || '');
+    if (!m) return false;
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const start = Number(m[1]) * 60 + Number(m[2]);
+    const end = Number(m[3]) * 60 + Number(m[4]);
+    return cur >= start && cur < end;
+}
+
 function _renderPairCard(item) {
     const origLesson = item.lesson;
     const subjectKey = item.is_custom ? origLesson : `${item.lesson} (${item.type_name})`;
@@ -147,10 +159,11 @@ function _renderPairCard(item) {
         : 'border-left: 3px solid var(--accent);';
 
     return `
-        <div class="schedule-item shadow-sm" style="${customStyle}">
+        <div class="schedule-item shadow-sm${_pairIsNow(item) ? ' pair-current' : ''}" style="${customStyle}">
             <div class="schedule-item-top">
                 <span class="schedule-item-time">
                     <strong class="text-primary">${escapeHtml(item.time_range || '')}</strong>
+                    ${_pairIsNow(item) ? '<span class="pair-now-badge">сейчас</span>' : ''}
                     ${editIconHtml}
                 </span>
                 <span class="add-task-btn" onclick="createTaskFromSchedule('${item.date}', '${safeTaskSubject}')">+ Заметка</span>

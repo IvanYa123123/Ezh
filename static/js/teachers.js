@@ -281,6 +281,34 @@ function getMyGroupSurnames() {
     return surnames;
 }
 
+function _normTeacherName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .replace(/ё/g, 'е')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function _teacherMatchesQuery(name, query) {
+    const n = _normTeacherName(name);
+    const q = _normTeacherName(query);
+    if (!q) return true;
+    if (n.includes(q)) return true;
+
+    // «Иванов Иван» / «Иван Иванович» — совпадение по отдельным словам.
+    const tokens = q.split(' ').filter(Boolean);
+    if (tokens.length > 1 && tokens.every(t => n.includes(t))) return true;
+
+    // «Иванов И.И.» — сравнение с инициалами.
+    const parts = n.split(' ');
+    if (parts.length > 1) {
+        const initials = parts[0] + ' ' + parts.slice(1).map(p => p.charAt(0)).join('');
+        const qCompact = q.replace(/[.\s]/g, '');
+        if (qCompact && initials.replace(/[.\s]/g, '').startsWith(qCompact)) return true;
+    }
+    return false;
+}
+
 function renderTeacherSuggestions(query) {
     const container = document.getElementById('teacherAddSuggestions');
     const hint = document.getElementById('teacherAddHint');
@@ -318,14 +346,14 @@ function renderTeacherSuggestions(query) {
         filtered = [];
         mode = 'short';
     } else {
-        filtered = teachersAllList.filter(t => (t.name || '').toLowerCase().includes(q)).slice(0, 50);
+        filtered = teachersAllList.filter(t => _teacherMatchesQuery(t.name, q)).slice(0, 50);
         mode = 'search';
     }
 
-    if (mode === 'mine') hint.textContent = `Ваши преподаватели (${filtered.length}). Начните вводить фамилию — найдём среди всех.`;
+    if (mode === 'mine') hint.textContent = `Ваши преподаватели (${filtered.length}). Начните вводить фамилию, имя или отчество — найдём среди всех.`;
     else if (mode === 'search') hint.textContent = `Найдено: ${filtered.length}`;
     else if (mode === 'short') hint.textContent = 'Введите минимум 2 символа';
-    else hint.textContent = `Всего: ${teachersAllList.length}. Показаны первые ${filtered.length}. Начните вводить фамилию для поиска.`;
+    else hint.textContent = `Всего: ${teachersAllList.length}. Показаны первые ${filtered.length}. Начните вводить фамилию, имя или отчество для поиска.`;
 
     if (filtered.length === 0) {
         container.innerHTML = mode === 'short'
@@ -604,6 +632,15 @@ async function _renderTeachersVertical() {
 //  ОСНОВНОЙ РЕНДЕР
 // ============================================================
 
+function addTeacherPairNote(date, lesson, timeRange, location, teacherName) {
+    if (typeof createTask !== 'function') return;
+    let text = `Посетить: ${lesson || 'пара'}`;
+    if (timeRange) text += ` · ${timeRange}`;
+    if (location) text += ` · ${location}`;
+    if (teacherName) text += ` (${teacherName})`;
+    createTask(date, text, 'green');
+}
+
 function renderTeachersCalendars() {
     if (_isTeachersSectionVertical()) {
         _renderTeachersVertical();
@@ -708,6 +745,8 @@ function renderTeachersCalendars() {
                                 <div>${escapeHtml(p.lesson)}</div>
                                 ${groupsHtml}
                             </div>
+                            <button class="teacher-pair-note" title="Создать заметку о посещении этой пары"
+                                    onclick="event.stopPropagation(); addTeacherPairNote('${escapeJsString(p.date)}','${escapeJsString(p.lesson)}','${escapeJsString(p.time_range)}','${escapeJsString(p.location || '')}','${escapeJsString(t.name)}')">+ Заметка</button>
                         </div>`;
                 });
             }

@@ -116,17 +116,17 @@
                 <div class="small schedule-status" id="scheduleStatus" style="margin-top: 0;"></div>
             </div>
 
-            <!-- Правая колонка: настройки, поиск, сегодня, неделя -->
-            <div class="col-12 col-md-4 d-flex align-items-center justify-content-end gap-2 mt-2 mt-md-0 flex-nowrap">
-                <button class="btn btn-outline-secondary fw-bold shadow-sm header-icon-btn" onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
-
+            <!-- Правая колонка: поиск, настройки, сегодня, неделя -->
+            <div class="col-12 col-md-4 d-flex align-items-center justify-content-end gap-2 mt-2 flex-nowrap">
                 <!-- Умный поиск -->
-                <div class="header-search-wrap" title="Поиск по заметкам">
+                <div class="header-search-wrap" title="Глобальный поиск">
                     <span class="header-search-icon">🔍</span>
                     <input type="text" id="globalSearchInput"
                            placeholder="Поиск..."
                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 </div>
+
+                <button class="btn btn-outline-secondary fw-bold shadow-sm header-icon-btn" onclick="openSettingsModal()" title="Настройки">&#9881;&#65039;</button>
 
                 <button class="btn btn-outline-primary btn-sm fw-bold shadow-sm flex-shrink-0" onclick="goToToday()">Сегодня</button>
                 <div class="dropdown flex-shrink-0">
@@ -320,7 +320,7 @@
                             <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard1', 'settingsToggleWidgetNotes1')" title="Скрыть">✕</button>
                         </div>
                     </div>
-                    <textarea id="notesWidgetText1" class="form-control form-control-sm" rows="8" placeholder="Что-нибудь важное..." oninput="onNotesWidgetInput(this)"></textarea>
+                    <div class="note-editor" id="notesWidgetText1" contenteditable="true" data-placeholder="Что-нибудь важное..."></div>
                 </div>
 
                 <div class="widget-card" id="widgetNotesCard2" data-draggable-widget style="display: none;">
@@ -331,7 +331,7 @@
                             <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard2', 'settingsToggleWidgetNotes2')" title="Скрыть">✕</button>
                         </div>
                     </div>
-                    <textarea id="notesWidgetText2" class="form-control form-control-sm" rows="8" placeholder="Вторая заметка..." oninput="onNotesWidgetInput(this)"></textarea>
+                    <div class="note-editor" id="notesWidgetText2" contenteditable="true" data-placeholder="Вторая заметка..."></div>
                 </div>
 
                 <div class="widget-card" id="widgetNotesCard3" data-draggable-widget style="display: none;">
@@ -342,7 +342,84 @@
                             <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard3', 'settingsToggleWidgetNotes3')" title="Скрыть">✕</button>
                         </div>
                     </div>
-                    <textarea id="notesWidgetText3" class="form-control form-control-sm" rows="8" placeholder="Третья заметка..." oninput="onNotesWidgetInput(this)"></textarea>
+                    <div class="note-editor" id="notesWidgetText3" contenteditable="true" data-placeholder="Третья заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard4" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 4</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard4', 'settingsToggleWidgetNotes4')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText4" contenteditable="true" data-placeholder="Четвёртая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard5" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 5</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard5', 'settingsToggleWidgetNotes5')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText5" contenteditable="true" data-placeholder="Пятая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard6" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 6</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard6', 'settingsToggleWidgetNotes6')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText6" contenteditable="true" data-placeholder="Шестая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard7" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 7</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard7', 'settingsToggleWidgetNotes7')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText7" contenteditable="true" data-placeholder="Седьмая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard8" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 8</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard8', 'settingsToggleWidgetNotes8')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText8" contenteditable="true" data-placeholder="Восьмая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard9" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 9</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard9', 'settingsToggleWidgetNotes9')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText9" contenteditable="true" data-placeholder="Девятая заметка..."></div>
+                </div>
+
+                <div class="widget-card" id="widgetNotesCard10" data-draggable-widget style="display: none;">
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">📝 Заметки 10</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetNotesCard10', 'settingsToggleWidgetNotes10')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="note-editor" id="notesWidgetText10" contenteditable="true" data-placeholder="Десятая заметка..."></div>
                 </div>
 
                 <div class="widget-card pro-widget" id="widgetLabsProCard" data-draggable-widget style="display: none;">
@@ -836,23 +913,11 @@
                     <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
                   </label>
                 </div>
-                <div class="col-6">
-                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes1">
-                    <span class="settings-row-label">Заметки 1</span>
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes1" onchange="saveSettingsFromUI()">
-                  </label>
-                </div>
-                <div class="col-6">
-                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes2">
-                    <span class="settings-row-label">Заметки 2</span>
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes2" onchange="saveSettingsFromUI()">
-                  </label>
-                </div>
-                <div class="col-6">
-                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetNotes3">
-                    <span class="settings-row-label">Заметки 3</span>
-                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetNotes3" onchange="saveSettingsFromUI()">
-                  </label>
+                <div class="col-12">
+                  <div class="d-flex align-items-center gap-2 flex-wrap px-2">
+                    <span class="settings-row-label">Заметки:</span>
+                    <div class="notes-toggle-row" id="notesToggleRow"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1076,6 +1141,19 @@
               <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="openMoodleModal()">
                  Войти в Moodle / Настройки
               </button>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="settingsToggleMoodleSyncOnStart"
+                       onchange="onMoodleSyncOnStartChanged(this)">
+                <label class="form-check-label small fw-bold" for="settingsToggleMoodleSyncOnStart">
+                  Синхронизировать про режим при каждом входе
+                </label>
+              </div>
+              <div id="moodleSyncOnStartWarning" class="settings-hint-box mt-2" style="display:none;">
+                ⚠️ Частая автоматическая синхронизация может привести к временной блокировке
+                аккаунта со стороны Moodle. Если она выключена, Pro-режим показывает
+                последние сохранённые данные, а обновить их можно кнопкой «Обновить».
+              </div>
             </div>
 
             <div class="settings-group mb-0">
@@ -1094,44 +1172,52 @@
 
 <!-- Модалка Еж Про (Moodle) -->
 <div class="modal fade" id="moodleModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header py-2 bg-light">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content border-0">
+      <div class="modal-header py-2 bg-body-tertiary">
         <h6 class="modal-title fw-bold">🌐 Еж Про: Успеваемость в Moodle</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <form id="moodleLoginForm" onsubmit="event.preventDefault(); if (typeof doMoodleLogin === 'function') doMoodleLogin();">
-          <div class="text-center mb-4">
-            <h5 class="fw-bold">Вход в личный кабинет СевГУ</h5>
-            <p class="text-muted small">Введите данные от do.sevsu.ru. Они используются только для получения сессии и никуда не отправляются.</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small">Логин</label>
-            <input type="text" id="moodleUser" class="form-control" placeholder="Логин">
-          </div>
-          <div class="mb-3">
-            <label class="form-label small">Пароль</label>
-            <input type="password" id="moodlePass" class="form-control" placeholder="••••••••">
-          </div>
-          <div id="moodleLoginError" class="alert alert-danger py-2 small" style="display:none;"></div>
-          <button type="submit" id="moodleLoginBtn" class="btn btn-primary w-100 fw-bold">Войти</button>
-        </form>
+        <div class="moodle-login-wrap" id="moodleLoginWrap">
+          <form id="moodleLoginForm" onsubmit="event.preventDefault(); if (typeof doMoodleLogin === 'function') doMoodleLogin();">
+            <div class="text-center mb-4">
+              <h5 class="fw-bold">Вход в личный кабинет СевГУ</h5>
+              <p class="text-muted small">Введите данные от do.sevsu.ru. Они используются только для получения сессии и никуда не отправляются.</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">Логин</label>
+              <input type="text" id="moodleUser" class="form-control" placeholder="Логин">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">Пароль</label>
+              <input type="password" id="moodlePass" class="form-control" placeholder="••••••••">
+            </div>
+            <div id="moodleLoginError" class="alert alert-danger py-2 small" style="display:none;"></div>
+            <button type="submit" id="moodleLoginBtn" class="btn btn-primary w-100 fw-bold">Войти</button>
+          </form>
+        </div>
 
         <div id="moodleStatsArea" style="display:none;">
-          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div class="moodle-pro-topbar">
             <div>
-                <h6 class="mb-0 fw-bold">Статистика по заданиям</h6>
+                <div class="fw-bold">Статистика по заданиям</div>
                 <div class="small text-muted" id="moodleDataAge" style="font-size: 0.8em;">нет данных</div>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-sm btn-outline-info fw-bold" onclick="openMoodleSetupModal()">⚙️ Настроить семестры</button>
                 <button class="btn btn-sm btn-outline-secondary" id="moodleUpdateBtn" onclick="loadMoodleStats(true)">🔄 Обновить</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="doMoodleLogout()">Выйти</button>
             </div>
           </div>
-          <div id="moodleStatsContent"></div>
-          <div class="text-end mt-3 border-top pt-3">
-            <button class="btn btn-sm btn-outline-danger" onclick="doMoodleLogout()">Выйти из аккаунта</button>
+          <div class="moodle-pro-layout">
+            <div class="moodle-pro-main">
+              <div id="moodleStatsContent"></div>
+            </div>
+            <aside class="moodle-pro-sidebar" id="moodleProSidebar">
+              <div class="moodle-sidebar-title">📊 Pro-виджеты</div>
+              <div id="moodleSidebarEmpty" class="small text-muted">Данных пока нет — нажмите «🔄 Обновить».</div>
+            </aside>
           </div>
         </div>
       </div>
@@ -1148,7 +1234,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted small text-center mb-3">Перетаскивайте курсы между колонками, чтобы указать, какие из них относятся к текущему семестру.</p>
+        <p class="text-muted small text-center mb-3">Перетаскивайте курсы между колонками, чтобы указать, какие из них относятся к текущему семестру. Изменения сохраняются автоматически.</p>
         <div class="row">
             <div class="col-6">
                 <h6 class="text-center fw-bold text-muted mb-2">Прошлые семестры / Архив</h6>

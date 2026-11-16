@@ -1096,24 +1096,29 @@ body {
 .mini-cal-num { line-height: 1; }
 .mini-cal-dots {
     display: flex;
-    gap: 2px;
+    flex-wrap: wrap;
+    gap: 1.5px;
     margin-top: 2px;
-    height: 4px;
+    min-height: 4px;
+    max-height: 9px;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 .mini-cal-dot {
     display: inline-block;
-    width: 4px;
-    height: 4px;
+    width: 3.5px;
+    height: 3.5px;
     border-radius: 50%;
 }
-.mini-cal-dot-task  { background: var(--accent); }
-.mini-cal-dot-class { background: var(--chart-passed); }
-.mini-cal-dot-event { background: var(--status-orange); }
+.mini-cal-dot-class { background: var(--accent); }
+.mini-cal-dot-event { background: var(--chart-passed); }
+.mini-cal-dot-task.note-easy { background: #22c55e; }
+.mini-cal-dot-task.note-mid  { background: #f59e0b; }
+.mini-cal-dot-task.note-hard { background: #ef4444; }
 
-.mini-cal-day.mini-cal-today .mini-cal-dot-task  { background: #fff; }
-.mini-cal-day.mini-cal-today .mini-cal-dot-class { background: #fff; }
+.mini-cal-day.mini-cal-today .mini-cal-dot-task,
+.mini-cal-day.mini-cal-today .mini-cal-dot-class,
 .mini-cal-day.mini-cal-today .mini-cal-dot-event { background: #fff; }
 
 #undoBar {

@@ -312,6 +312,13 @@ function renderSyncFreshness() {
     const subgroup = document.getElementById('subgroupSelect')?.value || '0';
     if (!group) { el.textContent = ''; return; }
 
+    // Клик по «последнему обновлению» запускает синхронизацию расписания.
+    el.style.cursor = 'pointer';
+    el.title = 'Нажмите, чтобы синхронизировать расписание';
+    el.onclick = () => {
+        if (typeof manualRefresh === 'function') manualRefresh();
+    };
+
     const ts = (typeof getSyncTime === 'function') ? getSyncTime(group, subgroup) : null;
     if (!ts) {
         el.innerHTML = `<span class="sync-fresh sync-fresh-cache" title="Расписание загружено из локального кэша">📦 из кэша</span>`;

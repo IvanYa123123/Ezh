@@ -18,7 +18,7 @@
 //   • 100 стихов для doMischiefNotes — в hedgehog-poems.js,
 //     fallback на 3 коротких, если файла нет.
 //   • Курсор — классическая стрелка, а не треугольник.
-//   • Заметок три (notesWidgetText1/2/3). doMischiefNotes ищет
+//   • Заметок до десяти (notesWidgetText1..10). doMischiefNotes ищет
 //     первое свободное.
 //   • doMischiefGroup пишет в #groupDisplay (в шапке), а не в
 //     input. Восстановление — через restoreGlobalState.
@@ -423,11 +423,11 @@
             originalValues.groupSelect = null;
         }
         if (originalValues.notesWidgetText !== null) {
-            for (let i = 1; i <= 3; i++) {
-                const ta = document.getElementById(`notesWidgetText${i}`);
-                if (ta && ta.value !== originalValues.notesWidgetText[i - 1]) {
-                    ta.value = originalValues.notesWidgetText[i - 1];
-                    if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ta);
+            for (let i = 1; i <= 10; i++) {
+                const ed = document.getElementById(`notesWidgetText${i}`);
+                if (ed && ed.innerHTML !== originalValues.notesWidgetText[i - 1]) {
+                    ed.innerHTML = originalValues.notesWidgetText[i - 1];
+                    if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ed);
                 }
             }
             originalValues.notesWidgetText = null;
@@ -944,12 +944,12 @@
 
         busyElements.add(ta.id);
 
-        const oldText = ta.value;
+        const oldHtml = ta.innerHTML;
         if (originalValues.notesWidgetText === null) {
             originalValues.notesWidgetText = [];
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 10; i++) {
                 const el = document.getElementById(`notesWidgetText${i}`);
-                originalValues.notesWidgetText.push(el ? el.value : '');
+                originalValues.notesWidgetText.push(el ? el.innerHTML : '');
             }
         }
 
@@ -973,17 +973,17 @@
                 ];
             const poem = poems[Math.floor(Math.random() * poems.length)];
 
-            ta.value = '';
+            ta.textContent = '';
             for (let i = 0; i < poem.length; i++) {
                 if (h.cancelled) break;
-                ta.value = poem.slice(0, i + 1);
+                ta.textContent = poem.slice(0, i + 1);
                 ta.scrollTop = ta.scrollHeight;
                 await sleep(50 + Math.random() * 50);
             }
             await sleep(2000);
 
         } finally {
-            ta.value = oldText;
+            ta.innerHTML = oldHtml;
             if (typeof onNotesWidgetInput === 'function') onNotesWidgetInput(ta);
             busyElements.delete(ta.id);
             setResting(h, true);

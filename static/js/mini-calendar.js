@@ -21,15 +21,18 @@ function renderMiniCalendar() {
     if (titleEl) titleEl.textContent = `${MINI_CAL_MONTHS[month]} ${year}`;
 
     const datesWithTasks = (typeof taskDatesSet !== 'undefined') ? taskDatesSet : new Set();
+    const taskCounts = (typeof taskCountsByDate !== 'undefined' && taskCountsByDate) ? taskCountsByDate : {};
 
-    const datesWithSchedule = new Set();
+    const pairCounts = new Map();
+    const eventCounts = new Map();
+    const addCount = (map, key) => map.set(key, (map.get(key) || 0) + 1);
+
     if (Array.isArray(cachedSchedule)) {
         cachedSchedule.forEach(item => {
-            if (item.date) datesWithSchedule.add(item.date);
+            if (item.date) addCount(pairCounts, item.date);
         });
     }
 
-    const datesWithCustom = new Set();
     if (typeof customScheduleItems !== 'undefined' && Array.isArray(customScheduleItems) && customScheduleItems.length > 0) {
         const firstOfMonth = new Date(year, month, 1);
         const lastOfMonth  = new Date(year, month + 1, 0);
@@ -37,7 +40,7 @@ function renderMiniCalendar() {
             const ds = getLocalDateStr(d);
             try {
                 const items = getCustomItemsForDate(ds);
-                if (items && items.length > 0) datesWithCustom.add(ds);
+                (items || []).forEach(ev => addCount(ev.is_event ? eventCounts : pairCounts, ds));
             } catch (e) { /* ignore */ }
         }
     }
@@ -73,9 +76,25 @@ function renderMiniCalendar() {
         if (date >= currentWeekStart && date <= currentWeekEnd) classes.push('mini-cal-current-week');
 
         let dots = '';
-        if (datesWithTasks.has(dateStr))    dots += '<span class="mini-cal-dot mini-cal-dot-task" title="Есть заметки"></span>';
-        if (datesWithSchedule.has(dateStr)) dots += '<span class="mini-cal-dot mini-cal-dot-class" title="Есть пары"></span>';
-        if (datesWithCustom.has(dateStr))   dots += '<span class="mini-cal-dot mini-cal-dot-event" title="Есть события"></span>';
+        const pairN = pairCounts.get(dateStr) || 0;
+        const eventN = eventCounts.get(dateStr) || 0;
+        const noteN = Number(taskCounts[dateStr] || (datesWithTasks.has(dateStr) ? 1 : 0));
+
+        for (let i = 0; i < pairN; i++) {
+            dots += `<span class="mini-cal-dot mini-cal-dot-class" title="Пары: ${pairN}"></span>`;
+        }
+        for (let i = 0; i < eventN; i++) {
+            dots += `<span class="mini-cal-dot mini-cal-dot-event" title="События: ${eventN}"></span>`;
+        }
+        const sev = (typeof taskSeverityByDate !== 'undefined' && taskSeverityByDate)
+            ? taskSeverityByDate[dateStr] : '';
+        const noteTone = sev === 'red' ? 'note-hard'
+            : sev === 'orange' ? 'note-mid'
+            : sev === 'green' ? 'note-easy'
+            : noteN >= 3 ? 'note-hard' : noteN === 2 ? 'note-mid' : 'note-easy';
+        for (let i = 0; i < noteN; i++) {
+            dots += `<span class="mini-cal-dot mini-cal-dot-task ${noteTone}" title="Заметки: ${noteN}"></span>`;
+        }
 
         html += `<div class="${classes.join(' ')}" onclick="miniCalPickDate('${dateStr}')" title="${dateStr}">
             <span class="mini-cal-num">${d}</span>

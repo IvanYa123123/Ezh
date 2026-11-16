@@ -15,24 +15,127 @@ let moodleAbortController = null;
 
 window.hasLoadedMoodleStats = false;
 
+const MOODLE_PRO_ACTIVE_KEY = 'moodleProActivated';
+const MOODLE_SYNC_ON_START_KEY = 'moodleSyncOnStart';
+const MOODLE_ALL_DONE_KEY = 'moodleAllDoneCourses';
+const MOODLE_ALL_DONE_BACKUP_KEY = 'moodleAllDoneBackup';
+
+function _readJsonLocal(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function _writeJsonLocal(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+function getForcedDoneCourseIds() {
+    const ids = _readJsonLocal(MOODLE_ALL_DONE_KEY, []);
+    return Array.isArray(ids) ? ids.map(String) : [];
+}
+
+function isCourseForcedDone(course) {
+    return !!course && getForcedDoneCourseIds().includes(String(course.id));
+}
+
+function setCourseForcedDone(courseId, forced) {
+    const ids = new Set(getForcedDoneCourseIds());
+    if (forced) ids.add(String(courseId));
+    else ids.delete(String(courseId));
+    _writeJsonLocal(MOODLE_ALL_DONE_KEY, [...ids]);
+}
+
+function getCourseSubjectKeys(course) {
+    const keys = new Set();
+    if (!course || typeof cachedSchedule === 'undefined' || !Array.isArray(cachedSchedule)) {
+        return [];
+    }
+    const cleanCourse = (course.name || '').replace(/\([^)]*\)/g, '').trim().toLowerCase();
+    if (!cleanCourse) return [];
+    cachedSchedule.forEach(item => {
+        if (item.type_name !== 'ЛЗ' && item.type_name !== 'ПЗ') return;
+        const lessonName = (item.lesson || '').toLowerCase();
+        if (lessonName && (cleanCourse.includes(lessonName) || lessonName.includes(cleanCourse))) {
+            keys.add(`${item.lesson} (${item.type_name})`);
+        }
+    });
+    return [...keys];
+}
+
+function _courseEffectiveStatus(course, act) {
+    return isCourseForcedDone(course) ? 'Сдано' : act.status;
+}
+
+function isMoodleProPersisted() {
+    try { return localStorage.getItem(MOODLE_PRO_ACTIVE_KEY) === '1'; } catch (e) { return false; }
+}
+
+function persistMoodlePro(isActive) {
+    try {
+        if (isActive) localStorage.setItem(MOODLE_PRO_ACTIVE_KEY, '1');
+        else localStorage.removeItem(MOODLE_PRO_ACTIVE_KEY);
+    } catch (e) {}
+}
+
+function isMoodleSyncOnStartEnabled() {
+    try { return localStorage.getItem(MOODLE_SYNC_ON_START_KEY) === '1'; } catch (e) { return false; }
+}
+
+function syncMoodleSyncOnStartWarning() {
+    const warning = document.getElementById('moodleSyncOnStartWarning');
+    if (warning) warning.style.display = isMoodleSyncOnStartEnabled() ? '' : 'none';
+}
+
+function onMoodleSyncOnStartChanged(el) {
+    const enabled = !!(el && el.checked);
+    try { localStorage.setItem(MOODLE_SYNC_ON_START_KEY, enabled ? '1' : '0'); } catch (e) {}
+    syncMoodleSyncOnStartWarning();
+    if (enabled && typeof showUpdateNotification === 'function') {
+        showUpdateNotification('⚠️ Частая синхронизация может привести к временной блокировке Moodle');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    const persisted = isMoodleProPersisted();
+    let statsRequested = false;
+    if (persisted) {
+        // Сразу показываем сохранённые данные, не дожидаясь проверки сессии.
+        setProMode(true);
+        loadMoodleStats(false);
+        statsRequested = true;
+    }
     try {
         const status = await apiGet('/api/moodle/status');
-        setProMode(status.logged_in);
-        if (status.logged_in) {
-            // Загружаем кэш сразу (это быстро и без сети)
-            await loadMoodleStats(false);
-            
-            // А фоновое обновление запускаем с задержкой в 10 секунд
-            if (!sessionStorage.getItem('moodle_bg_refreshed')) {
+        const serverActive = !!(status && status.logged_in);
+        if (serverActive) persistMoodlePro(true);
+        const active = persisted || serverActive;
+        setProMode(active);
+        if (active) {
+            if (!statsRequested) await loadMoodleStats(false);
+
+            // Автосинхронизация — только если пользователь включил её
+            // в настройках. По умолчанию выключена.
+            if (isMoodleSyncOnStartEnabled() && !sessionStorage.getItem('moodle_bg_refreshed')) {
                 sessionStorage.setItem('moodle_bg_refreshed', '1');
                 setTimeout(() => {
-                    console.log('[moodle] starting background refresh after 10s delay');
+                    if (!isMoodleSyncOnStartEnabled()) return;
+                    console.log('[moodle] starting background sync after 10s delay');
                     loadMoodleStats(true, true);
                 }, 10000);
             }
         }
-    } catch (e) {}
+    } catch (e) {
+        // Сервер недоступен (нет сети/таймаут) — Pro остаётся включённым,
+        // показываем последние сохранённые данные из кэша.
+        if (persisted) {
+            setProMode(true);
+            if (!statsRequested) loadMoodleStats(false);
+        }
+    }
 });
 
 async function openMoodleModal() {
@@ -40,24 +143,118 @@ async function openMoodleModal() {
     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
 
-    const status = await apiGet('/api/moodle/status');
-    if (status.logged_in) {
+    // Сразу показываем сохранённые данные, не дожидаясь проверки сессии.
+    if (window.isProActive || isMoodleProPersisted()) {
         showMoodleStatsView();
         loadMoodleStats(false);
     } else {
         showMoodleLoginView();
     }
+
+    try {
+        const status = await apiGet('/api/moodle/status');
+        if (status.logged_in) {
+            persistMoodlePro(true);
+            setProMode(true);
+            showMoodleStatsView();
+            loadMoodleStats(false);
+        } else if (!isMoodleProPersisted()) {
+            showMoodleLoginView();
+        }
+    } catch (e) {}
 }
 
 function showMoodleLoginView() {
-    document.getElementById('moodleLoginForm').style.display = 'block';
+    const wrap = document.getElementById('moodleLoginWrap');
+    if (wrap) wrap.style.display = 'flex';
     document.getElementById('moodleStatsArea').style.display = 'none';
 }
 
 function showMoodleStatsView() {
-    document.getElementById('moodleLoginForm').style.display = 'none';
-    document.getElementById('moodleStatsArea').style.display = 'block';
+    const wrap = document.getElementById('moodleLoginWrap');
+    if (wrap) wrap.style.display = 'none';
+    document.getElementById('moodleStatsArea').style.display = 'flex';
 }
+
+/* ---------- Pro-виджеты внутри полноэкранной модалки ---------- */
+const PRO_WIDGET_IDS = [
+    'widgetMoodleAvgGradeCard',
+    'widgetMoodleSubjectGradesCard',
+    'widgetLabsProCard',
+];
+let proWidgetHomes = [];
+let proWidgetsMounted = false;
+
+function isMoodleModalOpen() {
+    const modalEl = document.getElementById('moodleModal');
+    return !!(modalEl && modalEl.classList.contains('show'));
+}
+
+function resizeProWidgets() {
+    setTimeout(() => {
+        try {
+            if (typeof globalLabChartPro !== 'undefined' && globalLabChartPro) globalLabChartPro.resize();
+            if (typeof proSubjectChart !== 'undefined' && proSubjectChart) proSubjectChart.resize();
+        } catch (e) {}
+    }, 120);
+}
+
+function mountProWidgetsInModal() {
+    const sidebar = document.getElementById('moodleProSidebar');
+    if (!sidebar) return;
+
+    if (!proWidgetsMounted) {
+        proWidgetHomes = [];
+        PRO_WIDGET_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el || !el.parentElement) return;
+            const marker = document.createComment('pro-widget-' + id);
+            el.parentElement.insertBefore(marker, el);
+            proWidgetHomes.push({ el, marker, parent: el.parentElement });
+        });
+        proWidgetsMounted = true;
+    }
+
+    proWidgetHomes.forEach(({ el }) => {
+        if (el.parentElement !== sidebar) sidebar.appendChild(el);
+        el.style.display = window.hasLoadedMoodleStats ? '' : 'none';
+    });
+
+    const empty = document.getElementById('moodleSidebarEmpty');
+    if (empty) empty.style.display = 'none';
+    resizeProWidgets();
+}
+
+function unmountProWidgetsFromModal() {
+    if (!proWidgetsMounted) return;
+    proWidgetHomes.forEach(({ el, marker, parent }) => {
+        if (marker && marker.parentNode) {
+            marker.parentNode.replaceChild(el, marker);
+        } else if (parent) {
+            parent.appendChild(el);
+        }
+    });
+    proWidgetHomes = [];
+    proWidgetsMounted = false;
+
+    const empty = document.getElementById('moodleSidebarEmpty');
+    if (empty) empty.style.display = '';
+
+    if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+    resizeProWidgets();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modalEl = document.getElementById('moodleModal');
+    if (!modalEl) return;
+    modalEl.addEventListener('shown.bs.modal', () => {
+        if (window.isProActive) {
+            mountProWidgetsInModal();
+            if (typeof renderProWidgets === 'function') renderProWidgets();
+        }
+    });
+    modalEl.addEventListener('hidden.bs.modal', unmountProWidgetsFromModal);
+});
 
 function setProMode(isActive) {
     const badge = document.getElementById('app-mode-badge');
@@ -111,6 +308,7 @@ async function doMoodleLogin() {
     try {
         const resp = await apiPost('/api/moodle/login', { username: user, password: pass });
         if (resp.success) {
+            persistMoodlePro(true);
             showMoodleStatsView();
             setProMode(true);
             loadMoodleStats(true);
@@ -128,6 +326,8 @@ async function doMoodleLogin() {
 async function doMoodleLogout(forced = false) {
     if (!forced && !confirm('Выйти из аккаунта Moodle?')) return;
     await apiPost('/api/moodle/logout', {});
+    persistMoodlePro(false);
+    unmountProWidgetsFromModal();
     showMoodleLoginView();
     setProMode(false);
     sessionStorage.removeItem('moodle_bg_refreshed');
@@ -158,6 +358,11 @@ function cancelMoodleRefresh() {
     fetch('/api/moodle/cancel', { method: 'POST' }).catch(e => console.error(e));
 }
 
+function isMoodleStatsVisible() {
+    const area = document.getElementById('moodleStatsArea');
+    return !!(area && area.style.display !== 'none');
+}
+
 async function loadMoodleStats(force = false, isBackground = false) {
     if (isMoodleRefreshing && force) {
         cancelMoodleRefresh();
@@ -184,7 +389,7 @@ async function loadMoodleStats(force = false, isBackground = false) {
         }
     }
 
-    if (!isBackground && container && document.getElementById('moodleStatsArea').style.display === 'block') {
+    if (!isBackground && container && isMoodleStatsVisible()) {
         container.innerHTML = `
             <div class="text-center py-4">
                 ${getHedgehogSvgHtml(80)}
@@ -211,7 +416,25 @@ async function loadMoodleStats(force = false, isBackground = false) {
         const rawResp = await fetch(url, fetchOpts);
 
         if (rawResp.status === 401) {
-            doMoodleLogout(true);
+            // Сессия истекла. Pro-режим и сохранённые данные не сбрасываем:
+            // пользователь увидит кэш и сможет войти заново вручную.
+            if (!isBackground) {
+                if (container && isMoodleStatsVisible()) {
+                    const alertId = 'moodleSessionExpiredAlert';
+                    const old = document.getElementById(alertId);
+                    if (old) old.remove();
+                    container.insertAdjacentHTML('afterbegin', `
+                        <div id="${alertId}" class="alert alert-warning py-2 small">
+                            Сессия Moodle истекла — показаны сохранённые данные.
+                            <button class="btn btn-sm btn-outline-dark ms-2" onclick="showMoodleLoginView()">Войти заново</button>
+                        </div>`);
+                } else {
+                    showMoodleLoginView();
+                }
+                if (typeof showUpdateNotification === 'function') {
+                    showUpdateNotification('⚠️ Сессия Moodle истекла — показаны сохранённые данные');
+                }
+            }
             return;
         }
 
@@ -230,14 +453,19 @@ async function loadMoodleStats(force = false, isBackground = false) {
         moodleStats = resp.data || [];
         moodleStatsTimestamp = resp.timestamp || 0;
 
-        window.hasLoadedMoodleStats = true;
-        if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
-
+        // Сначала полностью собираем разметку и графики, и только потом
+        // показываем Pro-виджеты — чтобы не мелькали пустые карточки.
         renderMoodleStats();
         renderProWidgets();
 
+        window.hasLoadedMoodleStats = true;
+        if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
+
         const ageSpan = document.getElementById('moodleDataAge');
-        if (ageSpan) ageSpan.textContent = formatAge(moodleStatsTimestamp);
+        if (ageSpan) {
+            const suffix = (resp.stale && moodleStatsTimestamp) ? ' · сохранённые данные' : '';
+            ageSpan.textContent = formatAge(moodleStatsTimestamp) + suffix;
+        }
 
     } catch (e) {
         if (e.name === 'AbortError') {
@@ -275,72 +503,282 @@ function isCourseInCurrentSchedule(courseName, courseId) {
     });
 }
 
+function _groupCourseLabs(course) {
+    const groups = [];
+    const byNum = new Map();
+    (course.assignments || []).forEach(act => {
+        const num = extractLabNum(act.name);
+        if (num) {
+            let group = byNum.get(num);
+            if (!group) {
+                group = { num, key: `lab-${course.id}-${num}`, acts: [] };
+                byNum.set(num, group);
+                groups.push(group);
+            }
+            group.acts.push(act);
+        } else {
+            groups.push({ num: null, key: `one-${course.id}-${groups.length}`, acts: [act] });
+        }
+    });
+    return groups;
+}
+
+function _groupIsDone(course, group, forcedDone) {
+    if (forcedDone) return true;
+    // Если сдана хотя бы одна лаба с таким номером — засчитываем всю группу.
+    return group.acts.some(a => {
+        const s = _courseEffectiveStatus(course, a);
+        return s === 'Сдано' || s === 'На проверке';
+    });
+}
+
+function _groupRepresentative(group, done) {
+    if (done) {
+        const doneAct = group.acts.find(a => a.status === 'Сдано' || a.status === 'На проверке');
+        if (doneAct) return doneAct;
+    }
+    return group.acts.find(a => a.grade_num) || group.acts[0];
+}
+
+function toggleMoodleLabGroup(btn) {
+    const groupKey = btn.dataset.group;
+    const rows = document.querySelectorAll(`.moodle-lab-extra[data-group="${groupKey}"]`);
+    const open = btn.dataset.open === '1';
+    rows.forEach(row => { row.style.display = open ? 'none' : ''; });
+    btn.dataset.open = open ? '0' : '1';
+    btn.textContent = open ? '▶' : '▼';
+}
+
 function renderMoodleStats() {
     const container = document.getElementById('moodleStatsContent');
     if (!moodleStats || moodleStats.length === 0) {
-        if (container) container.innerHTML = '<div class="text-muted text-center py-3">Нет данных о курсах.</div>';
+        if (container) container.innerHTML = '<div class="text-muted text-center py-4">Сохранённых данных пока нет. Нажмите «🔄 Обновить», чтобы загрузить их с Moodle.</div>';
         return;
     }
 
     let currentCourses = moodleStats.filter(c => isCourseInCurrentSchedule(c.name, c.id));
+    let visibleCourses = currentCourses.filter(c => c.assignments && c.assignments.length > 0);
+    let totalTasks = visibleCourses.reduce((sum, c) => sum + _groupCourseLabs(c).length, 0);
 
     let html = `
-        <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded shadow-sm flex-wrap gap-2">
-            <div class="small fw-bold text-muted">Показаны предметы текущего семестра (${currentCourses.length})</div>
-            <div class="d-flex gap-2">
+        <div class="moodle-pro-toolbar">
+            <div class="small fw-bold text-muted">
+                Предметы текущего семестра: ${visibleCourses.length} · заданий: ${totalTasks}
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
                 <button class="btn btn-sm btn-outline-warning fw-bold" onclick="syncMoodleDeadlinesToCalendar()">📅 Дедлайны в календарь</button>
                 <button class="btn btn-sm btn-success fw-bold" onclick="syncMoodleToWidgets()">📥 Синхронизировать с виджетами</button>
             </div>
         </div>
-        <div class="moodle-courses-list">
+        <div class="moodle-segments">
     `;
 
-    currentCourses.forEach(course => {
-        if (course.assignments.length === 0) return;
+    if (visibleCourses.length === 0) {
+        html += '<div class="text-muted py-4">Для текущего семестра нет заданий.</div>';
+    }
 
-        let doneCount = course.assignments.filter(a => a.status === 'Сдано' || a.status === 'На проверке').length;
-        let total = course.assignments.length;
+    visibleCourses.forEach(course => {
+        const forcedDone = isCourseForcedDone(course);
+        const labGroups = _groupCourseLabs(course);
+        const doneCount = labGroups.filter(g => _groupIsDone(course, g, forcedDone)).length;
+        const total = labGroups.length;
+        let pct = total > 0 ? Math.round(doneCount * 100 / total) : 0;
 
         html += `
-            <div class="card mb-3 border-0 shadow-sm">
-                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-                    <span class="fw-bold small text-truncate" style="max-width: 80%;" title="${escapeHtml(course.name)}">📚 ${escapeHtml(course.name)}</span>
-                    <span class="badge ${doneCount === total ? 'bg-success' : 'bg-primary'}">${doneCount} / ${total}</span>
+            <section class="moodle-segment">
+                <div class="moodle-seg-head">
+                    <div class="moodle-seg-title" title="${escapeHtml(course.name)}">📚 ${escapeHtml(course.name)}</div>
+                    <div class="moodle-seg-actions">
+                        <span class="badge ${doneCount === total ? 'bg-success' : 'bg-primary'}">${doneCount} / ${total}</span>
+                        <button type="button"
+                                class="btn btn-sm ${forcedDone ? 'btn-success' : 'btn-outline-success'} moodle-seg-done-btn"
+                                onclick="toggleCourseAllDone('${escapeHtml(String(course.id))}')"
+                                title="${forcedDone ? 'Снять отметку «все сдано»' : 'Засчитать все лабы по предмету сданными'}">
+                            ${forcedDone ? '✓ Все сдано' : 'Все сдано'}
+                        </button>
+                    </div>
                 </div>
-                <ul class="list-group list-group-flush small">
+                <div class="moodle-seg-progress"><div style="width:${pct}%"></div></div>
+                <ul class="moodle-seg-list">
         `;
 
-        course.assignments.forEach(act => {
-            let badgeClass = 'bg-secondary';
-            if (act.status === 'Сдано') badgeClass = 'bg-success';
-            else if (act.status === 'На проверке') badgeClass = 'bg-warning text-dark';
-            else if (act.status === 'Не сдано') badgeClass = 'bg-danger';
-            else if (act.status === 'Тест') badgeClass = 'bg-info text-dark';
+        labGroups.forEach(group => {
+            const groupDone = _groupIsDone(course, group, forcedDone);
+            const rep = _groupRepresentative(group, groupDone);
+            const hasExtra = group.acts.length > 1;
+            const extraRows = hasExtra ? group.acts.filter(a => a !== rep) : [];
+            const groupKey = escapeHtml(String(group.key));
 
-            let dueHtml = act.due ? `<span class="text-muted ms-2" style="font-size:0.85em;">📅 ${escapeHtml(act.due)}</span>` : '';
+            let effStatus = groupDone ? 'Сдано' : _courseEffectiveStatus(course, rep);
+            let badgeClass = 'bg-secondary';
+            if (effStatus === 'Сдано') badgeClass = 'bg-success';
+            else if (effStatus === 'На проверке') badgeClass = 'bg-warning text-dark';
+            else if (effStatus === 'Не сдано') badgeClass = 'bg-danger';
+            else if (effStatus === 'Тест') badgeClass = 'bg-info text-dark';
+
+            let dueHtml = rep.due ? `<span class="moodle-seg-due">📅 ${escapeHtml(rep.due)}</span>` : '';
+            let gradeHtml = (rep.grade && rep.grade !== '—')
+                ? `<span class="badge bg-success ms-1">${escapeHtml(rep.grade)}</span>` : '';
+            let toggleHtml = hasExtra
+                ? `<button type="button" class="moodle-lab-toggle" data-group="${groupKey}" data-open="0" onclick="toggleMoodleLabGroup(this)" title="Показать все лабы с номером ${escapeHtml(String(group.num))}">▶</button>`
+                : '';
 
             html += `
-                <li class="list-group-item py-2 d-flex justify-content-between align-items-center">
-                    <div class="text-truncate pe-2" style="max-width: 60%;" title="${escapeHtml(act.name)}">
-                        ${escapeHtml(act.name)} ${dueHtml}
+                <li class="moodle-seg-item${groupDone ? ' is-done' : ''} moodle-lab-group" data-group="${groupKey}">
+                    <div class="moodle-seg-item-main">
+                        <span class="moodle-seg-name" title="${escapeHtml(rep.name)}">${toggleHtml}${moodleActivityNameHtml(rep)}</span>
+                        ${dueHtml}
                     </div>
-                    <div class="text-end">
-                        <span class="badge ${badgeClass}">${escapeHtml(act.status)}</span>
-                        ${act.grade !== '—' ? `<span class="ms-1 badge bg-success">${escapeHtml(act.grade)}</span>` : ''}
+                    <div class="moodle-seg-badges">
+                        <span class="badge ${badgeClass}">${escapeHtml(effStatus)}</span>
+                        ${gradeHtml}
                     </div>
                 </li>
             `;
+
+            extraRows.forEach(act => {
+                const st = groupDone ? 'Сдано' : _courseEffectiveStatus(course, act);
+                let cls = 'bg-secondary';
+                if (st === 'Сдано') cls = 'bg-success';
+                else if (st === 'На проверке') cls = 'bg-warning text-dark';
+                else if (st === 'Не сдано') cls = 'bg-danger';
+                else if (st === 'Тест') cls = 'bg-info text-dark';
+                const extraGrade = (act.grade && act.grade !== '—')
+                    ? `<span class="badge bg-success ms-1">${escapeHtml(act.grade)}</span>` : '';
+                const extraDue = act.due ? `<span class="moodle-seg-due">📅 ${escapeHtml(act.due)}</span>` : '';
+                html += `
+                    <li class="moodle-seg-item moodle-lab-extra${groupDone ? ' is-done' : ''}" data-group="${groupKey}" style="display:none">
+                        <div class="moodle-seg-item-main">
+                            <span class="moodle-seg-name" title="${escapeHtml(act.name)}">${moodleActivityNameHtml(act)}</span>
+                            ${extraDue}
+                        </div>
+                        <div class="moodle-seg-badges">
+                            <span class="badge ${cls}">${escapeHtml(st)}</span>
+                            ${extraGrade}
+                        </div>
+                    </li>
+                `;
+            });
         });
 
-        html += `</ul></div>`;
+        html += `</ul></section>`;
     });
     html += '</div>';
     if (container) container.innerHTML = html;
 }
 
-function extractLabNum(name) {
-    const match = name.match(/(?:ЛР|ЛЗ|ПЗ|Лабораторная работа|Практическое задание|Практическая работа|Лабораторное занятие|Лабораторная)\s*№?\s*(\d+(?:\.\d+)?)/i);
+let _allDoneBusy = false;
+
+async function toggleCourseAllDone(courseId) {
+    if (_allDoneBusy) return;
+    const course = (moodleStats || []).find(c => String(c.id) === String(courseId));
+    if (!course) return;
+    const forced = isCourseForcedDone(course);
+    const label = (course.name || '').split('(')[0].trim() || course.name || 'предмет';
+
+    if (forced) {
+        if (!confirm(`Снять отметку «Все сдано» по предмету «${label}»?\n\nРанее отмеченные лабы снова станут несданными.`)) return;
+    } else {
+        if (!confirm(`Засчитать все лабы по предмету «${label}» сданными?\n\nЛабы будут отмечены в трекере, даже если в Moodle они не сданы.`)) return;
+    }
+    await _setCourseAllDone(course, !forced);
+}
+
+async function _setCourseAllDone(course, forced) {
+    _allDoneBusy = true;
+    try {
+        const groupInput = document.getElementById('groupSelect');
+        const group = (groupInput && groupInput.value || '').trim();
+        const subjectKeys = getCourseSubjectKeys(course);
+        const backupsRaw = _readJsonLocal(MOODLE_ALL_DONE_BACKUP_KEY, {});
+        const backups = (backupsRaw && typeof backupsRaw === 'object' && !Array.isArray(backupsRaw))
+            ? backupsRaw : {};
+        const courseKey = String(course.id);
+        let changedIds = [];
+
+        if (group && subjectKeys.length > 0) {
+            let grouped = {};
+            try {
+                grouped = await apiLoadLabItems(group) || {};
+            } catch (e) {
+                console.error('[moodle-pro] lab_items load failed', e);
+            }
+
+            const affected = [];
+            subjectKeys.forEach(subj => {
+                (Array.isArray(grouped[subj]) ? grouped[subj] : []).forEach(it => affected.push(it));
+            });
+
+            if (forced) {
+                for (const it of affected) {
+                    if (it.completed) continue;
+                    try {
+                        await apiUpdateLabItem(it.id, { completed: 1 });
+                        changedIds.push(it.id);
+                    } catch (e) {
+                        console.error('[moodle-pro] lab_item update failed', it.id, e);
+                    }
+                }
+                if (changedIds.length > 0) {
+                    backups[courseKey] = { ids: changedIds, timestamp: Date.now() };
+                }
+            } else {
+                const backup = backups[courseKey];
+                const ids = (backup && Array.isArray(backup.ids)) ? backup.ids : [];
+                for (const id of ids) {
+                    try {
+                        await apiUpdateLabItem(Number(id), { completed: 0 });
+                    } catch (e) {
+                        console.error('[moodle-pro] lab_item restore failed', id, e);
+                    }
+                }
+                changedIds = ids;
+            }
+        }
+
+        setCourseForcedDone(course.id, forced);
+        if (forced) {
+            backups[courseKey] = backups[courseKey] || { ids: changedIds, timestamp: Date.now() };
+        } else {
+            delete backups[courseKey];
+        }
+        _writeJsonLocal(MOODLE_ALL_DONE_BACKUP_KEY, backups);
+
+        if (typeof updateLabsCache === 'function') await updateLabsCache();
+        if (typeof renderCharts === 'function') renderCharts();
+        renderMoodleStats();
+        if (window.isProActive) renderProWidgets();
+        if (typeof renderSuggestions === 'function') renderSuggestions(true);
+
+        if (typeof showUpdateNotification === 'function') {
+            showUpdateNotification(forced
+                ? '✅ Все лабы по предмету зачтены'
+                : '↩️ Отметка «Все сдано» снята');
+        }
+    } finally {
+        _allDoneBusy = false;
+    }
+}
+
+function extractLabNum(name) {    const match = name.match(/(?:ЛР|ЛЗ|ПЗ|Лабораторная работа|Практическое задание|Практическая работа|Лабораторное занятие|Лабораторная)\s*№?\s*(\d+(?:\.\d+)?)/i);
     return match ? match[1] : null;
+}
+
+const MOODLE_BASE_URL = 'https://do.sevsu.ru';
+
+function getMoodleActivityUrl(act) {
+    if (!act || !act.id) return '';
+    const type = act.type === 'quiz' ? 'quiz' : 'assign';
+    return `${MOODLE_BASE_URL}/mod/${type}/view.php?id=${encodeURIComponent(act.id)}`;
+}
+
+function moodleActivityNameHtml(act) {
+    const name = escapeHtml(act && act.name ? act.name : '');
+    const url = getMoodleActivityUrl(act);
+    if (!url) return name;
+    return `<a class="moodle-activity-link" href="${escapeHtml(url)}"
+               target="_blank" rel="noopener noreferrer"
+               title="Открыть в Moodle">${name}<span class="moodle-link-arrow">↗</span></a>`;
 }
 
 async function syncMoodleDeadlinesToCalendar() {
@@ -400,110 +838,98 @@ async function syncMoodleToWidgets() {
         return;
     }
 
-    if (!confirm("Синхронизировать сданные работы из Moodle с вашими виджетами «Лабораторные»?\n\nДубликаты (например, ЛР №1 и ЛР №1. архив) будут объединены.")) return;
+    const group = (document.getElementById('groupSelect').value || '').trim();
+    if (!group) {
+        alert('Сначала выберите группу.');
+        return;
+    }
 
-    let updatedCount = 0;
-    let payload = [];
-    let labItemsPayload = [];
+    if (!confirm("Синхронизировать работы из Moodle с виджетами «Лабораторные»?\n\n"
+        + "Отметки лаб будут приведены в соответствие с Moodle: сданные — отмечены, "
+        + "несданные — сняты. Предметы, убранные в прошлый семестр, не участвуют.")) return;
+
+    // subject -> Map(номер лабы -> сдана ли)
+    // Объединяем несколько курсов, привязанных к одному предмету, чтобы
+    // последний курс не перезатирал прогресс предыдущего.
+    const subjectLabs = new Map();
 
     for (const course of moodleStats) {
         if (!isCourseInCurrentSchedule(course.name, course.id)) continue;
 
-        let uniqueLabs = {};
-        course.assignments.forEach(a => {
-            if (a.type !== 'assign') return;
-            let num = extractLabNum(a.name);
-            if (!num) return;
-
-            if (!uniqueLabs[num]) {
-                uniqueLabs[num] = a;
-            } else {
-                if (a.status === 'Сдано' && uniqueLabs[num].status !== 'Сдано') uniqueLabs[num] = a;
-                else if (a.status === 'На проверке' && uniqueLabs[num].status === 'Ожидает') uniqueLabs[num] = a;
-            }
-        });
-
-        let totalLabs = Object.keys(uniqueLabs).length;
-        let doneLabs = Object.values(uniqueLabs).filter(a => a.status === 'Сдано' || a.status === 'На проверке').length;
-
-        if (totalLabs === 0) continue;
-
-        let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-        let matchingSubjects = new Set();
+        const forcedDone = isCourseForcedDone(course);
+        const cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
+        const matchingSubjects = new Set();
 
         cachedSchedule.forEach(item => {
             if (item.type_name !== 'ЛЗ' && item.type_name !== 'ПЗ') return;
-            let lessonName = item.lesson.toLowerCase();
-
+            const lessonName = item.lesson.toLowerCase();
             if (cleanCourse.includes(lessonName) || lessonName.includes(cleanCourse)) {
                 matchingSubjects.add(`${item.lesson} (${item.type_name})`);
             }
         });
+        if (matchingSubjects.size === 0) continue;
 
-        for (const subj of matchingSubjects) {
-            payload.push({
-                group: document.getElementById('groupSelect').value.trim(),
-                subject: subj,
-                completed: doneLabs,
-                total: totalLabs
+        course.assignments.forEach(a => {
+            if (a.type !== 'assign') return;
+            const num = extractLabNum(a.name);
+            if (!num) return;
+            const done = forcedDone || a.status === 'Сдано' || a.status === 'На проверке';
+            matchingSubjects.forEach(subj => {
+                if (!subjectLabs.has(subj)) subjectLabs.set(subj, new Map());
+                const labs = subjectLabs.get(subj);
+                labs.set(num, (labs.get(num) || false) || done);
             });
-            updatedCount++;
-        }
+        });
     }
 
-    if (payload.length === 0) {
+    if (subjectLabs.size === 0) {
         alert("Не удалось найти совпадений.");
         return;
     }
 
+    let payload = [];
+    subjectLabs.forEach((labs, subject) => {
+        payload.push({
+            group: group,
+            subject: subject,
+            completed: [...labs.values()].filter(Boolean).length,
+            total: labs.size
+        });
+    });
+
     try {
         await apiSaveLabs(payload);
 
-        const group = document.getElementById('groupSelect').value.trim();
-        let currentLabItems = await apiLoadLabItems(group);
+        const currentLabItems = await apiLoadLabItems(group);
+        let updatedMarks = 0;
 
-        let itemsToUpdate = [];
-        for (const course of moodleStats) {
-            if (!isCourseInCurrentSchedule(course.name, course.id)) continue;
-            let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
-
-            cachedSchedule.forEach(item => {
-                if (item.type_name !== 'ЛЗ' && item.type_name !== 'ПЗ') return;
-                let lessonName = item.lesson.toLowerCase();
-                if (!cleanCourse.includes(lessonName) && !lessonName.includes(cleanCourse)) return;
-
-                let subjKey = `${item.lesson} (${item.type_name})`;
-                let labList = currentLabItems[subjKey] || [];
-
-                course.assignments.forEach(a => {
-                    if (a.type !== 'assign') return;
-                    let num = extractLabNum(a.name);
-                    if (!num) return;
-
-                    let isDone = (a.status === 'Сдано' || a.status === 'На проверке');
-                    if (!isDone) return;
-
-                    let matchingItem = labList.find(l => {
-                        let itemNum = extractLabNum(l.title);
-                        return itemNum === num;
-                    });
-
-                    if (matchingItem && !matchingItem.completed) {
-                        itemsToUpdate.push({ id: matchingItem.id, completed: 1 });
-                    }
-                });
-            });
-        }
-
-        if (itemsToUpdate.length > 0) {
-            for (const item of itemsToUpdate) {
-                await apiUpdateLabItem(item.id, { completed: item.completed });
+        for (const [subject, labs] of subjectLabs) {
+            const items = currentLabItems[subject] || [];
+            for (const item of items) {
+                const num = extractLabNum(item.title);
+                if (num === null || !labs.has(num)) continue;
+                const want = labs.get(num) ? 1 : 0;
+                if (!!item.completed !== !!want) {
+                    await apiUpdateLabItem(item.id, { completed: want });
+                    updatedMarks++;
+                }
             }
         }
 
         await updateLabsCache();
         renderCharts();
-        alert(`Успешно синхронизировано предметов: ${updatedCount}. Отмечено сданных лаб: ${itemsToUpdate.length}.`);
+        renderMoodleStats();
+        renderProWidgets();
+
+        // Если открыта модалка «Темп сдачи лаб» — сразу обновляем её,
+        // чтобы зачёркивание сданных лаб появилось без переоткрытия.
+        const labItemsModal = document.getElementById('labItemsModal');
+        if (labItemsModal && labItemsModal.classList.contains('show')
+            && typeof _reloadLabItems === 'function') {
+            await _reloadLabItems();
+        }
+
+        alert(`Синхронизировано предметов: ${payload.length}. Обновлено отметок лаб: ${updatedMarks}.`);
     } catch (e) {
         console.error(e);
         alert("Ошибка при сохранении данных.");
@@ -515,6 +941,7 @@ async function syncMoodleToWidgets() {
 // ==========================================
 
 function renderProWidgets() {
+    if (window.isProActive && isMoodleModalOpen()) mountProWidgetsInModal();
     if (!moodleStats || moodleStats.length === 0) {
         return;
     }
@@ -546,9 +973,10 @@ function renderProWidgets() {
     if (window.isProActive) {
         let done = 0, attached = 0, remaining = 0;
         currentCourses.forEach(c => {
+            const forcedDone = isCourseForcedDone(c);
             c.assignments.forEach(a => {
                 if (a.type !== 'assign') return;
-                if (a.status === 'Сдано') done++;
+                if (forcedDone || a.status === 'Сдано') done++;
                 else if (a.status === 'На проверке' || a.status === 'Черновик') attached++;
                 else remaining++;
             });
@@ -631,6 +1059,7 @@ function renderProLabDetails() {
     let subjectStats = {};
 
     currentCourses.forEach(course => {
+        const forcedDone = isCourseForcedDone(course);
         let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim().toLowerCase();
         let matchingSubjects = new Set();
 
@@ -647,7 +1076,7 @@ function renderProLabDetails() {
 
             course.assignments.forEach(a => {
                 if (a.type !== 'assign') return;
-                if (a.status === 'Сдано') subjectStats[subj].done++;
+                if (forcedDone || a.status === 'Сдано') subjectStats[subj].done++;
                 else if (a.status === 'На проверке' || a.status === 'Черновик') subjectStats[subj].attached++;
                 else subjectStats[subj].remaining++;
             });
@@ -758,17 +1187,24 @@ function renderProSubjectChart() {
 
     const detailsEl = document.getElementById('proSubjectGradeDetails');
     if (detailsEl) {
-        let html = '';
+        const avgText = validGrades.length > 0 ? avgGrade.toFixed(1) : '—';
+        let html = `
+            <div class="widget-details-row pro-subject-avg" title="Средний балл по предмету">
+                <span class="widget-details-title">Средний балл</span>
+                <span class="widget-details-nums fw-bold">${avgText}</span>
+            </div>`;
         sortedLabs.forEach(lab => {
             let gradeText = lab.grade_num ? lab.grade_num : '—';
             html += `
                 <div class="widget-details-row" title="${escapeHtml(lab.name)}">
-                    <span class="widget-details-title">${escapeHtml(lab.name)}</span>
+                    <span class="widget-details-title">${moodleActivityNameHtml(lab)}</span>
                     <span class="widget-details-nums">${gradeText}</span>
                 </div>
             `;
         });
-        if (html === '') html = '<div class="text-muted small">Нет данных</div>';
+        if (sortedLabs.length === 0) {
+            html += '<div class="text-muted small">Нет оценок по предмету</div>';
+        }
         detailsEl.innerHTML = html;
     }
 
@@ -931,6 +1367,35 @@ function openMoodleSetupModal() {
     modal.show();
 }
 
+function persistSemesterConfigFromDom() {
+    const currentList = document.getElementById('currentSemesterList');
+    const pastList = document.getElementById('pastSemesterList');
+    const newConfig = {};
+
+    if (currentList) {
+        currentList.querySelectorAll('li').forEach(li => {
+            if (li.dataset.id) newConfig[li.dataset.id] = 'current';
+        });
+    }
+    if (pastList) {
+        pastList.querySelectorAll('li').forEach(li => {
+            if (li.dataset.id) newConfig[li.dataset.id] = 'past';
+        });
+    }
+
+    moodleSemesterConfig = newConfig;
+    try {
+        localStorage.setItem('moodleSemesterConfig', JSON.stringify(newConfig));
+    } catch (e) {
+        console.error('[moodle-pro] failed to save semester config', e);
+    }
+}
+
+function refreshProViewsAfterSemesterChange() {
+    renderMoodleStats();
+    renderProWidgets();
+}
+
 function handleSemesterDrop(ev, targetColumn) {
     ev.preventDefault();
     if (!draggedCourseId) return;
@@ -939,25 +1404,15 @@ function handleSemesterDrop(ev, targetColumn) {
     const draggedEl = document.querySelector(`[data-id="${draggedCourseId}"]`);
     if (draggedEl) {
         targetList.appendChild(draggedEl);
+        // Сохраняем сразу: иначе перенос можно потерять, закрыв окно крестиком.
+        persistSemesterConfigFromDom();
+        refreshProViewsAfterSemesterChange();
     }
     draggedCourseId = null;
 }
 
 function saveMoodleSetup() {
-    const currentList = document.getElementById('currentSemesterList');
-    const pastList = document.getElementById('pastSemesterList');
-    
-    let newConfig = {};
-    
-    currentList.querySelectorAll('li').forEach(li => {
-        newConfig[li.dataset.id] = 'current';
-    });
-    pastList.querySelectorAll('li').forEach(li => {
-        newConfig[li.dataset.id] = 'past';
-    });
-
-    moodleSemesterConfig = newConfig;
-    localStorage.setItem('moodleSemesterConfig', JSON.stringify(newConfig));
+    persistSemesterConfigFromDom();
     
     bootstrap.Modal.getInstance(document.getElementById('moodleSetupModal')).hide();
     renderMoodleStats();

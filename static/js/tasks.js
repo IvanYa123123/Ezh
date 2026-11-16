@@ -340,6 +340,19 @@ async function refreshTaskDates() {
     try {
         let dates = await apiLoadTaskDates();
         taskDatesSet = new Set(dates);
+        try {
+            const counts = await apiLoadTaskDateCounts() || {};
+            if (counts && counts.counts && typeof counts.counts === 'object') {
+                taskCountsByDate = counts.counts;
+                taskSeverityByDate = counts.severity || {};
+            } else {
+                taskCountsByDate = counts;
+                taskSeverityByDate = {};
+            }
+        } catch (e) {
+            taskCountsByDate = {};
+            taskSeverityByDate = {};
+        }
         if (typeof refreshMiniCalendar === 'function') refreshMiniCalendar();
         if (typeof refreshMiniCalEvents === 'function') refreshMiniCalEvents();
     } catch (e) { console.error("refreshTaskDates", e); }

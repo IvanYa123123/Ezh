@@ -9,6 +9,7 @@
 IS_EXE              = False
 BASE_DIR            = ''
 BUNDLE_DIR          = ''
+DATA_DIR            = ''
 DB_FILE             = ''
 SCHEDULES_DIR       = ''
 CUSTOM_GROUPS_FILE  = ''

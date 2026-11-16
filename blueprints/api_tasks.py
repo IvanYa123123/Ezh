@@ -1,6 +1,10 @@
 """Задачи и глобальный поиск."""
+import json
+import os
+
 from flask import Blueprint, jsonify, request
 
+from . import runtime
 from .common import validate_date
 from .db import get_db
 from .extensions import limiter
@@ -131,11 +135,69 @@ def task_dates():
     return jsonify([row["date"] for row in cursor.fetchall()])
 
 
+@bp.route("/api/task_date_counts")
+@limiter.limit("120 per minute")
+def task_date_counts():
+    conn = get_db()
+    cursor = conn.execute(
+        "SELECT date, COUNT(*) AS cnt, "
+        "       MAX(CASE status WHEN 'red' THEN 3 WHEN 'orange' THEN 2 ELSE 1 END) AS sev "
+        "FROM tasks GROUP BY date ORDER BY date"
+    )
+    counts = {}
+    severity = {}
+    names = {3: 'red', 2: 'orange', 1: 'green'}
+    for row in cursor.fetchall():
+        counts[row["date"]] = row["cnt"]
+        severity[row["date"]] = names.get(row["sev"], 'green')
+    return jsonify({"counts": counts, "severity": severity})
+
+
 # ============================================================
 #  ГЛОБАЛЬНЫЙ ПОИСК
 # ============================================================
 
 _SEARCH_RESULT_LIMIT = 100
+
+
+_SCHEDULE_ITEMS_CACHE = {"signature": None, "items": []}
+
+
+def _load_schedule_items():
+    """Читает все кэши расписаний для глобального поиска (с кэшем по mtime)."""
+    schedules_dir = runtime.SCHEDULES_DIR
+    if not schedules_dir or not os.path.isdir(schedules_dir):
+        return []
+
+    try:
+        names = sorted(n for n in os.listdir(schedules_dir) if n.endswith('.json'))
+    except OSError:
+        return []
+
+    signature = []
+    for name in names:
+        try:
+            signature.append((name, os.path.getmtime(os.path.join(schedules_dir, name))))
+        except OSError:
+            pass
+    signature = tuple(signature)
+
+    if _SCHEDULE_ITEMS_CACHE["signature"] == signature:
+        return _SCHEDULE_ITEMS_CACHE["items"]
+
+    items = []
+    for name in names:
+        try:
+            with open(os.path.join(schedules_dir, name), encoding='utf-8') as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):
+            items.extend(x for x in data if isinstance(x, dict))
+
+    _SCHEDULE_ITEMS_CACHE["signature"] = signature
+    _SCHEDULE_ITEMS_CACHE["items"] = items
+    return items
 
 
 @bp.route("/api/search")
@@ -197,9 +259,75 @@ def search_all():
             if len(events) >= _SEARCH_RESULT_LIMIT:
                 break
 
+    # Пары, преподаватели и аудитории из локальных кэшей расписаний.
+    lessons = []
+    teachers = []
+    rooms = []
+    seen_lessons = set()
+    seen_teachers = set()
+    seen_rooms = set()
+
+    for item in _load_schedule_items():
+        lesson = str(item.get('lesson') or '')
+        teacher = str(item.get('teacher') or '')
+        location = str(item.get('location') or '')
+        type_name = str(item.get('type_name') or '')
+        date = str(item.get('date') or '')
+
+        if q_lower in ' '.join([lesson, type_name, teacher, location]).lower():
+            key = (date, lesson, item.get('time_range'), location, item.get('subgroup'))
+            if key not in seen_lessons and len(lessons) < 12:
+                seen_lessons.add(key)
+                lessons.append({
+                    "date": date,
+                    "lesson": lesson,
+                    "type_name": type_name,
+                    "teacher": teacher,
+                    "location": location,
+                    "time_range": str(item.get('time_range') or ''),
+                    "subgroup": str(item.get('subgroup') or ''),
+                })
+
+        if teacher and q_lower in teacher.lower():
+            slug = str(item.get('teacher_slug') or '')
+            if teacher not in seen_teachers and len(teachers) < 8:
+                seen_teachers.add(teacher)
+                teachers.append({"name": teacher, "slug": slug})
+
+        if location and q_lower in location.lower():
+            if location not in seen_rooms and len(rooms) < 8:
+                seen_rooms.add(location)
+                rooms.append(location)
+
+    # Дополнительно — полный список преподавателей, если он уже загружен.
+    if len(teachers) < 8:
+        try:
+            with open(os.path.join(runtime.DATA_DIR, 'teachers.json'), encoding='utf-8') as f:
+                cached = json.load(f)
+        except (OSError, ValueError):
+            cached = []
+        if isinstance(cached, dict):
+            cached = cached.get('items') or cached.get('teachers') or []
+        if isinstance(cached, list):
+            for t in cached:
+                if not isinstance(t, dict):
+                    continue
+                name = str(t.get('name') or '')
+                slug = str(t.get('slug') or '')
+                if name and slug and q_lower in name.lower() and slug not in seen_teachers:
+                    seen_teachers.add(slug)
+                    teachers.append({"name": name, "slug": slug})
+                    if len(teachers) >= 8:
+                        break
+
+    lessons.sort(key=lambda x: x["date"], reverse=True)
+
     return jsonify({
         "tasks": tasks,
         "events": events,
+        "lessons": lessons,
+        "teachers": teachers,
+        "rooms": rooms,
         "query": q,
-        "count": len(tasks) + len(events),
+        "count": len(tasks) + len(events) + len(lessons) + len(teachers) + len(rooms),
     })
