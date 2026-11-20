@@ -461,19 +461,75 @@ async function deleteTrackedTeacher(id) {
 //  ПОДСЧЁТ ОБЩИХ ПАР (для преподавателей)
 // ============================================================
 
-function _countCommonPairsForTeacher(teacherDayPairs, myDaySchedule) {
-    const myGroup = (document.getElementById('groupSelect')?.value || '').trim().toUpperCase();
-    if (!myGroup || !teacherDayPairs.length || !myDaySchedule.length) return 0;
+// ============================================================
+//  СРАВНЕНИЕ РАСПИСАНИЙ (для режима преподавателя)
+// ============================================================
 
-    let count = 0;
-    teacherDayPairs.forEach(p => {
-        if (!Array.isArray(p.groups)) return;
-        const hasMyGroup = p.groups.some(g => String(g).toUpperCase() === myGroup);
-        if (!hasMyGroup) return;
-        const timeMatch = myDaySchedule.find(m => m.time_range === p.time_range);
-        if (timeMatch) count++;
+const TEACHER_CAMPUS_NAMES = { galosha: 'Галоша', gogol: 'Гоголя', univer: 'Университетская' };
+
+function _teacherPairKey(p) {
+    return [p.time_range || '', p.lesson || '', (p.location || '').trim().toLowerCase()].join('|');
+}
+
+function _teacherCampusLabel(item) {
+    const campus = getCampus(item);
+    return TEACHER_CAMPUS_NAMES[campus] || '';
+}
+
+function _teacherCompareHtml(theirDay, myDay) {
+    // В студенческом режиме не сравниваем своё расписание с преподавателем:
+    // теги «начинаем одновременно», «общая пара» и т.п. здесь не нужны.
+    if (typeof isTeacherRole === 'function' && !isTeacherRole()) return '';
+    if (!theirDay || !theirDay.length) return '';
+    if (!myDay || !myDay.length) {
+        return '<div class="shared-class shared-info fw-bold">🕘 У вас в этот день пар нет</div>';
+    }
+
+    theirDay = [...theirDay].sort((a, b) => (a.n || 0) - (b.n || 0));
+    myDay = [...myDay].sort((a, b) => (a.n || 0) - (b.n || 0));
+
+    const myKeys = new Set(myDay.map(_teacherPairKey));
+    const common = theirDay.filter(p => myKeys.has(_teacherPairKey(p)));
+
+    if (common.length === theirDay.length && theirDay.length === myDay.length) {
+        return '<div class="shared-class shared-common fw-bold">🤝 Все пары совпадают</div>';
+    }
+
+    let html = '';
+    common.slice(0, 3).forEach(p => {
+        html += `<div class="shared-class shared-common fw-bold">🤝 ${escapeHtml(p.time_range || '')} · ${escapeHtml(p.lesson || '')}</div>`;
     });
-    return count;
+
+    const theirStart = (theirDay[0].time_range || '').split(' - ')[0].trim();
+    const theirEnd = (theirDay[theirDay.length - 1].time_range || '').split(' - ')[1].trim();
+    const myStart = (myDay[0].time_range || '').split(' - ')[0].trim();
+    const myEnd = (myDay[myDay.length - 1].time_range || '').split(' - ')[1].trim();
+
+    if (theirStart && myStart && theirStart === myStart) {
+        const theirCampus = _teacherCampusLabel(theirDay[0]);
+        const myCampus = _teacherCampusLabel(myDay[0]);
+        if (theirCampus && myCampus && theirCampus !== myCampus) {
+            html += `<div class="shared-class shared-warning fw-bold">🚨 Начинаем одновременно в ${theirStart}, но в разных корпусах</div>`;
+        } else if (theirCampus && myCampus) {
+            html += `<div class="shared-class shared-same-campus fw-bold">🏃 Начинаем одновременно в корпусе «${escapeHtml(theirCampus)}» в ${theirStart}</div>`;
+        } else {
+            html += `<div class="shared-class shared-info fw-bold">🕒 Начинаем в одно время: ${theirStart}</div>`;
+        }
+    }
+
+    if (theirEnd && myEnd && theirEnd === myEnd) {
+        const theirCampus = _teacherCampusLabel(theirDay[theirDay.length - 1]);
+        const myCampus = _teacherCampusLabel(myDay[myDay.length - 1]);
+        if (theirCampus && myCampus && theirCampus !== myCampus) {
+            html += `<div class="shared-class shared-warning fw-bold">🚨 Заканчиваем одновременно в ${theirEnd}, но в разных корпусах</div>`;
+        } else if (theirCampus && myCampus) {
+            html += `<div class="shared-class shared-same-campus fw-bold">🏡 Заканчиваем одновременно в корпусе «${escapeHtml(theirCampus)}» в ${theirEnd}</div>`;
+        } else {
+            html += `<div class="shared-class shared-info fw-bold">🕒 Заканчиваем в одно время: ${theirEnd}</div>`;
+        }
+    }
+
+    return html;
 }
 
 // ============================================================
@@ -590,16 +646,13 @@ async function _renderTeachersVertical() {
         });
         const locStr = [...locations].slice(0, 3).join(', ');
 
-        const commonCount = _countCommonPairsForTeacher(dayPairs, myDaySched);
-        const commonHtml = commonCount > 0
-            ? `<div class="fv-common">🤝 ${commonCount} ${plural(commonCount, 'общая пара', 'общие пары', 'общих пар')}</div>`
-            : '';
+        const compareHtml = _teacherCompareHtml(dayPairs, myDaySched);
 
         summaryHtml = `
             <div class="fv-time">🕒 ${fStart} — ${fEnd}</div>
             ${locStr ? `<div class="fv-campus">📍 ${escapeHtml(locStr)}</div>` : ''}
             <div class="fv-pairs-count">${dayPairs.length} ${plural(dayPairs.length, 'пара', 'пары', 'пар')}</div>
-            ${commonHtml}
+            ${compareHtml}
         `;
     }
 
@@ -707,10 +760,10 @@ function renderTeachersCalendars() {
         }
 
         const grid = document.createElement('div');
-        grid.className = 'calendar-grid w-100';
+        grid.className = 'calendar-grid w-100 six-day-grid';
 
         const dayParts = [];
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 6; i++) {
             const d = new Date(currentBaseDate);
             d.setDate(d.getDate() + i);
             const dateStr = getLocalDateStr(d);
@@ -721,6 +774,9 @@ function renderTeachersCalendars() {
 
             let html = `<div class="teacher-col${isToday}">`;
             html += `<div class="teacher-day-header">${displayDate}</div>`;
+
+            const myDaySched = cachedSchedule.filter(p => p.date === dateStr);
+            html += _teacherCompareHtml(dayPairs, myDaySched);
 
             if (dayPairs.length === 0) {
                 html += '<div class="text-muted text-center mt-2" style="font-size:0.8em;">—</div>';

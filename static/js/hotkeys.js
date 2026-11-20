@@ -113,32 +113,4 @@
         }
     });
 
-    function _openTodayTaskInput() {
-        const today = getLocalDateStr(new Date());
-        const wrapId = 'task-input-wrap-' + today;
-
-        if (!document.getElementById(wrapId)) {
-            if (typeof goToToday === 'function') {
-                goToToday();
-            } else if (typeof jumpToDate === 'function') {
-                jumpToDate(today);
-            }
-        }
-
-        requestAnimationFrame(() => {
-            const wrap = document.getElementById(wrapId);
-            if (!wrap) return;
-
-            const input = document.getElementById('task-input-' + today);
-            if (wrap.style.display === 'none' || wrap.style.display === '') {
-                if (typeof toggleTaskInput === 'function') toggleTaskInput(today);
-            }
-            if (input) {
-                input.focus();
-                const len = input.value.length;
-                try { input.setSelectionRange(len, len); } catch (err) {}
-            }
-        });
-    }
-
 })();

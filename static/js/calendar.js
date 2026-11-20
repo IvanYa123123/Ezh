@@ -199,7 +199,9 @@ async function renderCalendar() {
     const endStr = getLocalDateStr(endD);
     const realTodayStr = getLocalDateStr(new Date());
 
-    const currentGroup = (document.getElementById('groupSelect')?.value || '').trim();
+    const currentGroup = (typeof isTeacherRole === 'function' && isTeacherRole())
+        ? (localStorage.getItem('ezhTeacherName') || 'Преподаватель')
+        : (document.getElementById('groupSelect')?.value || '').trim();
     if (!currentGroup || cachedSchedule.length === 0) {
         cal.innerHTML = `
             <div class="empty-state empty-state-wide">
@@ -254,6 +256,8 @@ async function renderCalendar() {
 
     renderFriendsCalendar(calDir);
     if (typeof renderTeachersCalendars === 'function') renderTeachersCalendars();
+    if (typeof renderTeachingLoad === 'function') renderTeachingLoad();
+    if (typeof refreshRoomsForCurrentWeek === 'function') refreshRoomsForCurrentWeek();
 
     if (typeof renderSyncFreshness === 'function') renderSyncFreshness();
     if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
@@ -310,6 +314,14 @@ function renderSyncFreshness() {
 
     const group    = (document.getElementById('groupSelect')?.value || '').trim();
     const subgroup = document.getElementById('subgroupSelect')?.value || '0';
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        el.innerHTML = '<span class="sync-fresh sync-fresh-ok" title="Обновить расписание преподавателя">🔄 расписание</span>';
+        el.style.cursor = 'pointer';
+        el.onclick = () => {
+            if (typeof manualRefresh === 'function') manualRefresh();
+        };
+        return;
+    }
     if (!group) { el.textContent = ''; return; }
 
     // Клик по «последнему обновлению» запускает синхронизацию расписания.

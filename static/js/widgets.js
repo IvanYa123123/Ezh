@@ -94,7 +94,8 @@ function renderCharts() {
     // --- График 1: остаток пар ---
     let passed = 0, remaining = 0;
     let todayStr = getLocalDateStr(new Date());
-    cachedSchedule.forEach(item => { _isPairInPast(item, todayStr) ? passed++ : remaining++; });
+    const semesterSchedule = cachedSchedule.filter(item => isInCurrentSemester(item.date));
+    semesterSchedule.forEach(item => { _isPairInPast(item, todayStr) ? passed++ : remaining++; });
 
     const canvas1 = document.getElementById('globalStatsChart');
     if (canvas1) {

@@ -109,6 +109,11 @@ function _renderPairCard(item) {
         if (s.location)    displayLocation = s.location;
     }
 
+    // В режиме преподавателя на паре показываем учебные группы.
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        displayTeacher = Array.isArray(item.groups) ? item.groups.join(', ') : '';
+    }
+
     let taskSubjectLabel;
     if (item.is_custom) taskSubjectLabel = item.lesson;
     else if (customName) taskSubjectLabel = `${customName} (${item.type_name})`;
