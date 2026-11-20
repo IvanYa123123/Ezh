@@ -36,7 +36,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const savedGroup = localStorage.getItem('savedGroup');
 
-        if (savedGroup) {
+        if (typeof getEzhRole === 'function' && !getEzhRole()) {
+            // Роль ещё не выбрана — ждём модалку «Кто вы?».
+            updateWeekDropdown();
+            renderCalendar();
+            renderMiniCalendar();
+            hideGlobalLoader();
+        } else if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+            updateWeekDropdown();
+            renderCalendar();
+            renderMiniCalendar();
+            hideGlobalLoader();
+            await fetchSemesterData();
+        } else if (savedGroup) {
             document.getElementById('groupSelect').value = savedGroup;
             const savedSubgroup = localStorage.getItem('savedSubgroup');
             if (savedSubgroup) {
@@ -73,6 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) return;
 
     const groupEl = document.getElementById('groupSelect');
     if (!groupEl) return;
@@ -108,6 +121,10 @@ async function ensureGroupsLoaded() {
 }
 
 async function fetchSemesterData() {
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        await fetchTeacherSemesterData();
+        return;
+    }
     const group = document.getElementById("groupSelect").value.trim();
     const subgroup = document.getElementById("subgroupSelect").value;
     if (!group) return;
@@ -193,6 +210,58 @@ async function fetchSemesterData() {
     updateScheduleStatus();
     refreshNotifications();
     syncSemesterData(group, subgroup);
+}
+
+async function fetchTeacherSemesterData() {
+    const teacher = (typeof getEzhTeacher === 'function')
+        ? getEzhTeacher()
+        : { slug: localStorage.getItem('ezhTeacherSlug') || '', name: '' };
+
+    if (!teacher.slug) {
+        hideGlobalLoader();
+        if (typeof openTeacherRolePicker === 'function') openTeacherRolePicker();
+        return;
+    }
+
+    showGlobalLoader('Загружаем расписание преподавателя...');
+    const cal = document.getElementById('calendar');
+    if (cal) cal.innerHTML = "<h6 class='text-center w-100 mt-5'>Загрузка расписания...</h6>";
+
+    try {
+        const raw = await apiGet('/api/teacher_schedule?slug=' + encodeURIComponent(teacher.slug));
+        cachedSchedule = applyTimeFix(
+            typeof teacherScheduleItems === 'function' ? teacherScheduleItems(raw) : (Array.isArray(raw) ? raw : [])
+        );
+        customScheduleItems = [];
+        scheduleLoaded = true;
+        renderCalendar();
+        updateScheduleStatus();
+        refreshNotifications();
+
+        if (cachedSchedule.length === 0) {
+            if (cal) {
+                cal.innerHTML = `
+                    <div class="empty-state empty-state-wide">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-title">Расписание пока пустое</div>
+                        <div class="empty-state-text">Для выбранного преподавателя пары не найдены.
+                        Нажмите 🔄 в шапке, чтобы обновить ICS-календарь.</div>
+                    </div>`;
+            }
+        }
+    } catch (e) {
+        console.error('teacher schedule load failed:', e);
+        if (cal) {
+            cal.innerHTML = `
+                <div class="empty-state empty-state-wide">
+                    <div class="empty-state-icon">⚠️</div>
+                    <div class="empty-state-title">Не удалось загрузить расписание</div>
+                    <div class="empty-state-text">${apiErrorText(e, { subject: 'расписание преподавателя' })}</div>
+                </div>`;
+        }
+    } finally {
+        hideGlobalLoader();
+    }
 }
 
 async function syncSemesterData(group, subgroup) {

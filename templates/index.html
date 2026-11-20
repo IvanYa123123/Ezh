@@ -191,13 +191,13 @@
                             <div class="friends-nav-btn friends-nav-prev" id="friendsNavPrev"><button class="nav-arrow" onclick="navigatePrev()">&#10094;</button></div>
                             <div class="friends-nav-btn friends-nav-next" id="friendsNavNext"><button class="nav-arrow" onclick="navigateNext()">&#10095;</button></div>
                             <div id="friendsCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
-                        </div>
-                    </div>
+                        </div>                    </div>
 
                     <div id="teachersSection" data-draggable-section>
                         <div class="mt-2 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="teachersControlsPanel">
                             <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
                             <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToFriendsBtn" onclick="switchFriendsTeachersTab('friends')" title="Переключиться на друзей" style="display: none;">👥</button>
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchTabToRoomBtn" onclick="switchTeacherMainTab('room')" title="Переключиться на аудитории" style="display: none;">🚪</button>
                             <button class="btn btn-sm btn-outline-primary fw-bold" onclick="showAddTeacherModal()">+ Добавить преподавателя</button>
                             <div class="vr mx-1"></div>
                             <div class="dropdown d-flex align-items-center">
@@ -211,7 +211,34 @@
                                 <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" onclick="rotateTeachersRight()" title="Прокрутить: последний → в начало">⇅</button>
                             </div>
                         </div>
-                        <div id="teachersCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
+                        <div class="friends-list-wrapper" id="teachersListWrapper">
+                            <div class="friends-nav-btn friends-nav-prev" id="teachersNavPrev"><button class="nav-arrow" onclick="navigatePrev()">&#10094;</button></div>
+                            <div class="friends-nav-btn friends-nav-next" id="teachersNavNext"><button class="nav-arrow" onclick="navigateNext()">&#10095;</button></div>
+                            <div id="teachersCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
+                        </div>
+                    </div>
+
+                    <div id="roomSection" data-draggable-section style="display: none;">
+                        <div class="mt-2 text-start d-flex align-items-center flex-wrap gap-2 mb-2 bg-white p-2 rounded shadow-sm border" id="roomControlsPanel">
+                            <span class="section-drag-handle" title="Перетащить раздел">⋮⋮</span>
+                            <button class="btn btn-sm btn-outline-secondary fw-bold header-icon-btn" id="switchRoomToTeachersBtn" onclick="switchTeacherMainTab('teachers')" title="Переключиться на коллег">🎓</button>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="openRoomPicker()">+ Добавить аудиторию</button>
+                            <div class="vr mx-1"></div>
+                            <div class="dropdown d-flex align-items-center">
+                                <button class="btn btn-sm btn-primary text-white dropdown-toggle fw-bold shadow-sm"
+                                        type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                        data-bs-popper-config='{"placement":"bottom-start"}'>Кого показывать?</button>
+                                <ul class="dropdown-menu shadow-sm border-0" id="roomTogglesDropdown" style="min-width: 250px;"></ul>
+                            </div>
+                            <div class="ms-auto d-flex gap-1 align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="refreshRoomSchedules()" title="Обновить расписание аудиторий">↻</button>
+                            </div>
+                        </div>
+                        <div class="friends-list-wrapper" id="roomsListWrapper">
+                            <div class="friends-nav-btn friends-nav-prev" id="roomsNavPrev"><button class="nav-arrow" onclick="navigatePrev()">&#10094;</button></div>
+                            <div class="friends-nav-btn friends-nav-next" id="roomsNavNext"><button class="nav-arrow" onclick="navigateNext()">&#10095;</button></div>
+                            <div id="roomsCalendarsContainer" class="d-flex flex-column gap-3 mb-4"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -241,6 +268,19 @@
                     </div>
                 </div>
 
+                <div class="widget-card weather-widget-card" id="widgetWeatherCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">🌤️ Погода <button type="button" class="weather-city-label" id="weatherCityLabel" onclick="openWeatherCitySettings()" title="Изменить город в настройках">Севастополь</button></h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetWeatherCard', 'settingsToggleWidgetWeather')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="weather-body" id="weatherBody">
+                        <div class="weather-loading">Загрузка прогноза…</div>
+                    </div>
+                </div>
+
                 <div class="widget-card" id="widgetGlobalCard" data-draggable-widget>
                     <div class="widget-header">
                         <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
@@ -254,6 +294,33 @@
                             <canvas id="globalStatsChart"></canvas>
                         </div>
                         <div class="widget-details-wrap" id="globalStatsDetails"></div>
+                    </div>
+                </div>
+
+                <div class="widget-card teacher-only-widget" id="widgetTeachingLoadCard" data-draggable-widget>
+                    <div class="widget-header">
+                        <span class="widget-drag-handle" title="Перетащить">⋮⋮</span>
+                        <h6 class="widget-title">Нагрузка за неделю</h6>
+                        <div class="widget-header-actions">
+                            <button class="widget-close-btn" onclick="hideWidget('widgetTeachingLoadCard', 'settingsToggleWidgetTeachingLoad')" title="Скрыть">✕</button>
+                        </div>
+                    </div>
+                    <div class="teaching-load-inline">
+                    <div class="teaching-load-grid">
+                        <div class="teaching-load-cell">
+                            <div class="teaching-load-num" id="teachingLoadHours">—</div>
+                            <div class="teaching-load-label">часов</div>
+                        </div>
+                        <div class="teaching-load-cell">
+                            <div class="teaching-load-num" id="teachingLoadPairs">—</div>
+                            <div class="teaching-load-label">пар</div>
+                        </div>
+                        <div class="teaching-load-cell">
+                            <div class="teaching-load-num" id="teachingLoadGaps">—</div>
+                            <div class="teaching-load-label">окон</div>
+                        </div>
+                    </div>
+                    <div class="teaching-load-detail" id="teachingLoadDetail"></div>
                     </div>
                 </div>
 
@@ -779,7 +846,7 @@
           <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
 
             <!-- Моя группа -->
-            <div class="settings-group pt-0">
+            <div class="settings-group pt-0" id="groupSettingsGroup">
               <div class="settings-group-title">🏫 Моя группа</div>
               <div class="settings-row-inline">
                 <span class="settings-row-label">Текущая группа</span>
@@ -790,10 +857,22 @@
               </div>
             </div>
 
+            <div class="settings-group" id="weatherCitySettingsRow">
+              <div class="settings-group-title">🌤️ Город погоды</div>
+              <div class="settings-row-inline">
+                <span class="settings-row-label">Прогноз для</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary weather-city-settings-btn"
+                        onclick="openWeatherCityPickerFromSettings()" title="Выбрать город или вставить ссылку rp5.ru">
+                  <span id="settingsWeatherCityValue">Севастополь</span> ▾
+                </button>
+              </div>
+              <div class="settings-hint-box mt-2">По умолчанию — Севастополь. Другой город можно добавить ссылкой со страницы rp5.ru.</div>
+            </div>
+
             <div class="settings-group">
               <div class="settings-group-title">📋 Отображение пар</div>
               <label class="settings-row" for="settingsToggleTeacher">
-                <span class="settings-row-label">ФИО преподавателей</span>
+                <span class="settings-row-label" id="settingsTeacherLabel">ФИО преподавателей</span>
                 <input class="form-check-input" type="checkbox" id="settingsToggleTeacher" onchange="saveSettingsFromUI()">
               </label>
               <label class="settings-row" for="settingsToggleLocation">
@@ -913,6 +992,24 @@
                     <input class="form-check-input" type="checkbox" id="settingsToggleWidgetPacing" onchange="saveSettingsFromUI()">
                   </label>
                 </div>
+                <div class="col-6">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetWeather">
+                    <span class="settings-row-label">Погода</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetWeather" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6 room-setting-row">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetRoom">
+                    <span class="settings-row-label">Аудитория</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetRoom" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
+                <div class="col-6 teacher-setting-row">
+                  <label class="settings-row px-2 m-0" for="settingsToggleWidgetTeachingLoad">
+                    <span class="settings-row-label">Нагрузка за неделю</span>
+                    <input class="form-check-input" type="checkbox" id="settingsToggleWidgetTeachingLoad" onchange="saveSettingsFromUI()">
+                  </label>
+                </div>
                 <div class="col-12">
                   <div class="d-flex align-items-center gap-2 flex-wrap px-2">
                     <span class="settings-row-label">Заметки:</span>
@@ -922,7 +1019,7 @@
               </div>
             </div>
 
-            <div class="settings-group mb-0">
+            <div class="settings-group mb-0" id="proWidgetSettingsGroup">
               <div class="settings-group-title text-primary">Pro-виджеты (Moodle)</div>
 
               <div id="proWidgetsLockedMsg" class="alert alert-secondary py-2 small mb-2 d-flex align-items-center justify-content-between" style="display: none;">
@@ -1109,6 +1206,14 @@
           <div class="tab-pane fade" id="tab-system" role="tabpanel">
 
             <div class="settings-group pt-0">
+              <div class="settings-group-title">👤 Режим работы</div>
+              <div class="settings-row">
+                <span class="settings-row-label">Сейчас: <b id="currentRoleLabel">Студент</b></span>
+                <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="changeUserRole()">Сменить</button>
+              </div>
+            </div>
+
+            <div class="settings-group pt-0">
               <div class="settings-group-title">📤 Экспорт</div>
               <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="downloadICS()">
                 📅 Скачать расписание (.ics)
@@ -1136,7 +1241,7 @@
               </div>
             </div>
 
-            <div class="settings-group">
+            <div class="settings-group" id="proSettingsGroup">
               <div class="settings-group-title">🌐 Еж Про (Moodle)</div>
               <button class="btn btn-outline-primary w-100 fw-bold mb-2" onclick="openMoodleModal()">
                  Войти в Moodle / Настройки
@@ -1253,6 +1358,96 @@
   </div>
 </div>
 
+  <div class="modal fade" id="roleSelectModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content role-modal border-0 shadow-lg">
+        <div class="modal-body p-4 text-center">
+          <div class="role-logo">🦔</div>
+          <h4 class="fw-bold mb-1">Кто вы?</h4>
+          <p class="text-muted small mb-4">Выберите режим работы. Потом его можно сменить в настройках.</p>
+          <div class="role-options">
+            <button type="button" class="role-option" onclick="chooseUserRole('student')">
+              <span class="role-option-icon">🎓</span>
+              <span class="role-option-title">Студент</span>
+              <span class="role-option-desc">Расписание, заметки, лабораторные, Pro-режим</span>
+            </button>
+            <button type="button" class="role-option" onclick="openTeacherRolePicker()">
+              <span class="role-option-icon">👨‍🏫</span>
+              <span class="role-option-title">Преподаватель</span>
+              <span class="role-option-desc">Своё расписание, аудитория и коллеги, без Pro и друзей</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="roleTeacherModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header py-2">
+          <h6 class="modal-title fw-bold">👨‍🏫 Ваше ФИО</h6>
+        </div>
+        <div class="modal-body">
+          <p class="small text-muted mb-2">
+            Найдите себя в списке преподавателей — по этому ФИО загрузится ваше расписание.
+          </p>
+          <input type="text" class="form-control form-control-sm mb-2" id="roleTeacherInput"
+                 placeholder="Начните вводить фамилию…" autocomplete="off"
+                 oninput="filterRoleTeachers(this.value)">
+          <div class="small text-muted mb-2" id="roleTeacherHint">Загрузка списка…</div>
+          <div class="role-teacher-list" id="roleTeacherList"></div>
+        </div>
+        <div class="modal-footer py-2 border-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary btn-sm fw-bold" id="roleTeacherConfirm"
+                  onclick="confirmTeacherRole()" disabled>Продолжить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="roomPickerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header py-2 bg-light">
+          <h6 class="modal-title fw-bold">🚪 Выбор аудитории</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="form-control form-control-sm mb-2" id="roomSearchInput"
+                 placeholder="Поиск по номеру аудитории…">
+          <div class="room-pick-list" id="roomPickerList">
+            <div class="small text-muted p-3 text-center">Загрузка списка аудиторий…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="weatherCityModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header py-2 bg-body-tertiary">
+          <h6 class="modal-title fw-bold">🌍 Город для прогноза</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="weather-city-grid" id="weatherCityPresets"></div>
+          <hr class="my-3">
+          <label class="form-label small fw-bold" for="weatherCityUrl">Другой город — ссылка со страницы rp5.ru</label>
+          <input type="url" class="form-control form-control-sm" id="weatherCityUrl"
+                 placeholder="https://rp5.ru/Погода_в_…">
+          <div class="form-text">Откройте нужный город на rp5.ru и скопируйте адрес страницы.</div>
+        </div>
+        <div class="modal-footer py-2 border-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+          <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="applyCustomWeatherCity()">Выбрать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="/vendor/bootstrap.bundle.min.js?v={{ app_version }}"
         onerror="document.write('&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;\/script&gt;')"></script>
 
@@ -1260,6 +1455,7 @@
 <script src="/static/js/utils.js?v={{ app_version }}"></script>
 <script src="/static/js/ui.js?v={{ app_version }}"></script>
 <script src="/static/js/api.js?v={{ app_version }}"></script>
+<script src="/static/js/role.js?v={{ app_version }}"></script>
 <script src="/static/js/autocomplete.js?v={{ app_version }}"></script>
 <script src="/static/js/weeks.js?v={{ app_version }}"></script>
 <script src="/static/js/mini-calendar.js?v={{ app_version }}"></script>
@@ -1279,6 +1475,9 @@
 <script src="/static/js/widgets-labs.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets-suggestions.js?v={{ app_version }}"></script>
 <script src="/static/js/widgets.js?v={{ app_version }}"></script>
+<script src="/static/js/weather.js?v={{ app_version }}"></script>
+<script src="/static/js/room-schedule.js?v={{ app_version }}"></script>
+<script src="/static/js/teaching-load.js?v={{ app_version }}"></script>
 
 <script src="/static/js/search.js?v={{ app_version }}"></script>
 <script src="/static/js/refresh.js?v={{ app_version }}"></script>

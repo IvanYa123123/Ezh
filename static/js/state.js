@@ -91,6 +91,9 @@ let showWidgetGlobal  = localStorage.getItem('showWidgetGlobal')  !== 'false';
 let showWidgetLabs    = localStorage.getItem('showWidgetLabs')    !== 'false';
 let showWidgetSuggestions = localStorage.getItem('showWidgetSuggestions') !== 'false';
 let showWidgetPacing  = localStorage.getItem('showWidgetPacing')  !== 'false';
+let showWidgetWeather = localStorage.getItem('showWidgetWeather') !== 'false';
+let showWidgetRoom = localStorage.getItem('showWidgetRoom') !== 'false';
+let showWidgetTeachingLoad = localStorage.getItem('showWidgetTeachingLoad') !== 'false';
 
 // Виджеты Заметок (1, 2, 3)
 let showWidgetNotes1 = localStorage.getItem('showWidgetNotes1') !== 'false';
@@ -166,6 +169,14 @@ function updateGroupDisplay() {
     const group = (groupInput.value || '').trim();
     const subgroup = subgroupInput ? subgroupInput.value : '0';
 
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        const tName = localStorage.getItem('ezhTeacherName') || '';
+        displayEl.textContent = tName || 'Выберите ФИО';
+        displayEl.classList.toggle('group-display-empty', !tName);
+        displayEl.title = 'Ваше ФИО — нажмите, чтобы изменить';
+        return;
+    }
+
     if (!group) {
         displayEl.textContent = 'Группа не выбрана';
         displayEl.classList.add('group-display-empty');
@@ -196,6 +207,9 @@ function hideWidget(widgetId, toggleId) {
     else if (toggleId === 'settingsToggleWidgetLabs') { showWidgetLabs = false; localStorage.setItem('showWidgetLabs', 'false'); }
     else if (toggleId === 'settingsToggleWidgetSuggestions') { showWidgetSuggestions = false; localStorage.setItem('showWidgetSuggestions', 'false'); }
     else if (toggleId === 'settingsToggleWidgetPacing') { showWidgetPacing = false; localStorage.setItem('showWidgetPacing', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetWeather') { showWidgetWeather = false; localStorage.setItem('showWidgetWeather', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetRoom') { showWidgetRoom = false; localStorage.setItem('showWidgetRoom', 'false'); }
+    else if (toggleId === 'settingsToggleWidgetTeachingLoad') { showWidgetTeachingLoad = false; localStorage.setItem('showWidgetTeachingLoad', 'false'); }
     else if (toggleId && toggleId.startsWith('settingsToggleWidgetNotes')) {
         const n = parseInt(toggleId.replace('settingsToggleWidgetNotes', ''), 10);
         if (n >= 1 && n <= 10) setNoteWidgetVisibility(n, false);
@@ -359,12 +373,6 @@ function scheduleUndo(message, callback, durationMs = 6000) {
         _undoTimer = null;
         if (typeof hideUndoBar === 'function') hideUndoBar();
     }, durationMs);
-}
-
-function cancelUndo() {
-    if (_undoTimer) { clearTimeout(_undoTimer); _undoTimer = null; }
-    _undoCallback = null;
-    if (typeof hideUndoBar === 'function') hideUndoBar();
 }
 
 // ============================================================
@@ -623,11 +631,71 @@ function _bindNoteEditor(ed) {
     });
 }
 
+function _noteDefaultTitle(i) {
+    return i === 1 ? 'Заметки' : `Заметки ${i}`;
+}
+
+function _noteTitle(i) {
+    try {
+        const saved = (localStorage.getItem(`noteTitle${i}`) || '').trim();
+        if (saved) return saved.slice(0, 40);
+    } catch (e) { /* ignore */ }
+    return _noteDefaultTitle(i);
+}
+
+function _applyNoteTitle(i) {
+    const span = document.getElementById(`noteTitle${i}`);
+    if (span) span.textContent = _noteTitle(i);
+}
+
+function _setupNoteTitle(i) {
+    const card = document.getElementById(`widgetNotesCard${i}`);
+    const header = card && card.querySelector('.widget-title');
+    if (!header) return;
+
+    let span = document.getElementById(`noteTitle${i}`);
+    if (!span) {
+        header.textContent = '';
+        header.appendChild(document.createTextNode('📝 '));
+        span = document.createElement('span');
+        span.id = `noteTitle${i}`;
+        span.className = 'note-title-text';
+        span.title = 'Двойной клик — переименовать';
+        span.addEventListener('dblclick', () => renameNoteWidget(i));
+        header.appendChild(span);
+    }
+    _applyNoteTitle(i);
+
+    const actions = card.querySelector('.widget-header-actions');
+    if (actions && !actions.querySelector('.note-rename-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'note-rename-btn';
+        btn.textContent = '✎';
+        btn.title = 'Переименовать заметку';
+        btn.addEventListener('click', () => renameNoteWidget(i));
+        actions.insertBefore(btn, actions.firstChild);
+    }
+}
+
+function renameNoteWidget(i) {
+    const current = _noteTitle(i);
+    const next = prompt('Название заметки:', current);
+    if (next === null) return;
+    const title = next.trim().slice(0, 40);
+    try {
+        if (title) localStorage.setItem(`noteTitle${i}`, title);
+        else localStorage.removeItem(`noteTitle${i}`);
+    } catch (e) { /* ignore */ }
+    _applyNoteTitle(i);
+}
+
 function initNotesWidget() {
     for (let i = 1; i <= NOTE_WIDGET_COUNT; i++) {
         const ed = document.getElementById(`notesWidgetText${i}`);
         if (!ed) continue;
 
+        _setupNoteTitle(i);
         _ensureNoteToolbar(ed);
 
         if (ed.dataset.noteReady !== '1') {
@@ -1394,6 +1462,9 @@ function _refreshAfterMove(card) {
 
         if (card.id === 'widgetMiniCalCard' && typeof refreshMiniCalEvents === 'function') {
             try { refreshMiniCalEvents(); } catch (e) { console.error(e); }
+        }
+        if (card.id === 'widgetWeatherCard' && typeof renderWeatherWidget === 'function') {
+            try { renderWeatherWidget(); } catch (e) { console.error(e); }
         }
         if (card.id === 'widgetGlobalCard' && typeof _renderGlobalStatsDetails === 'function') {
             try { _renderGlobalStatsDetails(); } catch (e) { console.error(e); }

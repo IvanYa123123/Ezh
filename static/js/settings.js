@@ -4,9 +4,6 @@
 //   • Блок «Моя группа» с кнопкой «Изменить» (открывает #groupSetupModal).
 //   • updateSettingsGroupValue() обновляет текст в этом блоке.
 
-const SETTINGS_SECTIONS_KEY = 'settingsSections_v1';
-const SETTINGS_SECTIONS_NAMES = ['display', 'widgets', 'status', 'notif'];
-
 const THEME_NAMES = {
     light: 'Светлая', dark: 'Тёмная', forest: 'Лесная', sunset: 'Закат', ocean: 'Океан',
     hedgehog: 'Ежики', southpark: 'Южный парк', anime: 'Аниме',
@@ -111,6 +108,11 @@ function updateSettingsGroupValue() {
     const el = document.getElementById('settingsGroupValue');
     if (!el) return;
 
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        el.textContent = localStorage.getItem('ezhTeacherName') || 'Не выбран';
+        return;
+    }
+
     const group = (document.getElementById('groupSelect').value || '').trim();
     const sub = document.getElementById('subgroupSelect').value || '0';
 
@@ -148,6 +150,11 @@ function openSettingsModal() {
     document.getElementById('settingsToggleWidgetLabs').checked    = showWidgetLabs;
     document.getElementById('settingsToggleWidgetSuggestions').checked = showWidgetSuggestions;
     document.getElementById('settingsToggleWidgetPacing').checked  = showWidgetPacing;
+    document.getElementById('settingsToggleWidgetWeather').checked = showWidgetWeather;
+    const roomToggle = document.getElementById('settingsToggleWidgetRoom');
+    if (roomToggle) roomToggle.checked = showWidgetRoom;
+    const teachingLoadToggle = document.getElementById('settingsToggleWidgetTeachingLoad');
+    if (teachingLoadToggle) teachingLoadToggle.checked = showWidgetTeachingLoad;
 
     // Заметки 1..10 — компактный ряд кнопок
     renderNotesToggleRow();
@@ -178,8 +185,6 @@ function openSettingsModal() {
     }
     if (typeof syncMoodleSyncOnStartWarning === 'function') syncMoodleSyncOnStartWarning();
 
-    restoreSettingsSections();
-
     if (typeof renderCustomThemePanel === 'function') renderCustomThemePanel();
     if (typeof updateCustomThemePanelVisibility === 'function') updateCustomThemePanelVisibility();
 
@@ -206,42 +211,10 @@ function openSettingsModal() {
     }
 
     modal.show();
-}
-
-function loadSettingsSections() {
-    try {
-        const raw = localStorage.getItem(SETTINGS_SECTIONS_KEY);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return (parsed && typeof parsed === 'object') ? parsed : {};
-    } catch (e) { return {}; }
-}
-
-function saveSettingsSections(state) {
-    try { localStorage.setItem(SETTINGS_SECTIONS_KEY, JSON.stringify(state)); } catch (e) {}
-}
-
-function toggleSettingsSection(name) {
-    const body  = document.getElementById('settings-section-' + name);
-    const arrow = document.getElementById('settings-arrow-' + name);
-    if (!body) return;
-    const isHidden = body.style.display === 'none';
-    body.style.display = isHidden ? 'block' : 'none';
-    if (arrow) arrow.textContent = isHidden ? '▾' : '▸';
-    const state = loadSettingsSections();
-    state[name] = isHidden ? 'open' : 'closed';
-    saveSettingsSections(state);
-}
-
-function restoreSettingsSections() {
-    const state = loadSettingsSections();
-    SETTINGS_SECTIONS_NAMES.forEach(name => {
-        const body  = document.getElementById('settings-section-' + name);
-        const arrow = document.getElementById('settings-arrow-' + name);
-        if (!body) return;
-        const isOpen = state[name] === 'open';
-        body.style.display = isOpen ? 'block' : 'none';
-        if (arrow) arrow.textContent = isOpen ? '▾' : '▸';
-    });
+    // Синхронизируем баннер «Войдите в Про-режим…» и видимость
+    // Pro-виджетов с текущим состоянием: настройки могли открыть уже
+    // после входа в Pro, когда applyWidgetVisibility ещё не вызывался.
+    if (typeof applyWidgetVisibility === 'function') applyWidgetVisibility();
 }
 
 function saveSettingsFromUI() {
@@ -279,12 +252,24 @@ function saveSettingsFromUI() {
     showWidgetLabs    = document.getElementById('settingsToggleWidgetLabs').checked;
     showWidgetSuggestions = document.getElementById('settingsToggleWidgetSuggestions').checked;
     showWidgetPacing  = document.getElementById('settingsToggleWidgetPacing').checked;
+    showWidgetWeather = document.getElementById('settingsToggleWidgetWeather').checked;
+    const roomToggleSave = document.getElementById('settingsToggleWidgetRoom');
+    if (roomToggleSave) {
+        showWidgetRoom = roomToggleSave.checked;
+        localStorage.setItem('showWidgetRoom', showWidgetRoom ? 'true' : 'false');
+    }
+    const teachingLoadSave = document.getElementById('settingsToggleWidgetTeachingLoad');
+    if (teachingLoadSave) {
+        showWidgetTeachingLoad = teachingLoadSave.checked;
+        localStorage.setItem('showWidgetTeachingLoad', showWidgetTeachingLoad ? 'true' : 'false');
+    }
 
     localStorage.setItem('showWidgetMiniCal', showWidgetMiniCal);
     localStorage.setItem('showWidgetGlobal',  showWidgetGlobal);
     localStorage.setItem('showWidgetLabs',    showWidgetLabs);
     localStorage.setItem('showWidgetSuggestions', showWidgetSuggestions);
     localStorage.setItem('showWidgetPacing',  showWidgetPacing);
+    localStorage.setItem('showWidgetWeather', showWidgetWeather ? 'true' : 'false');
 
     showWidgetLabsPro    = document.getElementById('settingsToggleWidgetLabsPro').checked;
     showWidgetMoodleAvg  = document.getElementById('settingsToggleWidgetMoodleAvg').checked;
@@ -632,9 +617,37 @@ function applyWidgetVisibility() {
 
     if (wm) wm.style.display = showWidgetMiniCal ? '' : 'none';
     if (wg) wg.style.display = showWidgetGlobal  ? '' : 'none';
-    if (wl) wl.style.display = (!window.isProActive && showWidgetLabs) ? '' : 'none';
-    if (ws) ws.style.display = showWidgetSuggestions ? '' : 'none';
-    if (wp) wp.style.display = showWidgetPacing  ? '' : 'none';
+    const teacherMode = (typeof isTeacherRole === 'function' && isTeacherRole());
+    if (wl) wl.style.display = (!window.isProActive && showWidgetLabs && !teacherMode) ? '' : 'none';
+    if (ws) ws.style.display = (showWidgetSuggestions && !teacherMode) ? '' : 'none';
+    if (wp) wp.style.display = (showWidgetPacing && !teacherMode) ? '' : 'none';
+    const roomSection = document.getElementById('roomSection');
+    if (roomSection) {
+        const roomTab = (localStorage.getItem('teacherMainTab') || 'teachers') === 'room';
+        roomSection.style.display = (teacherMode && showWidgetRoom) ? '' : 'none';
+        const teachersSection = document.getElementById('teachersSection');
+        if (teachersSection && teacherMode) {
+            teachersSection.style.display = (showWidgetRoom && roomTab) ? 'none' : '';
+        }
+        if (typeof renderRoomsSection === 'function') {
+            try { renderRoomsSection(); } catch (e) { console.error(e); }
+        }
+    }
+    const switchToRoom = document.getElementById('switchTabToRoomBtn');
+    if (switchToRoom) switchToRoom.style.display = (teacherMode && showWidgetRoom) ? '' : 'none';
+    const teachingLoadCard = document.getElementById('widgetTeachingLoadCard');
+    if (teachingLoadCard) {
+        const visible = teacherMode && showWidgetTeachingLoad;
+        teachingLoadCard.style.display = visible ? '' : 'none';
+        if (visible && typeof renderTeachingLoad === 'function') {
+            try { renderTeachingLoad(); } catch (e) { console.error(e); }
+        }
+    }
+    const ww = document.getElementById('widgetWeatherCard');
+    if (ww) ww.style.display = showWidgetWeather ? '' : 'none';
+    if (ww && showWidgetWeather && typeof renderWeatherWidget === 'function') {
+        try { renderWeatherWidget(); } catch (e) { console.error(e); }
+    }
 
     // Заметки 1..10
     for (let i = 1; i <= 10; i++) {
@@ -662,7 +675,9 @@ function applyWidgetVisibility() {
     const proLockMsg = document.getElementById('proWidgetsLockedMsg');
     const proGrid = document.getElementById('proWidgetsGrid');
     if (proLockMsg && proGrid) {
-        if (window.isProActive) {
+        const proOn = window.isProActive
+            || (typeof isMoodleProPersisted === 'function' && isMoodleProPersisted());
+        if (proOn) {
             proLockMsg.style.display = 'none';
             proGrid.style.display = '';
         } else {

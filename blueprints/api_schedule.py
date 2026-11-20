@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timezone, timedelta
 from urllib.parse import quote
 
+import requests
 from flask import Blueprint, jsonify, request, Response
 
 from . import runtime
@@ -108,6 +109,33 @@ def _resolve_schedule_file(group, subgroup):
 #  Было: 30/min и 10/min — пользователь упирался после
 #  2–5 перезагрузок страницы. Поднято с запасом.
 # ============================================================
+
+@bp.route("/api/schedule_health")
+@limiter.limit("120 per minute")
+def schedule_health():
+    """Быстрая проверка, что сайт расписания СевГУ вообще отвечает.
+
+    Нужна перед синхронизацией, чтобы не крутить лоадер 15 секунд и
+    сразу сказать пользователю «сайт недоступен».
+    """
+    group = (request.args.get("group") or "").strip()
+    params = {"v": "6.2", "section": 0, "week": 1}
+    if group:
+        params["group"] = group
+    try:
+        # Тот же session, что и у синхронизации: браузерный User-Agent и
+        # retry-политика. Иначе health может ругаться на сайт, который
+        # для реального запроса расписания доступен.
+        resp = runtime.planner.session.get(
+            "https://schedule.sevsu.ru/api/schedule",
+            params=params,
+            timeout=6,
+        )
+        # 4xx — сайт жив, просто запрос неполный/группа не та.
+        return jsonify({"ok": resp.status_code < 500, "status": resp.status_code})
+    except requests.RequestException as exc:
+        return jsonify({"ok": False, "error": type(exc).__name__})
+
 
 @bp.route("/api/schedule_all")
 @limiter.limit("240 per minute")

@@ -20,8 +20,13 @@ function _isPairInPast(item, todayStr) {
 }
 
 function showStats() {
-    const group = document.getElementById("groupSelect").value.trim();
-    if (!group || cachedSchedule.length === 0) return alert("Сначала загрузите расписание!");
+    const groupEl = document.getElementById("groupSelect");
+    const group = (groupEl?.value || '').trim();
+    const teacher = typeof isTeacherRole === 'function' && isTeacherRole();
+    const semesterSchedule = cachedSchedule.filter(item => isInCurrentSemester(item.date));
+    if ((!group && !teacher) || semesterSchedule.length === 0) {
+        return alert("Сначала загрузите расписание!");
+    }
 
     new bootstrap.Modal(document.getElementById('statsModal')).show();
 
@@ -29,7 +34,7 @@ function showStats() {
     let todayStr = getLocalDateStr(new Date());
     let totalPast = 0, totalFuture = 0;
 
-    cachedSchedule.forEach(item => {
+    semesterSchedule.forEach(item => {
         let subject = item.lesson;
         let type = item.type_name;
         if (!stats[subject]) stats[subject] = { display: subject, types: {} };
@@ -90,7 +95,7 @@ function showStats() {
     html += '</div>';
 
     if (Object.keys(stats).length === 0) {
-        html = "<p class='text-center'>Нет данных для выбранной группы.</p>";
+        html = "<p class='text-center'>Нет данных за текущий семестр.</p>";
     }
     document.getElementById('statsContent').innerHTML = html;
 }
@@ -106,7 +111,7 @@ function _renderGlobalStatsDetails() {
     const todayStr = getLocalDateStr(new Date());
     const stats = {};
 
-    cachedSchedule.forEach(item => {
+    cachedSchedule.filter(item => isInCurrentSemester(item.date)).forEach(item => {
         const subj = item.lesson;
         if (!stats[subj]) stats[subj] = { past: 0, total: 0 };
         stats[subj].total++;

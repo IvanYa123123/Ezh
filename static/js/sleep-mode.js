@@ -907,7 +907,23 @@
             faceDir(h, isLeft ? 1 : -1);
 
             let str = "";
-            if (typeof allGroups !== 'undefined' && allGroups.length > 0) {
+            const isTeacher = typeof isTeacherRole === 'function' && isTeacherRole();
+            if (isTeacher) {
+                // В режиме преподавателя шапка показывает ФИО, а не группу —
+                // значит и шалость должна подменять ФИО на другого препода.
+                let names = [];
+                if (typeof ensureAllTeachersLoaded === 'function') {
+                    const list = await ensureAllTeachersLoaded();
+                    names = (Array.isArray(list) ? list : [])
+                        .map(t => (t && t.name) || '')
+                        .filter(Boolean);
+                }
+                const current = (typeof getEzhTeacher === 'function' && getEzhTeacher().name) || oldText;
+                const pool = names.filter(n => n !== current);
+                str = pool.length
+                    ? pool[Math.floor(Math.random() * pool.length)]
+                    : (current || 'Преподаватель');
+            } else if (typeof allGroups !== 'undefined' && allGroups.length > 0) {
                 str = allGroups[Math.floor(Math.random() * allGroups.length)];
             } else {
                 str = "ПИН/б-24-1-о"; // fallback

@@ -67,7 +67,15 @@ function getCourseSubjectKeys(course) {
 }
 
 function _courseEffectiveStatus(course, act) {
-    return isCourseForcedDone(course) ? 'Сдано' : act.status;
+    if (isCourseForcedDone(course)) return 'Сдано';
+    // «Сдано» без оценки — работа прикреплена, но ещё не проверена.
+    if (act.status === 'Сдано' && act.grade_num == null) {
+        const grade = String(act.grade || '').trim();
+        if (!grade || grade === '—' || grade === '-' || grade === '–') {
+            return 'Прикреплено';
+        }
+    }
+    return act.status;
 }
 
 function isMoodleProPersisted() {
@@ -100,6 +108,10 @@ function onMoodleSyncOnStartChanged(el) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        setProMode(false);
+        return;
+    }
     const persisted = isMoodleProPersisted();
     let statsRequested = false;
     if (persisted) {
@@ -257,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setProMode(isActive) {
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) isActive = false;
     const badge = document.getElementById('app-mode-badge');
     window.isProActive = isActive;
 
@@ -523,15 +536,22 @@ function _groupCourseLabs(course) {
     return groups;
 }
 
+function _statusIsDone(status) {
+    return status === 'Сдано' || status === 'Прикреплено' || status === 'На проверке';
+}
+
 function _groupIsDone(course, group, forcedDone) {
     if (forcedDone) return true;
     // Если сдана хотя бы одна лаба с таким номером — засчитываем всю группу.
-    return group.acts.some(a => a.status === 'Сдано' || a.status === 'На проверке');
+    return group.acts.some(a => _statusIsDone(a.status));
 }
 
 function _groupRepresentative(group, done) {
     if (done) {
-        const doneAct = group.acts.find(a => a.status === 'Сдано' || a.status === 'На проверке');
+        // Показываем оценённую работу, если она есть в группе.
+        const graded = group.acts.find(a => a.grade_num != null);
+        if (graded) return graded;
+        const doneAct = group.acts.find(a => _statusIsDone(a.status));
         if (doneAct) return doneAct;
     }
     return group.acts.find(a => a.grade_num) || group.acts[0];
@@ -606,9 +626,10 @@ function renderMoodleStats() {
             const extraRows = hasExtra ? group.acts.filter(a => a !== rep) : [];
             const groupKey = escapeHtml(String(group.key));
 
-            let effStatus = groupDone ? 'Сдано' : _courseEffectiveStatus(course, rep);
+            let effStatus = forcedDone ? 'Сдано' : _courseEffectiveStatus(course, rep);
             let badgeClass = 'bg-secondary';
             if (effStatus === 'Сдано') badgeClass = 'bg-success';
+            else if (effStatus === 'Прикреплено') badgeClass = 'bg-info text-dark';
             else if (effStatus === 'На проверке') badgeClass = 'bg-warning text-dark';
             else if (effStatus === 'Не сдано') badgeClass = 'bg-danger';
             else if (effStatus === 'Тест') badgeClass = 'bg-info text-dark';
@@ -634,9 +655,10 @@ function renderMoodleStats() {
             `;
 
             extraRows.forEach(act => {
-                const st = groupDone ? 'Сдано' : _courseEffectiveStatus(course, act);
+                const st = forcedDone ? 'Сдано' : _courseEffectiveStatus(course, act);
                 let cls = 'bg-secondary';
                 if (st === 'Сдано') cls = 'bg-success';
+                else if (st === 'Прикреплено') cls = 'bg-info text-dark';
                 else if (st === 'На проверке') cls = 'bg-warning text-dark';
                 else if (st === 'Не сдано') cls = 'bg-danger';
                 else if (st === 'Тест') cls = 'bg-info text-dark';
@@ -794,7 +816,7 @@ async function syncMoodleDeadlinesToCalendar() {
         let cleanCourse = course.name.replace(/\([^)]*\)/g, '').trim();
 
         for (const act of course.assignments) {
-            if (act.status === 'Сдано' || act.status === 'На проверке' || act.status === 'Черновик') continue;
+            if (_statusIsDone(act.status) || act.status === 'Черновик') continue;
             if (!act.due_iso) continue;
 
             let [y, m, d] = act.due_iso.split('-').map(Number);
@@ -870,7 +892,7 @@ async function syncMoodleToWidgets() {
             if (a.type !== 'assign') return;
             const num = extractLabNum(a.name);
             if (!num) return;
-            const done = forcedDone || a.status === 'Сдано' || a.status === 'На проверке';
+            const done = forcedDone || _statusIsDone(a.status);
             matchingSubjects.forEach(subj => {
                 if (!subjectLabs.has(subj)) subjectLabs.set(subj, new Map());
                 const labs = subjectLabs.get(subj);
@@ -973,7 +995,7 @@ function renderProWidgets() {
             const forcedDone = isCourseForcedDone(c);
             c.assignments.forEach(a => {
                 if (a.type !== 'assign') return;
-                if (forcedDone || a.status === 'Сдано') done++;
+                if (forcedDone || a.status === 'Сдано' || a.status === 'Прикреплено') done++;
                 else if (a.status === 'На проверке' || a.status === 'Черновик') attached++;
                 else remaining++;
             });
@@ -1073,7 +1095,7 @@ function renderProLabDetails() {
 
             course.assignments.forEach(a => {
                 if (a.type !== 'assign') return;
-                if (forcedDone || a.status === 'Сдано') subjectStats[subj].done++;
+                if (forcedDone || a.status === 'Сдано' || a.status === 'Прикреплено') subjectStats[subj].done++;
                 else if (a.status === 'На проверке' || a.status === 'Черновик') subjectStats[subj].attached++;
                 else subjectStats[subj].remaining++;
             });

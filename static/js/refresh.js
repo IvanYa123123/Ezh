@@ -22,8 +22,69 @@ function _stillSameSelection(group, subgroup) {
     return g === group && (subgroup === undefined || s === subgroup);
 }
 
+async function manualRefreshTeacher() {
+    const teacher = (typeof getEzhTeacher === 'function')
+        ? getEzhTeacher()
+        : { slug: localStorage.getItem('ezhTeacherSlug') || '', name: '' };
+
+    if (!teacher.slug) {
+        if (typeof openTeacherRolePicker === 'function') openTeacherRolePicker();
+        return;
+    }
+
+    const btn  = document.getElementById('refreshBtn');
+    const icon = document.getElementById('refreshIcon');
+
+    _refreshInFlight = true;
+    showGlobalLoader('🔄 Обновляем расписание преподавателя...');
+    if (btn)  btn.disabled = true;
+    if (icon) icon.classList.add('refresh-spinning');
+
+    // Погода обновляется параллельно с расписанием.
+    if (typeof refreshWeather === 'function') refreshWeather();
+
+    try {
+        setLoaderText('🌐 Проверяем сайт расписания...');
+        let health = null;
+        try { health = await apiScheduleHealth(); } catch (e) { health = null; }
+        if (!health || !health.ok) {
+            // Health-проверка может ошибаться (DDoS-Guard отдаёт 502
+            // браузеру иначе, чем API). Не блокируем обновление —
+            // настоящую ошибку покажет сама синхронизация.
+            showUpdateNotification('⚠️ Сайт расписания не ответил на проверку — пробуем синхронизацию напрямую…');
+        }
+
+        const raw = await apiGet('/api/teacher_schedule?slug='
+            + encodeURIComponent(teacher.slug) + '&force=1');
+        cachedSchedule = applyTimeFix(
+            typeof teacherScheduleItems === 'function' ? teacherScheduleItems(raw) : (Array.isArray(raw) ? raw : [])
+        );
+        customScheduleItems = [];
+        renderCalendar();
+        updateScheduleStatus();
+        refreshNotifications();
+        const count = Array.isArray(cachedSchedule) ? cachedSchedule.length : 0;
+        showUpdateNotification(`✅ Расписание преподавателя обновлено (${count} пар)`);
+    } catch (e) {
+        console.error('[refresh] teacher ERROR:', e);
+        showUpdateNotification(`❌ ${apiErrorText(e, {
+            subject: 'расписание преподавателя',
+            fallback: 'Не удалось обновить расписание'
+        })}`);
+    } finally {
+        hideGlobalLoader();
+        if (btn)  btn.disabled = false;
+        if (icon) icon.classList.remove('refresh-spinning');
+        _refreshInFlight = false;
+    }
+}
+
 async function manualRefresh() {
     if (_refreshInFlight) return;
+
+    if (typeof isTeacherRole === 'function' && isTeacherRole()) {
+        return manualRefreshTeacher();
+    }
 
     const group    = (document.getElementById('groupSelect').value || '').trim();
     const subgroup = document.getElementById('subgroupSelect').value;
@@ -43,7 +104,20 @@ async function manualRefresh() {
     if (btn)  btn.disabled = true;
     if (icon) icon.classList.add('refresh-spinning');
 
+    // Погода обновляется параллельно с расписанием.
+    if (typeof refreshWeather === 'function') refreshWeather();
+
     try {
+        // --- 0. Проверяем, жив ли сайт расписания ---
+        setLoaderText('🌐 Проверяем сайт расписания...');
+        let health = null;
+        try { health = await apiScheduleHealth(group); } catch (e) { health = null; }
+        if (!health || !health.ok) {
+            // Не блокируем: проверка может дать ложный минус, а реальный
+            // sync ниже всё равно вернёт понятную ошибку при недоступности.
+            showUpdateNotification('⚠️ Сайт расписания не ответил на проверку — пробуем синхронизацию напрямую…');
+        }
+
         // --- 1. Форсим sync с сервера ---
         setLoaderText('📡 Запрашиваем расписание (может занять 5–15 сек)...');
         const fresh = await apiSyncScheduleForce(group, subgroup);

@@ -101,6 +101,7 @@ async function apiUpdateCustomSchedule(id, x) { return apiPut(`/api/custom_sched
 async function apiDeleteCustomSchedule(id)    { return apiDelete(`/api/custom_schedule/${id}`); }
 async function apiSearch(q)                   { return apiGet(`/api/search?q=${encodeURIComponent(q)}`); }
 async function apiSyncScheduleForce(group, sg){ return apiGet(`/api/schedule_sync?group=${encodeURIComponent(group)}&subgroup=${sg}&force=1`); }
+async function apiScheduleHealth(group)      { return apiGet(`/api/schedule_health${group ? '?group=' + encodeURIComponent(group) : ''}`); }
 
 // ============================================================
 //  ЛАБЫ ПОШТУЧНО (lab_items)

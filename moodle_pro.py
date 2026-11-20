@@ -176,10 +176,35 @@ def _random_sleep():
 
 _STATUS_RULES = (
     (re.compile(r'не\s+сдано|not\s+submitted', re.IGNORECASE), 'Не сдано'),
+    (re.compile(r'прикреплен|attached', re.IGNORECASE), 'Прикреплено'),
     (re.compile(r'на\s+проверк|отправлен|submitted\s+for\s+grading', re.IGNORECASE), 'На проверке'),
     (re.compile(r'черновик|draft', re.IGNORECASE), 'Черновик'),
     (re.compile(r'\bсдано\b|оценено|graded|complete', re.IGNORECASE), 'Сдано'),
 )
+
+
+def _normalize_grade_status(status: str, grade_text: str, grade_num) -> str:
+    """«Сдано» без оценки — это прикреплённая, но ещё не оценённая работа."""
+    if status == 'Сдано' and grade_num is None:
+        if (grade_text or '').strip() in ('', '—', '-', '–'):
+            return 'Прикреплено'
+    return status
+
+
+def _normalize_stats_data(data):
+    """Приводит статусы в старом кэше к актуальным названиям."""
+    if not isinstance(data, list):
+        return data
+    for course in data:
+        if not isinstance(course, dict):
+            continue
+        for act in course.get('assignments', []) or []:
+            if isinstance(act, dict):
+                act['status'] = _normalize_grade_status(
+                    act.get('status', ''), act.get('grade', ''), act.get('grade_num')
+                )
+    return data
+
 
 
 def _status_from_text(text: str) -> str:
@@ -280,6 +305,7 @@ def _parse_gradebook_bs4(html: str) -> dict:
                         break
             if not status:
                 status = 'Сдано' if grade_num is not None else 'Не сдано'
+            status = _normalize_grade_status(status, grade_text, grade_num)
 
             result[aid] = {
                 "name": aname,
@@ -321,6 +347,7 @@ def _parse_gradebook_regex(html: str) -> dict:
                 break
         if not status:
             status = 'Сдано' if grade_num is not None else 'Не сдано'
+        status = _normalize_grade_status(status, grade_text, grade_num)
 
         result[aid] = {
             "name": aname,
@@ -456,7 +483,7 @@ def get_stats():
 
     def _cached_response(stale=False):
         return jsonify({
-            "data": cached_data.get("data", []) if isinstance(cached_data, dict) else [],
+            "data": _normalize_stats_data(cached_data.get("data", [])) if isinstance(cached_data, dict) else [],
             "timestamp": cached_data.get("timestamp", 0) if isinstance(cached_data, dict) else 0,
             "stale": stale,
         })

@@ -137,16 +137,6 @@ function plural(n, one, few, many) {
     return many;
 }
 
-function formatDuration(mins) {
-    if (mins < 1) return "меньше минуты";
-    if (mins < 60) return `${mins} ${plural(mins, 'минуту', 'минуты', 'минут')}`;
-    let h = Math.floor(mins / 60);
-    let m = mins % 60;
-    let hStr = `${h} ${plural(h, 'час', 'часа', 'часов')}`;
-    if (m === 0) return hStr;
-    return `${hStr} ${m} ${plural(m, 'минуту', 'минуты', 'минут')}`;
-}
-
 function formatDateRu(dateStr) {
     let [y, m, d] = dateStr.split('-').map(Number);
     let months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -250,6 +240,24 @@ function formatAdvanceText(value, unit) {
     };
     const f = forms[unit] || forms.min;
     return `${n} ${plural(n, f[0], f[1], f[2])}`;
+}
+
+// Границы текущего учебного семестра (осень: 1 сентября — 31 января, весна: 1 февраля — 30 июня).
+function getCurrentSemesterBounds(now) {
+    const d = now || new Date();
+    const year = d.getFullYear();
+    const month = d.getMonth(); // 0 = январь
+    if (month >= 7 || month === 0) {
+        const startYear = month >= 7 ? year : year - 1;
+        return { start: `${startYear}-09-01`, end: `${startYear + 1}-01-31` };
+    }
+    return { start: `${year}-02-01`, end: `${year}-06-30` };
+}
+
+function isInCurrentSemester(dateStr, now) {
+    if (!dateStr || typeof dateStr !== 'string') return false;
+    const bounds = getCurrentSemesterBounds(now);
+    return dateStr >= bounds.start && dateStr <= bounds.end;
 }
 
 // Миллисекунды для пары (число, единица).

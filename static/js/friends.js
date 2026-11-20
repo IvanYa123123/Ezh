@@ -795,7 +795,7 @@ function renderFriendsCalendar(dir = null) {
         wrapper.appendChild(header);
 
         let grid = document.createElement('div');
-        grid.className = "calendar-grid w-100";
+        grid.className = "calendar-grid w-100 six-day-grid";
         grid.classList.remove('slide-left', 'slide-right', 'fade-in');
         void grid.offsetWidth;
         if (dir === 'right')      grid.classList.add('slide-right');
@@ -804,7 +804,7 @@ function renderFriendsCalendar(dir = null) {
 
         const dayParts = [];
 
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 6; i++) {
             let d = new Date(currentBaseDate); d.setDate(d.getDate() + i);
             let dateStr = getLocalDateStr(d);
             let displayDate = d.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });

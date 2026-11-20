@@ -173,8 +173,10 @@ textarea {
    ============================================================ */
 
 #teachersCalendarsContainer {
-    padding-left: 40px;
-    padding-right: 40px;
+    /* Внешний .friends-list-wrapper уже резервирует место под стрелки;
+       второй отступ делал календарь коллег заметно уже основного. */
+    padding-left: 0;
+    padding-right: 0;
 }
 
 /* ============================================================
@@ -2359,6 +2361,19 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     margin: 0 2px;
 }
 
+.note-title-text { cursor: text; }
+.note-rename-btn {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1;
+    padding: 2px 3px;
+    opacity: 0.65;
+    cursor: pointer;
+}
+.note-rename-btn:hover { color: var(--accent); opacity: 1; }
+
 .note-editor {
     min-height: 120px;
     max-height: 320px;
@@ -2557,3 +2572,494 @@ body.widget-dragging #teachersSection:not(.is-vertical) #teachersCalendarsContai
     color: var(--accent);
     background: var(--accent-soft);
 }
+
+/* ============================================================
+   ВИДЖЕТ ПОГОДЫ (rp5.ru)
+   ============================================================ */
+.weather-widget-card .widget-title { white-space: nowrap; }
+.weather-city-label {
+    font-size: .68rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 2px;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+}
+.weather-city-label:hover { color: var(--accent); }
+.settings-highlight {
+    border-radius: 10px;
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px var(--accent-border, transparent);
+    transition: box-shadow .2s ease;
+}
+.weather-body { padding: 10px 12px 8px; }
+.weather-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.weather-nav-btn {
+    width: 26px;
+    height: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+}
+.weather-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.weather-nav-btn:disabled { opacity: .35; cursor: default; }
+.weather-nav-label {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: .72rem;
+    text-align: center;
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.weather-nav-label:hover { color: var(--accent); }
+.weather-offline {
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1px 5px;
+    flex: 0 0 auto;
+}
+.weather-day-today .weather-day-name { color: var(--accent); }
+.weather-now {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.weather-now-icon { font-size: 2.7rem; line-height: 1; filter: saturate(1.05); }
+.weather-now-main { min-width: 0; }
+.weather-now-temp { font-size: 1.85rem; font-weight: 700; line-height: 1.05; }
+.weather-now-cond { font-size: .88rem; font-weight: 600; margin-top: 1px; }
+.weather-now-date { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+.weather-verdict {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    font-size: .7rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+.weather-day-verdict {
+    display: inline-block;
+    max-width: 100%;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    font-size: .62rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.weather-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 9px;
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+.weather-forecast {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+.weather-day {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    padding: 8px 6px;
+    text-align: center;
+    min-width: 0;
+}
+.weather-day-name { font-weight: 700; font-size: .85rem; }
+.weather-day-date { font-size: .68rem; color: var(--text-muted); }
+.weather-day-icon { font-size: 1.9rem; line-height: 1.2; margin: 4px 0 2px; }
+.weather-day-temp { font-size: 1.12rem; font-weight: 700; }
+.weather-day-min { font-size: .78rem; font-weight: 500; color: var(--text-muted); margin-left: 4px; }
+.weather-day-cond {
+    font-size: .72rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    min-height: 2.1em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.weather-foot { font-size: .66rem; color: var(--text-muted); margin-top: 7px; opacity: .85; }
+.weather-loading, .weather-error {
+    padding: 14px 4px;
+    font-size: .82rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.weather-retry {
+    margin-top: 8px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: .78rem;
+}
+.weather-retry:hover { border-color: var(--accent); color: var(--accent); }
+.weather-city-settings-btn {
+    padding: .15rem .5rem;
+    font-size: .78rem;
+}
+.weather-city-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+}
+.weather-city-option {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    padding: 6px 8px;
+    font-size: .8rem;
+    text-align: left;
+}
+.weather-city-option:hover { border-color: var(--accent); color: var(--accent); }
+.weather-city-option.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+}
+@media (max-width: 575.98px) {
+    .weather-forecast { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .weather-day { padding: 6px 3px; }
+}
+
+/* ===== Режим работы: студент / преподаватель ===== */
+.role-teacher #friendsSection,
+.role-teacher #widgetSuggestionsCard,
+.role-teacher #widgetPacingCard,
+.role-teacher #widgetLabsCard,
+.role-teacher .pro-widget,
+.role-teacher #app-mode-badge,
+.role-teacher #proWidgetSettingsGroup,
+.role-teacher #proSettingsGroup {
+  display: none !important;
+}
+.role-teacher #teachersSection { display: block; }
+.role-teacher #switchTabToFriendsBtn { display: none !important; }
+.role-student #widgetRoomCard,
+.role-student .room-setting-row { display: none !important; }
+
+.role-modal { border-radius: 18px; overflow: hidden; }
+.role-logo { font-size: 2.6rem; line-height: 1; margin-bottom: 6px; }
+.role-options { display: grid; gap: 10px; }
+.role-option {
+  display: grid; grid-template-columns: 42px 1fr; grid-template-rows: auto auto;
+  gap: 2px 12px; text-align: left; padding: 14px 16px; border-radius: 14px;
+  border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-surface, #fff);
+  color: var(--text-primary, #1e293b); cursor: pointer; transition: .15s;
+}
+.role-option:hover { border-color: var(--accent); box-shadow: 0 6px 18px rgba(99,102,241,.16); transform: translateY(-1px); }
+.role-option-icon { grid-row: 1 / 3; font-size: 1.9rem; align-self: center; }
+.role-option-title { font-weight: 800; font-size: 1rem; }
+.role-option-desc { font-size: .78rem; color: var(--text-muted, #64748b); }
+
+/* ===== Виджет «Аудитория» ===== */
+.room-widget-body { max-height: 380px; overflow-y: auto; }
+.room-widget-subtitle { font-size: .72em; font-weight: 600; color: var(--text-muted, #64748b); }
+.room-empty { padding: 12px 4px; text-align: center; }
+.room-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.room-nav-btn { border: 1px solid var(--border-color, #e2e8f0); background: transparent; color: inherit; border-radius: 7px; width: 26px; height: 26px; line-height: 1; }
+.room-nav-btn:disabled { opacity: .35; }
+.room-nav-label { flex: 1; text-align: center; font-size: .76em; font-weight: 700; }
+.room-room-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.room-room-name { font-size: .8em; font-weight: 700; color: var(--accent); }
+.room-days { display: flex; flex-direction: column; gap: 8px; }
+.room-day { border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; padding: 6px 8px; }
+.room-day-today { border-color: var(--accent); }
+.room-day-head { display: flex; justify-content: space-between; font-size: .7em; font-weight: 700; color: var(--text-muted, #64748b); margin-bottom: 4px; }
+.room-day-empty { font-size: .74em; color: var(--text-muted, #64748b); }
+.room-pair { display: flex; gap: 7px; padding: 4px 0; border-top: 1px dashed var(--border-color, #e2e8f0); }
+.room-pair:first-of-type { border-top: 0; }
+.room-pair-num { flex: 0 0 18px; height: 18px; border-radius: 5px; background: var(--accent); color: var(--text-invert, #fff); font-size: .66em; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.room-pair-body { min-width: 0; flex: 1; }
+.room-pair-time { font-size: .68em; font-weight: 700; color: var(--accent); }
+.room-pair-lesson { font-size: .78em; font-weight: 600; overflow-wrap: anywhere; }
+.room-pair-meta, .room-pair-teacher { font-size: .68em; color: var(--text-muted, #64748b); overflow-wrap: anywhere; }
+.room-pick-list { max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.room-pick-item { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; border: 1px solid var(--border-color, #e2e8f0); background: transparent; color: inherit; border-radius: 8px; padding: 7px 10px; font-size: .84em; }
+.room-pick-item:hover, .room-pick-item.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.room-pick-slug { color: var(--text-muted, #64748b); font-size: .72em; }
+
+/* --- Раздел «Аудитория» (режим преподавателя) --- */
+.room-empty-section {
+    padding: 28px 16px;
+    border: 1px dashed var(--border-color, #e2e8f0);
+    border-radius: 14px;
+    background: var(--bg-surface, #fff);
+}
+.room-folder { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.room-folder-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: .84em; font-weight: 800; color: var(--text-muted, #64748b);
+    padding: 0 2px;
+}
+.room-folder-head .btn { text-decoration: none; }
+.room-wrapper { border-top-color: var(--accent); }
+.room-wrapper .teacher-header-row { flex-wrap: wrap; gap: 4px; }
+.room-card-name { font-size: .9em; font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.room-category-badge {
+    font-size: .68em; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+}
+.room-card-body { padding: 0; }
+/* 7 колонок, как у коллег: вся неделя всегда в один ряд */
+.room-wrapper .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.room-col { padding: 6px; }
+.room-col .teacher-day-header { margin-bottom: 5px; }
+.room-pair-card { padding: 4px 5px; }
+.room-pair-card .teacher-pair-head { flex-wrap: wrap; gap: 3px; }
+.room-pair-time { font-size: .66em; font-weight: 800; color: var(--accent); }
+.room-pair-type {
+    font-size: .6em; font-weight: 700; padding: 0 4px; border-radius: 4px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent);
+}
+.room-pair-lesson { font-size: .72em; font-weight: 600; overflow-wrap: anywhere; }
+.room-pair-meta, .room-pair-teacher { font-size: .62em; color: var(--text-muted, #64748b); overflow-wrap: anywhere; }
+.room-col .room-day-empty { font-size: .66em; color: var(--text-muted, #64748b); }
+@media (max-width: 767.98px) {
+    .room-wrapper .calendar-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Режим преподавателя: ФИО вместо группы, выбор себя в списке. */
+body.role-teacher #subgroupSelect,
+body.role-teacher #groupSettingsGroup { display: none !important; }
+body.role-teacher #groupDisplay { cursor: pointer; }
+.role-teacher-list {
+  max-height: 46vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.role-teacher-item {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: .86em;
+}
+.role-teacher-item:hover,
+.role-teacher-item.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* Режим преподавателя: моя пара в расписании аудитории */
+.room-pair-mine {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-left: 3px solid var(--accent);
+  padding-left: 6px;
+  border-radius: 6px;
+}
+.room-pair-me {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--text-invert);
+  font-size: 0.62em;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.room-busy-me {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chart-passed) 18%, transparent);
+  color: var(--chart-passed);
+  font-size: 0.68em;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Виджет нагрузки преподавателя */
+body.role-student .teacher-only-widget,
+body.role-student .teacher-setting-row { display: none !important; }
+.teaching-load-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  text-align: center;
+  padding: 2px 0 4px;
+}
+.teaching-load-num {
+  font-size: 1.16em;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--accent);
+}
+.teaching-load-label {
+  margin-top: 2px;
+  font-size: 0.64em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.teaching-load-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  font-size: 0.72em;
+  color: var(--text-secondary);
+}
+.teaching-load-day {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 7px;
+}
+.teaching-load-day span:first-child {
+  flex: 0 0 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.teaching-load-gap {
+  margin-top: 3px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+.teaching-load-empty {
+  text-align: center;
+  color: var(--text-muted, var(--text-secondary));
+  padding: 4px 0;
+}
+
+/* Горизонтальный формат: всё в одну компактную строку, без растянутых пустот */
+.widget-card.is-horizontal .teaching-load-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 18px;
+}
+.widget-card.is-horizontal .teaching-load-grid {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 20px;
+  padding: 0 0 6px;
+  text-align: left;
+}
+.widget-card.is-horizontal .teaching-load-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.widget-card.is-horizontal .teaching-load-num {
+  font-size: 1.3em;
+  line-height: 1;
+}
+.widget-card.is-horizontal .teaching-load-label {
+  margin: 0;
+  font-size: 0.68em;
+}
+.widget-card.is-horizontal .teaching-load-detail {
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 12px;
+  margin-top: 0;
+}
+.widget-card.is-horizontal .teaching-load-day {
+  flex: 0 0 auto;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--bg-surface-alt);
+}
+.widget-card.is-horizontal .teaching-load-day span:first-child {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.widget-card.is-horizontal .teaching-load-gap {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  font-weight: 600;
+}
+.widget-card.is-horizontal .teaching-load-empty {
+  padding: 0;
+  text-align: left;
+}
+
+/* Стрелки недель у горизонтальных списков друзей, коллег и аудиторий */
+.friends-list-wrapper {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+.friends-list-wrapper > .friends-nav-btn {
+  position: absolute;
+  top: 50%;
+  margin: 0;
+  float: none;
+  transform: translateY(-50%);
+  opacity: 1;
+  visibility: visible;
+}
+.friends-list-wrapper > .friends-nav-prev { left: 0; }
+.friends-list-wrapper > .friends-nav-next { right: 0; }
+.friends-list-wrapper > .friends-nav-btn .nav-arrow {
+  padding: 0 10px;
+  line-height: 1;
+}
+[data-draggable-section].is-vertical .friends-list-wrapper {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Шесть дней (Пн–Сб) в карточках друзей, коллег и аудиторий */
+.friend-wrapper .calendar-grid.six-day-grid,
+.teacher-wrapper .calendar-grid.six-day-grid,
+.room-wrapper .calendar-grid.six-day-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 767px) {
+  .room-wrapper .calendar-grid.six-day-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
