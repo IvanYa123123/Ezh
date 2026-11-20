@@ -332,12 +332,16 @@ from blueprints.api_people   import bp as bp_people
 from blueprints.api_schedule import bp as bp_schedule
 from blueprints.api_tasks    import bp as bp_tasks
 from blueprints.api_labs     import bp as bp_labs
+from blueprints.api_weather  import bp as bp_weather
+from blueprints.api_locations import bp as bp_locations
 
 app.register_blueprint(bp_core)
 app.register_blueprint(bp_people)
 app.register_blueprint(bp_schedule)
 app.register_blueprint(bp_tasks)
 app.register_blueprint(bp_labs)
+app.register_blueprint(bp_weather)
+app.register_blueprint(bp_locations)
 
 # РЕГИСТРАЦИЯ ЕЖ ПРО (MOODLE)
 app.register_blueprint(moodle_bp)
@@ -347,15 +351,14 @@ app.register_blueprint(moodle_bp)
 #  ЗАПУСК
 # ============================================================
 
-def _find_free_port(preferred: int = 5000) -> int:
-    for p in range(preferred, preferred + 20):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(("127.0.0.1", p))
-                return p
-            except OSError:
-                continue
-    return preferred
+def _port_is_busy(port: int, host: str = "127.0.0.1", timeout: float = 0.35) -> bool:
+    """Занят ли порт: на Windows waitress с SO_REUSEADDR может успешно
+    сесть на уже слушающий порт, и два сервера начинают делить запросы
+    (старый и новый интерфейс вперемешку). Поэтому проверяем connect."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(timeout)
+        return s.connect_ex((host, port)) == 0
 
 
 def _create_waitress_server(preferred: int, threads: int = 8):
@@ -369,6 +372,8 @@ def _create_waitress_server(preferred: int, threads: int = 8):
 
     last_error = None
     for p in range(preferred, preferred + 20):
+        if _port_is_busy(p):
+            continue
         try:
             return create_server(app, host="127.0.0.1", port=p, threads=threads), p
         except OSError as e:
@@ -1016,9 +1021,7 @@ if __name__ == "__main__":
 
     debug = os.environ.get("FLASK_DEBUG", "0") == "1"
 
-    PORT = _find_free_port(5000)
-    if PORT != 5000:
-        _safe_print(f"[server] порт 5000 занят, использую {PORT}", flush=True)
+    PORT = 5000
 
     if use_gui:
         _run_gui_mode(PORT)
